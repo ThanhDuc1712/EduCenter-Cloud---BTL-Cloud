@@ -6,7 +6,7 @@
 | Vị trí file | `docs/handoff/DUC.md` |
 | Phiên bản · Ngày tạo | 1.0 · 14/11/2026 |
 | Người nhận | **Đức — TV1 — Tech Lead / Architecture & Integration** |
-| Tài liệu nguồn | `ROADMAP.md` v1.2 (§2.3, §3.3, §5, §6, §7, §8, §10, §11, §15) · `EduCenter_Cloud_Ban_Thiet_Ke_2.md` (V2) · `BTL CK 1.pdf` · Quyết định mô hình tài liệu tối giản của trưởng nhóm (14/11) |
+| Tài liệu nguồn | `ROADMAP.md` v1.3 (§2.3, §3.3, §5, §6, §7, §8, §10, §11, §15) · `EduCenter_Cloud_Ban_Thiet_Ke_2.md` (V2) · `BTL CK 1.pdf` · Quyết định mô hình tài liệu tối giản của trưởng nhóm (14/11) |
 | Không có khi soạn | `DOANH.md`, `ANH.md`, `HA.md`, `DUONG.md`, `GIANG.md` không có trong Project → phần phối hợp dựa trên ROADMAP; đối chiếu lại khi các file vào repo |
 | Trạng thái | **DRAFT — chờ trưởng nhóm xác nhận.** Chưa có task nào Done; tài liệu không chứa kết quả đo hay evidence |
 | Thứ tự ưu tiên khi mâu thuẫn | Quyết định mới của trưởng nhóm (mô hình tài liệu) → ROADMAP §15 (phân công cuối) → ROADMAP §5 (backlog) → V2. Mâu thuẫn còn mở: §7.2 |
@@ -73,7 +73,7 @@ Phạm vi phiên: <TASK_ID | BATCH_ID>.
 2. KẾ HOẠCH: liệt kê chính xác file sẽ tạo/sửa (chỉ trong "Allowed files" của DUC.md),
    test sẽ viết, quyết định cần con người xác nhận. CHỜ Đức duyệt rồi mới code.
 3. Viết test positive + negative từ acceptance criteria trước.
-4. Code đúng phạm vi. Branch: <type>/<TASK_ID>-<slug>. Commit: Conventional Commits có [<TASK_ID>].
+4. Code đúng phạm vi. Branch cá nhân: duc (mô hình 7 branch cố định D-35). Commit: Conventional Commits có [<TASK_ID>].
 5. Chạy pnpm lint, pnpm typecheck và test liên quan. Dán lệnh + output THẬT; chưa chạy thì ghi "chưa chạy".
 6. Soạn mô tả PR theo .github/pull_request_template.md, gồm mục "Kết quả & bàn giao".
    Không merge, không push thẳng main.

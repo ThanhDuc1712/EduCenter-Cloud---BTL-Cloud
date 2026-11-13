@@ -94,6 +94,7 @@ gh pr create --base main --head <ten-ban>   # hoặc tạo PR trên GitHub
 
 - Mở PR vào `main` khi xong **một task hoặc một batch task liên quan**, hoặc tại mốc bàn giao mà người khác đang phụ thuộc. Không gom toàn bộ phần việc cá nhân rồi mới merge.
 - Điền đủ PR template; chờ review theo CODEOWNERS; **không tự merge**.
+- Khi merge PR vào `main`: **bắt buộc sử dụng merge commit** (không squash, không rebase để tránh lệch lịch sử và conflict khi đồng bộ ngược về branch cá nhân). Không xóa branch cá nhân sau khi merge.
 
 ## Lệnh hiện có
 
