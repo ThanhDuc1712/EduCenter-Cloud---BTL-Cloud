@@ -1,0 +1,11 @@
+extends:
+  - recommended
+
+rules:
+  # Dự án nội bộ BTL, không phát hành license cho API.
+  info-license: off
+  # Components dùng chung (MoneyVnd, DateTimeUtc, Idempotency-Key, 409/429…) được định nghĩa
+  # từ v0 để mọi module dùng thống nhất; endpoint dùng chúng sẽ thêm ở contract v1 (P1-14).
+  no-unused-components: off
+  # /health là public probe, không có response 4xx theo thiết kế; operation khác vẫn phải có 4xx.
+  operation-4xx-response: off
