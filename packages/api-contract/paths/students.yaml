@@ -1,0 +1,123 @@
+# Owner endpoint: Hà (P1-09) · Contract: Đức
+# Phạm vi theo vai trò: CENTER_ADMIN = toàn tenant; TEACHER = học viên trong lớp mình dạy;
+# STUDENT = chính mình. Ngoài phạm vi → 404 (không tiết lộ sự tồn tại).
+
+students:
+  get:
+    operationId: listStudents
+    tags: [students]
+    summary: Danh sách học viên (phân trang, tìm theo mã/tên)
+    parameters:
+      - $ref: ../components/parameters.yaml#/Page
+      - $ref: ../components/parameters.yaml#/PageSize
+      - name: q
+        in: query
+        required: false
+        description: Tìm theo mã học viên (và họ tên khi OQ-17 chốt). So khớp tham số hóa, không phải pattern.
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 100
+    responses:
+      '200':
+        description: Một trang học viên.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/StudentPage
+      '400':
+        $ref: ../components/responses.yaml#/ValidationFailed
+      '401':
+        $ref: ../components/responses.yaml#/Unauthorized
+      '403':
+        $ref: ../components/responses.yaml#/Forbidden
+      '500':
+        $ref: ../components/responses.yaml#/InternalError
+  post:
+    operationId: createStudent
+    tags: [students]
+    summary: Tạo học viên (CENTER_ADMIN)
+    description: Cần CSRF token (P1-02). Trùng `code` trong tenant → 409.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/StudentCreateRequest
+    responses:
+      '201':
+        description: Đã tạo.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/Student
+      '400':
+        $ref: ../components/responses.yaml#/ValidationFailed
+      '401':
+        $ref: ../components/responses.yaml#/Unauthorized
+      '403':
+        $ref: ../components/responses.yaml#/Forbidden
+      '409':
+        $ref: ../components/responses.yaml#/Conflict
+      '500':
+        $ref: ../components/responses.yaml#/InternalError
+
+studentById:
+  parameters:
+    - name: studentId
+      in: path
+      required: true
+      description: ID học viên (UUID). Sai định dạng → 400.
+      schema:
+        $ref: ../components/schemas.yaml#/Uuid
+  get:
+    operationId: getStudent
+    tags: [students]
+    summary: Chi tiết học viên
+    responses:
+      '200':
+        description: Học viên.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/Student
+      '400':
+        $ref: ../components/responses.yaml#/ValidationFailed
+      '401':
+        $ref: ../components/responses.yaml#/Unauthorized
+      '403':
+        $ref: ../components/responses.yaml#/Forbidden
+      '404':
+        $ref: ../components/responses.yaml#/NotFound
+      '500':
+        $ref: ../components/responses.yaml#/InternalError
+  patch:
+    operationId: updateStudent
+    tags: [students]
+    summary: Cập nhật học viên (CENTER_ADMIN)
+    description: Cần CSRF token (P1-02). Trùng `code` → 409.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/StudentUpdateRequest
+    responses:
+      '200':
+        description: Đã cập nhật.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/Student
+      '400':
+        $ref: ../components/responses.yaml#/ValidationFailed
+      '401':
+        $ref: ../components/responses.yaml#/Unauthorized
+      '403':
+        $ref: ../components/responses.yaml#/Forbidden
+      '404':
+        $ref: ../components/responses.yaml#/NotFound
+      '409':
+        $ref: ../components/responses.yaml#/Conflict
+      '500':
+        $ref: ../components/responses.yaml#/InternalError

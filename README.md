@@ -101,5 +101,12 @@ gh pr create --base main --head <ten-ban>   # hoặc tạo PR trên GitHub
 |---|---|
 | `pnpm install --frozen-lockfile` | Cài dependency đúng lockfile |
 | `pnpm lint` · `pnpm typecheck` · `pnpm test` · `pnpm build` | Chạy script tương ứng trong mọi package có định nghĩa (bỏ qua package chưa có) |
+| `pnpm --filter @educenter/api-contract lint` | Lint OpenAPI (Redocly) |
+| `pnpm --filter @educenter/api-contract bundle` | Gộp spec thành `dist/openapi.bundled.yaml` |
+| `pnpm --filter @educenter/api-contract generate` | Sinh lại `generated/schema.d.ts` — chạy sau mỗi lần sửa contract và commit kết quả |
+| `pnpm --filter @educenter/api-contract check` | lint + bundle + generate + typecheck |
+
+Dùng contract ở frontend: thêm dependency `"@educenter/api-contract": "workspace:*"` rồi
+`import { createApiClient } from '@educenter/api-contract'`.
 
 Lệnh chạy local (API, web, PostgreSQL qua Docker Compose) sẽ được bổ sung khi P0-07, P0-10, P0-19 hoàn thành.
