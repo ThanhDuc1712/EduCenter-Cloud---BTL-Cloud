@@ -1,6 +1,7 @@
 # EDUCENTER CLOUD — ENGINEERING ROADMAP
 
-**Phiên bản roadmap:** 1.2 (bỏ gán tên thành viên cụ thể — nhóm tự phân công theo vai trò TV1–TV6) · **Ngày lập:** 13/11/2026 · **Source of Truth:** `EduCenter_Cloud_Ban_Thiet_Ke_2.md` (Version 2.0) + `BTL CK 1.pdf`
+**Phiên bản roadmap:** 1.3 · **Ngày lập:** 13/11/2026 · **Cập nhật v1.3:** 14/11/2026 · **Source of Truth:** `EduCenter_Cloud_Ban_Thiet_Ke_2.md` (Version 2.0) + `BTL CK 1.pdf`
+**Thay đổi v1.3 (P0-05, chỉ quy trình làm việc — không đổi kiến trúc, Task ID, phân công, deadline, AC):** (1) Mô hình tài liệu tối giản (D-34): **không dùng `AGENTS.md`/`CLAUDE.md`**, không tạo trước thư mục ADR/task card/handoff theo task; `ROADMAP.md` là tài liệu điều phối duy nhất, `docs/handoff/<TÊN>.md` là file giao việc cá nhân, kết quả task ghi trong PR; Decision Log §2.3 thay cho file ADR. (2) Git workflow 7 branch cố định (D-35, §7.4). (3) Cập nhật trạng thái D-12, D-20, D-24; thêm D-34…D-36.
 **Thay đổi so với v1.0:** 34 phát hiện review (2 Critical, 12 High, 15 Medium, 5 Low) — chi tiết và trạng thái xử lý ở **Phụ lục A**. Các quyết định đã chốt trong V2 được giữ nguyên; mọi thay đổi kiến trúc được đề xuất qua ADR-021…ADR-027 (D-23…D-33).
 **Tổ hợp Cloud:** Microsoft Azure + Alibaba Cloud (tổ hợp số 9 — được tô vàng, +1 điểm theo đề)
 **Hạn nộp:** 30/11/2026 · **Mục tiêu nộp nội bộ:** 29/11/2026 22:00 (giữ 30/11 làm buffer)
@@ -171,7 +172,7 @@ flowchart LR
 | Idempotency | Mọi mutation | Chỉ payment (bắt buộc) + enrollment | Đúng chỗ có rủi ro lặp theo V2 §14 |
 | Reconciliation lock | `background_jobs` lease | `pg_try_advisory_lock` | Đơn giản, đủ đúng cho 1 job |
 | Dashboard | Biểu đồ lazy load | Thẻ số liệu, không thư viện chart | F11 là "tối giản" |
-| ADR | 20 file ADR đầy đủ | 1 file ADR log; chỉ ADR lệch V2 (015–027) viết đầy đủ | Giảm tải TV1 Phase 0 |
+| ADR | 20 file ADR đầy đủ | 1 file ADR log; chỉ ADR lệch V2 (015–027) viết đầy đủ → **v1.3: không tạo file ADR**, mã ADR-0xx chỉ là nhãn trong Decision Log §2.3 (D-34) | Giảm tải TV1 Phase 0 |
 | SAST | CodeQL hoặc Semgrep | Đúng 1 công cụ theo D-23 | Tránh trùng chức năng (V2 §13.2) |
 | DAST | ZAP scan | ZAP API/baseline scan, không active scan toàn bộ | Tránh phá dữ liệu demo, giảm thời gian |
 | Máy tạo tải | Laptop + VM | Laptop mặc định; VM chỉ khi `dropped_iterations` > 0 | Giảm chi phí và thao tác |
@@ -193,7 +194,7 @@ Trạng thái: **Proposed** → **Accepted** (nhóm đồng ý) → **Verified**
 | D-09 | Region: Azure Southeast Asia + Aliyun Singapore (ap-southeast-1), xác nhận sau đo latency | Gần VN, đủ dịch vụ | Toàn bộ hạ tầng; cần ghi chú chuyển dữ liệu xuyên biên giới (chỉ dữ liệu giả) | TV6 + TV5 | 15/11 | Proposed |
 | D-10 | Thư viện PDF: `pypdf` + `pypdfium2` — ADR-019 | Giấy phép permissive | FC | TV5 | 15/11 | Proposed |
 | D-11 | Không có malware scanning trong BTL; công bố giới hạn | Thời gian/chi phí | ST14, báo cáo | TV3 | 15/11 | Proposed |
-| D-12 | Tiền VND: `BIGINT` trong DB, serialize JSON dạng **string** | Tránh mất chính xác JS | Contract, FE | TV1 + TV4 | 14/11 | Proposed |
+| D-12 | Tiền VND: `BIGINT` trong DB, serialize JSON dạng **string** | Tránh mất chính xác JS | Contract, FE | TV1 + TV4 | 14/11 | **Accepted** (14/11, áp dụng trong OpenAPI v0 `MoneyVnd`) |
 | D-13 | **(sửa v1.1)** Idempotency: bảng `idempotency_keys` (tenant, actor, operation, key, request_hash, response) áp dụng **chỉ** cho `POST /invoices/:id/payments` (bắt buộc) và `POST /classrooms/:id/enrollments`; `payments.idempotency_key` unique là chốt chặn cuối | Thống nhất cơ chế, tránh áp dụng tràn lan | P1-13, P2-03 | TV4 + TV3 | 16/11 | Proposed |
 | D-14 | Ngưỡng Decision Quality Score ≥ 93 | Giải quyết mâu thuẫn 92/93 | Đánh giá | TV1 | 14/11 | Proposed |
 | D-15 | **(sửa v1.1)** Máy tạo tải: laptop có mạng ổn định tại VN là mặc định; chỉ thuê VM ngắn hạn khi `dropped_iterations` > 0 hoặc CPU máy tạo tải > 80%; báo cáo ghi rõ nguồn tải | Giảm chi phí/thao tác | P2-18, P4 | TV6 | 22/11 | Proposed |
@@ -201,11 +202,11 @@ Trạng thái: **Proposed** → **Accepted** (nhóm đồng ý) → **Verified**
 | D-17 | Cấu hình demo khởi điểm: App Service Linux 1 instance gói thấp nhất hỗ trợ Always On + deployment; PG Flexible Burstable | Tiết kiệm credit | P0-11 | TV6 | 14/11 | Proposed |
 | D-18 | **(sửa v1.1)** Chống trùng lịch giáo viên: `class_sessions.teacher_id` (sao từ classroom khi tạo) + `SELECT … FOR UPDATE` trên hàng teacher + kiểm tra chồng giờ trong cùng transaction. Bỏ hướng `btree_gist` (exclusion constraint không thể kiểm tra qua join với classroom) | Nhất quán dưới concurrency, đơn giản hơn | P0-08, P1-12 | TV4 | 16/11 | Proposed |
 | D-19 | Callback FC → hostname App Service public, không có edge trong BTL; ST21 = production-only | Không có Front Door | P0-16, ST21 | TV3 | 15/11 | Proposed |
-| D-20 | Monorepo pnpm workspace, không Nx/Turborepo; Node LTS hiện hành + PostgreSQL 16 (nếu Azure + Prisma hỗ trợ) — ghi chính xác vào ADR sau Phase 0 | §4.3 | Toàn bộ | TV1 | 15/11 | Proposed |
+| D-20 | Monorepo pnpm workspace, không Nx/Turborepo; **Node.js 24 LTS** (`.nvmrc`, `engines`) + **pnpm 10.34.9** (`packageManager`) + PostgreSQL 16 (nếu Azure + Prisma hỗ trợ) | §4.3 | Toàn bộ | TV1 | 15/11 | **Accepted** (14/11: Node 24 + pnpm 10.34.9; PostgreSQL 16 chờ P0-11 xác nhận) |
 | D-21 | Upload dùng OSS PostObject policy (`content-length-range` ≤ 10 MB, hết hạn 5 phút, key cố định) | Giới hạn kích thước trước khi upload | P0-17, P2-05 | TV5 + TV3 | 15/11 | Proposed |
 | D-22 | **(sửa v1.1)** P1 (F12–F15) **ngoài phạm vi BTL**; chỉ ghi vào Future work | Capacity chỉ dư ~8%; P1 không cộng điểm riêng | Scope | TV1 | 14/11 | Proposed |
 | D-23 | **Repo GitHub public** trong org của nhóm (code không chứa secret, chỉ dữ liệu tổng hợp) — ADR-026. Lý do: trên repo private gói Free không có protected branches/CODEOWNERS bắt buộc; environment required reviewers trên private chỉ có ở Enterprise; CodeQL private cần GHAS. Phương án B: repo private dưới tài khoản cá nhân có GitHub Pro (Student Pack) → có branch protection + CODEOWNERS, **không** có environment approval (thay bằng `workflow_dispatch` chỉ cho người có quyền admin + biên bản), SAST = Semgrep | Giữ được release gate, SAST, secret scanning mà không tốn tiền | P0-04, P0-06, P0-12, P1-18, P5-05 | Cả nhóm (cần đồng ý công khai code) | 14/11 09:00 | Proposed |
-| D-24 | Login gồm `tenantSlug` + email + password; session lưu `tenant_id` cố định; đổi tenant = đăng nhập lại; PLATFORM_ADMIN không triển khai trong BTL — ADR-021 | `users` unique theo `(tenant_id, email)` | P0-08, P0-09, P1-01, P1-15 | TV3 + TV1 | 14/11 | Proposed |
+| D-24 | Login gồm `tenantSlug` + email + password; session lưu `tenant_id` cố định; đổi tenant = đăng nhập lại; PLATFORM_ADMIN không triển khai trong BTL — ADR-021 | `users` unique theo `(tenant_id, email)` | P0-08, P0-09, P1-01, P1-15 | TV3 + TV1 | 14/11 | **Accepted** (14/11, áp dụng trong OpenAPI v0 `LoginRequest`) |
 | D-25 | DB roles: `edu_migrator` (owner schema, chỉ dùng cho migration), `edu_runtime` (DML, không BYPASSRLS, không owner); `ALTER DEFAULT PRIVILEGES` cấp quyền cho bảng mới; audit_logs chỉ INSERT/SELECT. Migration chạy bằng job CD riêng: workflow lấy IP runner → thêm firewall rule tạm thời qua az CLI (OIDC) → `prisma migrate deploy` → xóa rule (luôn chạy ở bước `always()`). Không bật "Allow public access from any Azure service" — ADR-022 | Không mở DB rộng; runtime role đúng chuẩn V2 §9.3 | P0-11, P0-12, P1-23 | TV6 + TV3 | 15/11 | Proposed |
 | D-26 | Mọi truy cập DB nghiệp vụ đi qua 1 wrapper `TenantTx` (interactive transaction + `set_config('app.tenant_id', …, true)` + Prisma client có scope) ngay từ P1-04, dù RLS đã bật hay chưa. Bật RLS sau này = chỉ thêm migration policy — ADR-023 | Tránh làm lại toàn bộ module ở Phase 2 khi rollout RLS | P1-04, P1-05, P2-10, mọi module | TV3 + TV4 | 16/11 | Proposed |
 | D-27 | **Schema v1 đóng băng 16/11 20:00** (gồm mọi bảng P0, kể cả `login_attempts`, cột bổ sung ở Design Audit #19). Sau mốc này: thay đổi schema = change request cho TV4 + ADR nếu đổi nghĩa — ADR-024 | Tránh nhiều agent cùng sửa `schema.prisma` | P1-08 và mọi task backend | TV4 + TV1 | 16/11 | Proposed |
@@ -215,6 +216,9 @@ Trạng thái: **Proposed** → **Accepted** (nhóm đồng ý) → **Verified**
 | D-31 | Bảo vệ demo env khi chấm: script reset dữ liệu demo idempotent; tài khoản cho giảng viên ưu tiên Teacher/Student; tài khoản Admin demo dùng mật khẩu riêng chỉ ghi trong báo cáo nộp; kiểm tra + reset 28–30/11 | Link báo cáo public → ai có link đều đăng nhập được | P5-06, P6-08 | TV5 + TV3 | 26/11 | Proposed |
 | D-32 | Reconciliation dùng `pg_try_advisory_lock`; `background_jobs` chỉ lưu lịch sử chạy — ADR-027 | Đơn giản hóa §10.8 V2 nhưng giữ tính đúng | P2-09 | TV5 + TV1 | 20/11 | Proposed |
 | D-33 | Core Web Vitals trong BTL đo bằng Lighthouse (lab) cho mobile + desktop; báo cáo ghi rõ không phải p75 field | Không có người dùng thật | P3-08, R-10 | TV2 | 24/11 | Proposed |
+| D-34 | **Mô hình tài liệu tối giản:** không dùng `AGENTS.md`/`CLAUDE.md`; `ROADMAP.md` là tài liệu điều phối duy nhất (gồm quy tắc làm việc §7); `docs/` ban đầu chỉ có `docs/handoff/` (6 file giao việc cá nhân); không tạo trước thư mục ADR, task card, handoff theo task, runbook, evidence, report, video, slides — chỉ tạo khi task thực sự cần; Decision Log §2.3 thay file ADR (mã ADR-0xx giữ làm nhãn) | Giảm tài liệu quản lý, một nguồn điều phối | §5 cột Module/File của P0-04, P0-05, P1-05, P5-03; §7 | TV1 (trưởng nhóm) | 14/11 | **Accepted** |
+| D-35 | **Git workflow 7 branch cố định:** `main` (tích hợp) + 6 branch cá nhân `duc`, `doanh`, `anh`, `ha`, `duong`, `giang`; PR từ branch cá nhân vào `main` theo **task hoặc batch task liên quan**, tại mốc bàn giao hoặc khi người khác đang phụ thuộc (thay quy tắc "1 task = 1 branch/1 PR") — chi tiết §7.4 | Đơn giản hóa thao tác branch cho nhóm dùng AI | §7.4, PR template | TV1 (trưởng nhóm) | 14/11 | **Accepted** |
+| D-36 | Công cụ contract: Redocly CLI 2.78.0 (lint + bundle), openapi-typescript 7.13.0 (sinh type), openapi-fetch 0.17.0 (client), TypeScript 5.9.3; `generated/` được commit để phát hiện drift | Một công cụ cho mỗi việc, nhẹ, không runtime nặng | P0-09, P1-14, P1-18 (OpenAPI lint trong CI) | TV1 | 14/11 | **Accepted** |
 
 ---
 
@@ -391,7 +395,7 @@ flowchart LR
 |---|---|
 | Mục tiêu | Giảm rủi ro kiến trúc lớn nhất: tài khoản Cloud, luồng Azure ↔ Aliyun, nền móng repo/CI/contract/schema |
 | Entry | Decision D-01, D-02, D-03, D-04, D-12, D-17 được nhóm Accept (họp 14/11 09:00) |
-| Deliverables | Repo monorepo + AGENTS.md; CI có gitleaks; `/api/v1/health` trên Azure kết nối PG qua TLS; OSS quarantine/published private; FC xử lý PDF thật; callback HMAC xác thực được; bảng latency 3 chặng |
+| Deliverables | Repo monorepo + `docs/handoff/` (D-34); CI có gitleaks; `/api/v1/health` trên Azure kết nối PG qua TLS; OSS quarantine/published private; FC xử lý PDF thật; callback HMAC xác thực được; bảng latency 3 chặng |
 | Security track | Secret scanning từ commit đầu; Key Vault + Managed Identity; DB runtime user ≠ admin; bucket private + versioning; RAM least privilege; HMAC constant-time |
 | Performance track | Đo latency Client(VN) → Azure, Client → OSS, FC → Azure (p50/p95, 10 mẫu); bundle budget FE ≤ 250 KB gzip từ skeleton |
 | Evidence | Ảnh đăng ký; ảnh resource Azure/Aliyun (che ID nhạy cảm); log callback có correlation ID; bảng latency; run CI xanh |
@@ -459,7 +463,7 @@ flowchart LR
 
 # 5. Task Backlog có ID và dependency
 
-> Mỗi task = 1 PR (hoặc 1 bộ thao tác hạ tầng có script/ghi chép). Task chỉ được sửa file trong cột "Module/File". Test bắt buộc phải chạy thật trong CI hoặc có log; không có bằng chứng = chưa Done.
+> Mỗi PR chứa 1 task hoặc 1 batch task liên quan, ghi rõ Task ID (D-35, §7.4); thao tác hạ tầng phải có script/ghi chép. Task chỉ được sửa file trong cột "Module/File". Test bắt buộc phải chạy thật trong CI hoặc có log; không có bằng chứng = chưa Done.
 
 ## 5.1. Phase 0 — Foundation & Multi-Cloud PoC
 
@@ -468,8 +472,8 @@ flowchart LR
 | P0-01 | Xác nhận nhóm 6 người + tổ hợp 9 đã đăng ký hợp lệ | TV1 → cả nhóm | — | `docs/evidence/P0-01/` | Sheet đăng ký của thầy | Ảnh chụp có tên nhóm + tổ hợp 9. Nếu chưa có: email thầy trong sáng 14/11 | Evidence | 14/11 · 0,5h | S |
 | P0-02 | Chuẩn bị Azure: subscription, RG `rg-educenter-demo`, budget alert 50/80/100%, kiểm tra quota App Service + PG Flexible tại Southeast Asia | TV6 → TV1 | — | `infra/azure/README.md` | Tài khoản Azure | Budget alert gửi email thử thành công; quota/region xác nhận; không commit subscription secret | Evidence ảnh | 14/11 · 3h | P |
 | P0-03 | Chuẩn bị Aliyun: tài khoản quốc tế đã xác minh, MFA cho root, RAM admin user (không dùng root), budget alert, region Singapore | TV5 → TV3 | — | `infra/aliyun/README.md` | Tài khoản Aliyun | RAM user đăng nhập được; root có MFA; OSS + FC khả dụng ở SG | Evidence ảnh | 14/11 · 3h | S (MC) |
-| P0-04 | Dựng monorepo theo §12.2 V2: pnpm workspace, `.nvmrc`, lockfile, `.gitignore`, `.env.example` (placeholder), CODEOWNERS (mỗi đường dẫn nhạy cảm có ≥ 2 owner), PR template, branch protection `main`; **xác minh tính năng GitHub theo D-23** (protected branch, CODEOWNERS bắt buộc, environment approval, SAST) | TV1 → TV6 | Kick-off (D-23) | root, `.github/`, `apps/`, `packages/`, `functions/`, `infra/`, `docs/` | §12.2 V2, D-20, D-23 | `pnpm install --frozen-lockfile` chạy được; push trực tiếp `main` bị chặn; PR cần 1 approval + CODEOWNERS; ảnh chụp trang Settings xác nhận từng tính năng có thật | CI chạy trên PR mẫu; thử push thẳng `main` | 14/11 · 3h | S |
-| P0-05 | Viết `AGENTS.md`, `CLAUDE.md`, `docs/adr/ADR-LOG.md` (ADR-001…014 mỗi cái 1 đoạn, trạng thái Proposed) + ADR đầy đủ cho các quyết định lệch V2 (ADR-015…027) | TV1 → TV3 | P0-04 | `AGENTS.md`, `CLAUDE.md`, `docs/adr/` | §12.3 V2, §7 roadmap | File có đủ mục §7.2; ADR đầy đủ có Status/Context/Decision/Verification | Review checklist | 15/11 sáng · 2h | P |
+| P0-04 | Dựng monorepo theo §12.2 V2: pnpm workspace, `.nvmrc`, lockfile, `.gitignore`, `.env.example` (placeholder), CODEOWNERS (mỗi đường dẫn nhạy cảm có ≥ 2 owner), PR template, branch protection `main`; **xác minh tính năng GitHub theo D-23** (protected branch, CODEOWNERS bắt buộc, environment approval, SAST) | TV1 → TV6 | Kick-off (D-23) | root, `.github/`, `apps/`, `packages/`, `functions/`, `infra/`, `tests/`, `docs/handoff/` | §12.2 V2, D-20, D-23 | `pnpm install --frozen-lockfile` chạy được; push trực tiếp `main` bị chặn; PR cần 1 approval + CODEOWNERS; ảnh chụp trang Settings xác nhận từng tính năng có thật | CI chạy trên PR mẫu; thử push thẳng `main` | 14/11 · 3h | S |
+| P0-05 | **(v1.3, D-34)** Chuẩn hóa quy tắc làm việc chung trong `ROADMAP.md`: §7 thay `AGENTS.md`/`CLAUDE.md`/task card/handoff theo task; Decision Log §2.3 thay file ADR; Git workflow 7 branch (D-35) | TV1 → TV3 | P0-04 | `ROADMAP.md` | §12.3 V2, §7 roadmap | Không còn yêu cầu tạo `AGENTS.md`/`CLAUDE.md`/`docs/adr`/`docs/tasks`/`docs/handoffs` (ngoài ghi chú lịch sử); toàn bộ danh sách Cấm/Bắt buộc/Pool của §7.2 cũ vẫn còn; không tạo file mới | Review checklist | 15/11 sáng · 2h | P |
 | P0-06 | CI baseline: lint, typecheck, unit test, gitleaks; `permissions: contents: read`; actions pin theo commit SHA; concurrency cancel | TV3 → TV6 | P0-04 | `.github/workflows/ci.yml` | §13 V2 | PR chứa fake secret bị chặn; mọi job xanh trên repo rỗng | PR thử secret giả | 14/11 · 3h | P |
 | P0-07 | NestJS skeleton: `/api/v1/health` (liveness + DB readiness), ConfigModule validate env, ValidationPipe (whitelist, forbidNonWhitelisted, transform), helmet, body limit, **raw body cho route internal**, request-id, error filter `{code,message,requestId,fieldErrors}`, PrismaModule với `connection_limit` cấu hình được, `enableShutdownHooks` (graceful shutdown) | TV3 → TV1 | P0-04 | `apps/api/src/{main.ts,app.module.ts,common/,health/}` | §8.3, §8.4, §11.5, §14 V2 | `/health` 200; lỗi trả không lộ stack/lỗi DB; thiếu env → app không khởi động; SIGTERM → hoàn tất request đang chạy | Unit error filter; e2e health; test shutdown | 14/11 · 4h | S |
 | P0-08 | Prisma schema v0 + migration: tenants (`slug` unique), users, auth_sessions, students, teachers, courses, classrooms, class_sessions (**có `teacher_id`** theo D-18), enrollments; `UNIQUE(tenant_id,id)` + composite FK; seed 2 tenant demo (dữ liệu giả) | TV4 → TV3 | P0-04, D-04, D-18, D-24 | `apps/api/prisma/`, `scripts/seed/` | §9.1, §9.2 V2 | Migrate từ DB rỗng thành công; tạo enrollment chéo tenant bị DB từ chối | Integration test FK chéo tenant | 14–15/11 · 5h | S |
@@ -495,7 +499,7 @@ flowchart LR
 | P1-02 | CSRF: token cho POST/PUT/PATCH/DELETE + kiểm tra Origin; không có mutation qua GET | TV3 → TV6 | P1-01 | `apps/api/src/auth/csrf/` | §11.3 V2 | Mutation thiếu/sai token → 403 | ST07 | 17/11 · 3h | S |
 | P1-03 | Authorization framework: AuthGuard → TenantContext (từ session, AsyncLocalStorage) → RolesGuard → `@Policy()` ownership/class membership; **deny-by-default**; route internal dùng `@InternalHmacPolicy()` tường minh (không session, không CSRF, bắt buộc HMAC) | TV3 → TV1 | P1-01 | `apps/api/src/common/authz/` | §11.4 V2 | Route không khai báo policy → 403; test liệt kê toàn bộ route và fail nếu route thiếu policy; route internal không chấp nhận cookie session thay HMAC | Route inventory test; ST04 | 17/11 · 6h | S |
 | P1-04 | `TenantTx` (D-26): mọi truy cập DB nghiệp vụ chạy trong interactive transaction có `set_config('app.tenant_id', …, true)` + Prisma client có scope tenant; lint cấm import PrismaClient trực tiếp ngoài `common/prisma`, cấm `$queryRawUnsafe`, cấm nhận `tenant_id` từ body | TV3 → TV4 | P1-03, P1-23 | `apps/api/src/common/prisma/`, `.eslintrc` | §9.2, §9.3 V2, ADR-023 | Query ngoài `TenantTx` → throw; lint bắt vi phạm; transaction không giữ khi gọi mạng | Unit + ST02 | 17–18/11 · 4h | S |
-| P1-05 | RLS PoC trên `students` dùng chính `TenantTx`: policy USING + WITH CHECK chạy với `edu_runtime`; đo overhead của TenantTx và RLS bằng k6 nhỏ (cùng lúc cho CP1) | TV3 + TV4 → TV1 | P1-04 | `apps/api/prisma/migrations/` (qua PR migration của TV4), `docs/adr/ADR-020.md` | §9.3 V2 | Báo cáo: A/B luân phiên cùng pool không rò; thiếu context → 0 dòng; overhead p95 → quyết định D-05 | ST20 | 18/11 · 4h | P |
+| P1-05 | RLS PoC trên `students` dùng chính `TenantTx`: policy USING + WITH CHECK chạy với `edu_runtime`; đo overhead của TenantTx và RLS bằng k6 nhỏ (cùng lúc cho CP1) | TV3 + TV4 → TV1 | P1-04 | `apps/api/prisma/migrations/` (qua PR migration của TV4); kết quả ghi Decision Log D-05 + PR | §9.3 V2 | Báo cáo: A/B luân phiên cùng pool không rò; thiếu context → 0 dòng; overhead p95 → quyết định D-05 | ST20 | 18/11 · 4h | P |
 | P1-06 | Login rate limit trên bảng `login_attempts` (đã có trong schema v1) theo account + tenant (chính) và IP (ngưỡng cao, tính đến NAT của trung tâm), lockout tăng dần, 429 + Retry-After, audit login thất bại. Limiter API chung (nếu có) theo user/tenant, **không theo IP** | TV6 → TV3 | P1-01, P1-07, P1-08, D-06 | `apps/api/src/auth/rate-limit/` | §8.5 V2 | 2 instance dùng chung bộ đếm; 30 người chung 1 IP không bị khóa nhau | ST10 | 18/11 · 4h | P |
 | P1-07 | Audit log service append-only (runtime role chỉ INSERT); trường actor, tenant, action, resource, timestamp, requestId; không ghi PII đầy đủ | TV1 → TV3 | P1-03 | `apps/api/src/common/audit/` | §11.8 V2 | UPDATE/DELETE audit bằng runtime role → bị DB từ chối | Integration | 17/11 · 3h | P |
 | P1-08 | **Schema v1 đóng băng 16/11 20:00 (D-27)**: assessments, grades (version), attendance, materials (`attempt`, `source_version_id`), processing_events (`event_id` unique, `payload_hash`), invoices (`status`, `due_date`, `paid_vnd`, version), payments, audit_logs, idempotency_keys, background_jobs, `login_attempts`; `users.must_change_password`; index §9.4; CHECK (score 0–10, amount > 0, paid ≤ amount, capacity > 0) | TV4 → TV3 + TV1 | P0-08, D-27 | `apps/api/prisma/` | §9 V2, ADR-024 | Migration backward-compatible; ERD sinh được; mọi task backend P1–P2 tìm thấy bảng/cột mình cần | Integration constraint tests | 16/11 · 6h | S |
@@ -580,7 +584,7 @@ flowchart LR
 |---|---|---|---|---|---|---|---|---|---|
 | P5-01 | Deploy RC1 + dữ liệu demo giả dễ đọc (2–3 tenant, tên tiếng Việt tổng hợp) | TV6 → TV1 | G3, G4 | `scripts/seed/demo/` | — | URL demo ổn định; tài khoản demo cho giảng viên (mật khẩu chỉ ghi trong báo cáo nếu được phép, không trong repo) | Smoke | 26/11 tối · 2h | S |
 | P5-02 | Regression đầy đủ trên RC1: CI + E2E + ST suite | TV6 → TV3 | P5-01 | evidence | — | Toàn bộ xanh hoặc có ghi chú giới hạn | E2E + ST | 27/11 sáng · 3h | S |
-| P5-03 | Gói tài liệu kỹ thuật: README local, deployment runbook, incident runbook (lộ credential, callback lỗi), OpenAPI export, ERD, ADR cập nhật Accepted/Verified | TV1 → owners | P5-01 | `README.md`, `docs/` | — | Người ngoài nhóm dựng lại local được theo README | Thử bởi thành viên khác | 26–27/11 · 4h | P |
+| P5-03 | Gói tài liệu kỹ thuật: README local, deployment runbook, incident runbook (lộ credential, callback lỗi), OpenAPI export, ERD, Decision Log §2.3 cập nhật Accepted/Verified | TV1 → owners | P5-01 | `README.md`, `docs/` | — | Người ngoài nhóm dựng lại local được theo README | Thử bởi thành viên khác | 26–27/11 · 4h | P |
 | P5-04 | Họp Go/No-Go theo hard gates §8.2 | TV1 → cả nhóm | P5-02 | `docs/release/RC1-decision.md` | Evidence | Biên bản GO/NO-GO có chữ ký (tên) 6 người | — | 27/11 12:00 · 1h | S → **G5** |
 | P5-05 | Đóng băng demo env: chỉ hotfix với 2 approval (TV1 + TV3), cơ chế theo D-23 | TV6 | P5-04 | environment protection / workflow | — | Không deploy ngoài hotfix tới khi chấm xong | — | 27/11 · 0,5h | S |
 | P5-06 | **(mới v1.1)** Bảo vệ demo env theo D-31: script reset dữ liệu demo idempotent; tài khoản cho giảng viên (Teacher/Student, Admin riêng); lịch kiểm tra + reset 28, 29, 30/11 | TV5 → TV3 | P5-01 | `scripts/seed/demo/`, `docs/runbooks/demo-reset.md` | D-31 | Reset < 5 phút; sau reset luồng demo E2E xanh | Chạy reset + E2E | 26–27/11 · 2h | P |
@@ -603,9 +607,9 @@ flowchart LR
 
 # 6. Team Assignment Matrix
 
-## 6.1. Vai trò, module và reviewer — 6 "mục công việc" của dự án (D-01 — **chưa gán người, cả nhóm tự quyết định**)
+## 6.1. Vai trò, module và reviewer — 6 "mục công việc" của dự án (D-01 Accepted — tên thật xem §15)
 
-> Đây là danh sách để trưởng nhóm/cả nhóm phân công: 6 vai trò dưới đây tương ứng với 6 mảng việc chính của dự án (giống "backend", "frontend"... nhưng chia theo đúng kiến trúc Azure+Aliyun của EduCenter). Toàn bộ task ở §5 chỉ ghi mã **TV1–TV6**; roadmap không gán tên thật. Một người có thể kiêm, hoặc chia nhỏ hơn nếu nhóm muốn — bảng chỉ là đề xuất hợp lý theo khối lượng việc.
+> 6 vai trò dưới đây tương ứng với 6 mảng việc chính của dự án, chia theo kiến trúc Azure+Aliyun của EduCenter. Toàn bộ task ở §5 ghi mã **TV1–TV6**; mapping tên thật ↔ vai trò đã chốt ở §15.1.
 
 | Vai trò | Tên gợi ý (kiểu backend/frontend...) | Module owner (code/hạ tầng phụ trách) | Reviewer chính cho | Được review bởi | Chương báo cáo |
 |---|---|---|---|---|---|
@@ -618,7 +622,7 @@ flowchart LR
 
 **Quy tắc review v1.1 (giải tỏa nút thắt 1 reviewer):** 3 pool nhạy cảm A/B/C như trên; CODEOWNERS liệt kê ≥ 2 người cho mỗi đường dẫn nhạy cảm (vd `auth/` → TV3, TV1) để PR của chính owner vẫn có người duyệt; **SLA review 4 giờ** trong khung 08:00–22:00; PR quá SLA được báo trong standup và chuyển reviewer dự phòng.
 
-**Cách dùng:** sau khi trưởng nhóm gán 6 tên thật (Đức, Hà, Dương, Doanh, Giang, Anh) vào TV1–TV6 ở D-01, chỉ cần tìm-thay mã TV tương ứng thành tên trong file này (hoặc giữ nguyên mã TV và lập một bảng ánh xạ riêng ở đầu file) — không cần sửa lại từng task ở §5.
+**Cách dùng:** giữ mã TV trong mọi bảng; tra tên thật ở §15.1. Phạm vi chi tiết từng người: `docs/handoff/<TÊN>.md`.
 
 ## 6.2. Tải công việc ước tính theo Phase (giờ)
 
@@ -653,27 +657,29 @@ Khả năng (A-08): ~5 h/ngày × 16 ngày ≈ 80 h/người. **Kết luận rev
 
 ## 7.1. Tập tin context bắt buộc
 
+> **v1.3 (D-34):** repo **không có** `AGENTS.md`/`CLAUDE.md` — AI agent không tự nạp luật dự án, nên **mỗi phiên AI phải mở đầu** bằng việc đọc `ROADMAP.md` + file giao việc của thành viên (prompt chung có trong từng `docs/handoff/<TÊN>.md`).
+
 | File | Vai trò | Owner |
 |---|---|---|
-| `AGENTS.md` | Luật chung cho mọi AI agent (canonical) | TV1 |
-| `CLAUDE.md` | Trỏ về `AGENTS.md` + lệnh hay dùng; không được mâu thuẫn AGENTS.md | TV1 |
-| `docs/architecture/` | Bản thiết kế V2 + sơ đồ | TV1 |
-| `docs/adr/` | Quyết định đã chốt | TV1 |
+| `ROADMAP.md` | Tài liệu điều phối duy nhất: Decision Log (§2.3), task + dependency + AC (§5), quy tắc làm việc (§7), quality gates (§8) | TV1 |
+| `docs/handoff/<TÊN>.md` | File giao việc cá nhân: phạm vi trách nhiệm, allowed files, prompt AI, phối hợp | Từng thành viên (TV1 duyệt) |
 | `packages/api-contract/openapi.yaml` + `paths/<module>.yaml` | Hợp đồng API — nguồn chân lý cho FE/BE; tách file theo module để tránh xung đột giữa agent | TV1 (root), owner module (file path của mình, TV1 duyệt) |
 | `apps/api/prisma/schema.prisma` | Schema — đóng băng 16/11 20:00; sau đó chỉ TV4 sửa theo change request | TV4 |
 | `apps/api/src/app.module.ts` | Điểm đăng ký module — mỗi PR module chỉ được thêm đúng 1 dòng import của module mình | TV1 |
-| `docs/tasks/<TaskID>.md` | Task card (§7.6) | Owner task |
-| `docs/handoffs/<TaskID>.md` | Handoff sau task (§7.7) | Owner task |
+| Pull Request (theo `.github/pull_request_template.md`) | Thay task card + handoff theo task: Task ID, phạm vi, dependency, test thật, contract/schema impact, bàn giao | Owner task |
 
-## 7.2. Khung `AGENTS.md` (nội dung bắt buộc)
+Bản thiết kế V2 (`EduCenter_Cloud_Ban_Thiet_Ke_2.md`) là tài liệu tham chiếu kiến trúc; chỉ đưa vào repo khi nhóm cần (D-34).
+
+## 7.2. Quy tắc làm việc chung (thay `AGENTS.md` — áp dụng cho mọi người và mọi AI agent)
 
 ```markdown
-# AGENTS.md — EduCenter Cloud
 ## 0. Đọc trước khi sửa code
-docs/architecture/EduCenter_Cloud_Ban_Thiet_Ke_2.md, docs/adr/, packages/api-contract/openapi.yaml,
-apps/api/prisma/schema.prisma, docs/tasks/<TaskID>.md.
+ROADMAP.md (§2.3 Decision Log, dòng Task ID ở §5, §7, §8) · docs/handoff/<TÊN>.md (mục của task) ·
+packages/api-contract/ · apps/api/prisma/schema.prisma (nếu đã có) · code thực tế trên main mới nhất.
+Kiểm tra dependency của task đã merge vào main chưa; chưa → DỪNG, báo blocker.
 ## 1. Phạm vi
-Chỉ sửa file trong mục "Allowed paths" của task card. Cần sửa ngoài phạm vi → DỪNG, ghi vào handoff "Out-of-scope requests".
+Chỉ sửa file trong cột "Module/File" của task (§5) và "Allowed files" trong file handoff cá nhân.
+Không tự xây lại module của thành viên khác. Cần sửa ngoài phạm vi → DỪNG, ghi vào mục "Blocker / bàn giao" của PR.
 ## 2. Cấm tuyệt đối
 Đổi stack; thêm dịch vụ Cloud; đổi auth/session/CSRF; bỏ guard/tenant validation; đổi schema không có migration;
 thêm dependency chưa có lý do; bật bucket public; tắt TLS verification; hardcode secret; skip/xóa test để merge;
@@ -687,9 +693,9 @@ Không thêm cờ bypass auth/rate limit/CSRF cho test hay benchmark.
 Không sửa schema.prisma (đã đóng băng) — gửi change request cho TV4. Chỉ sửa paths/<module>.yaml của module mình.
 ## 4. Lệnh
 pnpm lint · pnpm typecheck · pnpm test · pnpm test:integration · pnpm --filter api prisma migrate dev
-## 5. Output mỗi task
+## 5. Output mỗi task (ghi trong PR theo template, không tạo file handoff riêng)
 Files modified · Design assumptions · Test results (lệnh + kết quả THẬT) · Security risks & mitigation ·
-Unresolved issues. Không được ghi "tests passed" nếu chưa chạy.
+Unresolved issues. Không được ghi "tests passed" nếu chưa chạy. Tạo PR, chờ review — không tự merge vào main.
 ## 6. Module nhạy cảm (reviewer theo pool, xem ROADMAP §6.1)
 Pool A (TV3, dự phòng TV1): auth/ · common/authz/ · common/prisma/ · materials/internal/ · materials/storage/ · infra/aliyun/ram/
 Pool B (TV1, dự phòng TV3): tuition/ · prisma/migrations/ · infra/azure/
@@ -714,13 +720,15 @@ Pool C (TV6, dự phòng TV3): .github/workflows/
 
 | Quy tắc | Chi tiết |
 |---|---|
-| Mô hình | Trunk-based: `main` luôn deploy được; nhánh ngắn `<type>/<TaskID>-<slug>` (vd `feat/P1-03-authz-guard`) |
-| PR | 1 task = 1 PR, ≤ ~400 dòng thay đổi logic khi có thể; template bắt buộc: Task ID, phạm vi, test chạy thật, rủi ro bảo mật, ảnh hưởng contract/schema |
+| Mô hình (v1.3, D-35) | **7 branch cố định.** `main`: nhánh tích hợp, luôn deploy được, chỉ nhận PR đã review + test, không push thẳng. Branch cá nhân: `duc` (TV1), `doanh` (TV2), `anh` (TV3), `ha` (TV4), `duong` (TV5), `giang` (TV6) — tạo/đồng bộ từ `main` sau khi bộ khung P0-04 merge |
+| Đồng bộ | Trước khi bắt đầu task mới và trước khi mở PR: `git fetch origin` → `git merge origin/main` vào branch cá nhân, giải quyết conflict tại branch cá nhân. Không force-push branch đã có PR đang mở |
+| PR | Từ branch cá nhân vào `main`, gồm **1 task hoặc 1 batch task liên quan** (ghi đủ Task ID), ≤ ~400 dòng thay đổi logic khi có thể. Mở PR **tại mốc bàn giao hoặc ngay khi xong task mà người khác đang phụ thuộc** — không gom toàn bộ phần việc cá nhân rồi mới merge. Template bắt buộc: Task ID, nội dung, file/module, dependency, test chạy thật, contract/schema impact, reviewer, blocker/bàn giao |
+| Tiến độ | Sau khi PR merge: cập nhật trạng thái task theo §7.11 trong standup; kết quả và bàn giao nằm trong PR |
 | Nền tảng GitHub | Theo D-23: repo public (khuyến nghị) hoặc private dưới GitHub Pro; P0-04 phải chụp màn hình xác nhận branch protection, CODEOWNERS bắt buộc, approval gate, SAST thực sự bật |
 | Review | ≥ 1 approval; CODEOWNERS theo 3 pool (§6.1), mỗi đường dẫn ≥ 2 owner; tác giả không tự merge module bảo mật của mình; SLA 4 giờ |
-| File dùng chung | `openapi.yaml` gốc, `app.module.ts`, `schema.prisma`, `AGENTS.md`: chỉ owner trong §7.1 sửa; agent khác chỉ được thêm đúng phần của module mình theo quy tắc §7.1 |
+| File dùng chung | `openapi.yaml` gốc, `app.module.ts`, `schema.prisma`, `ROADMAP.md`: chỉ owner trong §7.1 sửa; agent khác chỉ được thêm đúng phần của module mình theo quy tắc §7.1 |
 | Required checks | lint, typecheck, unit, integration, authz tests, gitleaks, SAST, SCA, Trivy, OpenAPI lint |
-| Merge | Squash merge; cấm force-push `main`; nhánh xóa sau merge |
+| Merge | **Merge commit** (không squash — branch cá nhân tồn tại lâu, squash làm lịch sử lệch và gây conflict lặp lại khi đồng bộ); cấm force-push `main`; **không xóa** branch cá nhân sau merge |
 | Migration | Label `migration`; chỉ 1 PR migration mở tại một thời điểm; TV4 approve; migration backward-compatible |
 | Contract | PR đổi `openapi.yaml` merge **trước** PR backend/frontend dùng nó; TV1 approve |
 | Freeze | Từ 24/11 00:00 chỉ nhận label `fix`, `test`, `docs`, `security` |
@@ -729,7 +737,7 @@ Pool C (TV6, dự phòng TV3): .github/workflows/
 
 ```mermaid
 flowchart LR
-    A["Task card + acceptance criteria"] --> B{"Đổi contract hoặc schema?"}
+    A["Task ID + AC (§5) + file handoff cá nhân"] --> B{"Đổi contract hoặc schema?"}
     B -- "Có" --> C["PR contract/schema riêng - TV1 hoặc TV4 duyệt"]
     C --> D["Codegen client + Prisma generate"]
     B -- "Không" --> E["AI agent đề xuất plan + file bị ảnh hưởng"]
@@ -741,38 +749,18 @@ flowchart LR
     I --> J["PR + CI security gates"]
     J --> K["Human review + reviewer nhạy cảm"]
     K --> L["Merge + deploy demo"]
-    L --> M["Handoff + evidence"]
+    L --> M["Bàn giao trong PR + evidence"]
 ```
 
-## 7.6. Task card template (`docs/tasks/<TaskID>.md`)
+## 7.6. Phạm vi task (thay task card — D-34)
 
-```markdown
-# <TaskID> — <Tiêu đề>
-Owner: <tên> · Reviewer: <tên> · Phase: <n> · Est: <h> · Mode: S/P
-Dependencies: <TaskID đã Done + commit SHA>
-Allowed paths: <danh sách thư mục/file>
-Inputs: <mục V2, ADR, endpoint contract, bảng schema>
-Acceptance criteria: <đo được>
-Required tests: <unit/integration/ST/LT>
-Out of scope: <ghi rõ>
-Sensitive?: yes/no (yes → TV3 review)
-```
+Không tạo file task card. Phạm vi một task = dòng Task ID ở §5 (Owner → Reviewer, Dep, Module/File, Acceptance Criteria, Test bắt buộc) + mục tương ứng trong `docs/handoff/<TÊN>.md` (allowed files, các bước, prompt AI). Mâu thuẫn giữa hai nguồn → hỏi TV1, không tự chọn.
 
-## 7.7. Context handoff (`docs/handoffs/<TaskID>.md`)
+## 7.7. Bàn giao (thay handoff theo task — D-34)
 
-```markdown
-# Handoff <TaskID>
-Commit/PR: <SHA, link> · Trạng thái: Done / Partial / Blocked
-Đã làm: <tóm tắt 3–5 dòng>
-Quyết định/giả định mới: <đưa vào Decision Log nếu ảnh hưởng kiến trúc>
-Contract/schema thay đổi: <có/không + link>
-Test đã chạy (lệnh + kết quả): <...>
-Còn tồn tại / rủi ro: <...>
-Out-of-scope requests: <...>
-Prompt context cho agent tiếp theo: <file cần đọc, điểm vào code, lưu ý>
-```
+Không tạo file `docs/handoffs/<TaskID>.md`. Kết quả và bàn giao ghi trong PR theo `.github/pull_request_template.md`: Task ID, nội dung, file/module, dependency, test đã chạy (lệnh + kết quả thật), contract/schema impact, reviewer, blocker/bàn giao (trạng thái Done/Partial/Blocked, quyết định mới → Decision Log, out-of-scope, ghi chú cho người/AI tiếp theo).
 
-Quy tắc handoff: agent mới **luôn** bắt đầu bằng đọc `AGENTS.md` + task card + handoff của các task phụ thuộc; không dựa vào lịch sử chat cũ.
+Quy tắc bàn giao: phiên AI mới **luôn** bắt đầu bằng đọc `ROADMAP.md` + file handoff cá nhân + PR đã merge của các task phụ thuộc; không dựa vào lịch sử chat cũ.
 
 ## 7.8. Human review checklist cho code AI
 
@@ -788,14 +776,17 @@ Quy tắc handoff: agent mới **luôn** bắt đầu bằng đọc `AGENTS.md` 
 
 ## 7.9. Prompt mẫu cho task (bổ sung cho §12.5 V2)
 
+Prompt chi tiết theo vai trò nằm trong từng `docs/handoff/<TÊN>.md`. Khung chung:
+
 ```text
-You are implementing <TaskID> in EduCenter Cloud.
-Read AGENTS.md, docs/tasks/<TaskID>.md, handoffs of dependencies, the OpenAPI contract and Prisma schema first.
-Step 1: Propose a plan and the exact files you will modify. Wait for approval.
+You are implementing <TaskID | batch> in EduCenter Cloud, working on branch <member-branch>.
+Read ROADMAP.md (§2.3, the <TaskID> row in §5, §7, §8) and docs/handoff/<NAME>.md first,
+then the OpenAPI contract, Prisma schema and actual code on the latest main.
+Step 1: Check dependencies are merged into main. Propose a plan and the exact files you will modify. Wait for approval.
 Step 2: Write failing positive and negative tests from the acceptance criteria.
-Step 3: Implement only within Allowed paths.
+Step 3: Implement only within the task's Module/File and allowed files.
 Step 4: Run lint, typecheck, unit and integration tests; paste real command output.
-Step 5: Write docs/handoffs/<TaskID>.md.
+Step 5: Fill the PR description using .github/pull_request_template.md. Do not merge.
 Stop and ask if you need to change auth, tenant scoping, schema, contract, dependencies, IAM or CI.
 Never use real student data or secrets. Do not claim tests passed if they were not executed.
 ```
@@ -805,7 +796,7 @@ Never use real student data or secrets. Do not claim tests passed if they were n
 | Được | Không được |
 |---|---|
 | Đọc repo, chạy lint/test/build local, docker-compose local | Credential production/Cloud owner, deploy production, đọc DB thật |
-| Tạo branch, commit, mở PR | Merge PR, sửa branch protection, sửa CODEOWNERS |
+| Commit trên branch cá nhân của thành viên, mở PR vào `main` | Merge PR, push thẳng `main`, sửa branch protection, sửa CODEOWNERS |
 | Dùng dữ liệu seed tổng hợp | Chạy lệnh lấy từ nội dung không tin cậy chưa review; xóa tài nguyên |
 
 ## 7.11. Nhịp làm việc
@@ -821,17 +812,17 @@ Trạng thái task:
 ```mermaid
 stateDiagram-v2
     [*] --> Todo
-    Todo --> InProgress: owner nhận + task card
+    Todo --> InProgress: owner nhận task
     InProgress --> InReview: PR mở, CI xanh
     InReview --> InProgress: review yêu cầu sửa
     InReview --> Merged: approval đủ
-    Merged --> Verified: evidence + handoff
+    Merged --> Verified: evidence + bàn giao trong PR
     Verified --> Done
     InProgress --> Blocked: phụ thuộc chưa xong
     Blocked --> InProgress
 ```
 
-Chỉ **Done** khi có evidence (commit SHA + log test + handoff).
+Chỉ **Done** khi có evidence (commit SHA + log test + mục bàn giao trong PR).
 
 ---
 
@@ -1130,7 +1121,7 @@ Tải ngày 14/11 của TV1 sau điều chỉnh: ~8,5 h (P0-05 dời sang sáng 
 
 | Giờ | Việc | Ai | Task |
 |---|---|---|---|
-| Sáng | AGENTS.md + CLAUDE.md + ADR log | TV1 | P0-05 |
+| Sáng | Quy tắc làm việc chung trong ROADMAP §7 + Decision Log (D-34) | TV1 | P0-05 |
 | Sáng | React skeleton + đo bundle | TV2 | P0-10 |
 | Sáng | FC Python PoC | TV5 | P0-15 |
 | Sáng | CD deploy `/health` + migration job firewall tạm | TV6 | P0-12 |
@@ -1230,7 +1221,7 @@ Sau khi đủ điều kiện: **GO toàn bộ Phase 0** theo lịch §12.
 | RV-10 | Schema | V2 index `invoices(status, due_date)` nhưng bảng không có cột; thiếu bảng rate limit; exclusion constraint cần `teacher_id` trên class_sessions; P1-05/P1-06 tạo migration ngoài owner | Agent tự thêm cột/migration → xung đột schema giữa agent | P0-08, P1-05, P1-06, P1-08, P1-12 | D-27/ADR-024: schema v1 đầy đủ, đóng băng 16/11 20:00; mọi migration qua TV4 | Đã sửa |
 | RV-11 | Multi-Cloud security | Chỉ có kế hoạch lưu HMAC key phía Azure; không nói FC giữ key ở đâu; xoay key không tính đến cache Key Vault reference | Key bị đặt thô trong code/env FC; xoay key làm gãy callback | P0-15, P0-16, P3-05 | D-29 + P0-21: key ngoài repo, biến môi trường mã hóa FC, 2 key ID song song, runbook có restart | Đã sửa |
 | RV-12 | Học liệu (SEC19) | Policy upload cho phép POST lại cùng key trong 5 phút → nhiều version cùng attempt → nhiều callback; v1.0 chỉ chặn "attempt cũ" | Nội dung chưa quét có thể thay bản đã quét nếu API nhận callback sau | P1-22, P2-07, ST16 | Quy tắc "kết quả terminal đầu tiên của mỗi attempt gắn `source_version_id`"; version khác → log bảo mật, không đổi trạng thái | Đã sửa |
-| RV-13 | Bảo mật benchmark | 1.200 session seed trực tiếp tồn tại trong env dùng để chấm; limiter theo IP sẽ chặn benchmark → áp lực thêm cờ bypass | "Cửa sau" còn lại sau benchmark; cờ bypass là lỗ hổng | P1-20, P1-06, P4-11 | D-16 sửa: tenant `bench-*`, TTL ≤ 24 h, xóa ở P4-11 + G4 kiểm tra = 0; limiter API theo user/tenant; cấm cờ bypass trong AGENTS.md | Đã sửa |
+| RV-13 | Bảo mật benchmark | 1.200 session seed trực tiếp tồn tại trong env dùng để chấm; limiter theo IP sẽ chặn benchmark → áp lực thêm cờ bypass | "Cửa sau" còn lại sau benchmark; cờ bypass là lỗ hổng | P1-20, P1-06, P4-11 | D-16 sửa: tenant `bench-*`, TTL ≤ 24 h, xóa ở P4-11 + G4 kiểm tra = 0; limiter API theo user/tenant; cấm cờ bypass trong quy tắc chung (v1.0: AGENTS.md → v1.3: ROADMAP §7.2) | Đã sửa |
 | RV-14 | Bảo mật vận hành | Tài khoản demo ghi trong báo cáo có link public → ai cũng có thể sửa/phá dữ liệu trước khi chấm | Demo hỏng đúng lúc giảng viên chấm | P5-01, P6-08 | D-31 + P5-06: script reset idempotent, tài khoản giảng viên ưu tiên Teacher/Student, reset 28–30/11 | Đã sửa |
 
 ## A.3. Medium
@@ -1291,7 +1282,7 @@ Sau khi đủ điều kiện: **GO toàn bộ Phase 0** theo lịch §12.
 **Lưu ý vận hành:**
 - CODEOWNERS (§7.4) và các cột "Được review bởi" ở §6.1 giữ nguyên dạng mã TV; áp mapping trên để biết ai duyệt PR của ai trong thực tế (ví dụ: PR của **Anh** ở module auth do **Đức + Giang** duyệt — tức TV3 được TV1 + TV6 review, theo §6.1).
 - Tải giờ ước tính (~68–80h/người) giữ nguyên từ bản tính cân bằng ở §6.2 — không thay đổi vì mapping mới không đổi khối lượng việc của từng vai trò, chỉ đổi người đảm nhiệm. Vẫn áp dụng quy tắc ở §6.2: đo velocity thật 16–17/11, nếu < 80% kế hoạch tại G1 → scope-cut cấp 2.
-- Decision Log D-01 đã chuyển trạng thái **Accepted**; AGENTS.md/CODEOWNERS ở P0-04/P0-05 nên dùng tên thật theo bảng trên khi khai báo trên GitHub (CODEOWNERS cần username GitHub thật, không dùng mã TV).
+- Decision Log D-01 đã chuyển trạng thái **Accepted**; CODEOWNERS (P0-04) dùng tên thật theo bảng trên khi khai báo trên GitHub (CODEOWNERS cần username GitHub thật, không dùng mã TV).
 
 ## 15.2. Phân công sản phẩm nộp BTL (Slide / Báo cáo / Video)
 
