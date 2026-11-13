@@ -1,0 +1,4 @@
+# functions/material-processor là Python (TV5) — nằm ngoài pnpm workspace.
+packages:
+  - "apps/*"
+  - "packages/*"
