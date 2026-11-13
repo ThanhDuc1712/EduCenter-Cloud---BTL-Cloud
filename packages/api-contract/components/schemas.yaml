@@ -1,0 +1,217 @@
+# Schema dùng chung — owner: TV1 (Đức).
+# Mục ghi "Proposed" cần owner liên quan xác nhận trước contract v1 (P1-14).
+
+Error:
+  type: object
+  description: Error body chuẩn cho mọi response lỗi. Không chứa stack trace, lỗi DB hay chi tiết kỹ thuật.
+  additionalProperties: false
+  required: [code, message, requestId]
+  properties:
+    code:
+      $ref: '#/ErrorCode'
+    message:
+      type: string
+      description: Thông điệp thân thiện (tiếng Việt), an toàn để hiển thị.
+    requestId:
+      type: string
+      description: Trùng với header `X-Request-ID` của response; dùng để tra log.
+    fieldErrors:
+      type: array
+      description: Chỉ có khi `code = VALIDATION_FAILED`.
+      items:
+        $ref: '#/FieldError'
+
+ErrorCode:
+  type: string
+  pattern: '^[A-Z][A-Z0-9_]*$'
+  description: |
+    Mã lỗi dạng UPPER_SNAKE_CASE. Module được thêm mã nghiệp vụ riêng (vd `ENROLLMENT_CAPACITY_EXCEEDED`).
+    Mã dùng chung (ANH.md §9.2, Proposed):
+    `VALIDATION_FAILED` (400), `AUTH_INVALID_CREDENTIALS` (401), `AUTH_SESSION_INVALID` (401),
+    `CSRF_REJECTED` (403), `FORBIDDEN` (403), `PASSWORD_CHANGE_REQUIRED` (403), `NOT_FOUND` (404),
+    `CONFLICT` (409), `RATE_LIMITED` (429), `INTERNAL_ERROR` (500).
+  examples:
+    - VALIDATION_FAILED
+
+FieldError:
+  type: object
+  description: 'Proposed — shape chi tiết chốt với Anh (error filter P0-07).'
+  additionalProperties: false
+  required: [field, message]
+  properties:
+    field:
+      type: string
+      description: Tên field trong request (dạng path, vd `email`).
+    message:
+      type: string
+
+PageMeta:
+  type: object
+  additionalProperties: false
+  required: [page, pageSize, total]
+  properties:
+    page:
+      type: integer
+      minimum: 1
+    pageSize:
+      type: integer
+      minimum: 1
+      maximum: 100
+    total:
+      type: integer
+      minimum: 0
+      description: Tổng số bản ghi khớp bộ lọc (trong phạm vi tenant/quyền của người gọi).
+
+MoneyVnd:
+  type: string
+  pattern: '^(0|[1-9][0-9]*)$'
+  description: Số tiền VND (số nguyên, không âm). DB lưu BIGINT; JSON serialize dạng string để tránh mất chính xác (D-12).
+  examples:
+    - '1500000'
+
+DateTimeUtc:
+  type: string
+  format: date-time
+  pattern: 'Z$'
+  description: Thời điểm ISO-8601 theo UTC, luôn kết thúc bằng `Z`.
+  examples:
+    - '2026-11-14T03:00:00Z'
+
+Uuid:
+  type: string
+  format: uuid
+
+TenantSlug:
+  type: string
+  minLength: 1
+  maxLength: 63
+  pattern: '^[a-z0-9]+(-[a-z0-9]+)*$'
+  description: 'Định danh tenant dùng khi đăng nhập (D-24). Pattern/độ dài: Proposed.'
+  examples:
+    - trung-tam-a
+
+Role:
+  type: string
+  enum: [CENTER_ADMIN, TEACHER, STUDENT]
+  description: 'Vai trò trong tenant (V2 §6.2). PLATFORM_ADMIN không triển khai trong BTL (D-24). Tên giá trị: Proposed — Anh xác nhận ở P1-01.'
+
+# ---------- Health ----------
+HealthStatus:
+  type: object
+  description: 'Proposed — Anh chốt shape ở P0-07.'
+  additionalProperties: false
+  required: [status, database]
+  properties:
+    status:
+      type: string
+      enum: [ok, unavailable]
+    database:
+      type: string
+      enum: [up, down]
+      description: Kết quả kiểm tra DB readiness (`SELECT 1` có timeout).
+
+# ---------- Auth / Me ----------
+LoginRequest:
+  type: object
+  additionalProperties: false
+  required: [tenantSlug, email, password]
+  properties:
+    tenantSlug:
+      $ref: '#/TenantSlug'
+    email:
+      type: string
+      format: email
+      maxLength: 254
+    password:
+      type: string
+      format: password
+      minLength: 1
+      maxLength: 128
+      description: Giới hạn độ dài tối đa để chống DoS Argon2 (Proposed, ANH.md P1-01).
+
+TenantSummary:
+  type: object
+  additionalProperties: false
+  required: [slug, name]
+  properties:
+    slug:
+      $ref: '#/TenantSlug'
+    name:
+      type: string
+
+Principal:
+  type: object
+  description: |
+    Thông tin tối thiểu của người dùng đang đăng nhập (ANH.md P1-01).
+    Thông tin CSRF sẽ bổ sung khi P1-02 chốt cơ chế.
+  additionalProperties: false
+  required: [userId, role, mustChangePassword, tenant]
+  properties:
+    userId:
+      $ref: '#/Uuid'
+    role:
+      $ref: '#/Role'
+    mustChangePassword:
+      type: boolean
+      description: true → chỉ được gọi `GET /me`, `POST /auth/change-password`, `POST /auth/logout` (D-28).
+    tenant:
+      $ref: '#/TenantSummary'
+
+# ---------- Students ----------
+# Field theo schema v0 (HA.md P0-08): tenant_id, code, user_id, profile, status.
+# Chưa chốt: cột tên học viên để tìm kiếm / cấu trúc `profile` (OQ-17, hạn 16/11),
+# giá trị enum `status`. Sẽ bổ sung ở contract v1 (P1-14) cùng Hà.
+StudentCode:
+  type: string
+  minLength: 1
+  maxLength: 50
+  description: 'Mã học viên, duy nhất trong tenant (UNIQUE(tenant_id, code)). Độ dài: Proposed.'
+
+Student:
+  type: object
+  additionalProperties: false
+  required: [id, code, userId, status]
+  properties:
+    id:
+      $ref: '#/Uuid'
+    code:
+      $ref: '#/StudentCode'
+    userId:
+      description: Tài khoản đăng nhập gắn với học viên; null nếu chưa cấp (P1-25).
+      oneOf:
+        - $ref: '#/Uuid'
+        - type: 'null'
+    status:
+      type: string
+      description: 'Giá trị enum chưa chốt (HA.md OQ-07) — FE không được giả định danh sách giá trị.'
+
+StudentPage:
+  type: object
+  additionalProperties: false
+  required: [items, meta]
+  properties:
+    items:
+      type: array
+      items:
+        $ref: '#/Student'
+    meta:
+      $ref: '#/PageMeta'
+
+StudentCreateRequest:
+  type: object
+  description: |
+    Không nhận `tenantId`, `userId`, `role` từ body. Field họ tên/profile bổ sung sau khi OQ-17 chốt.
+  additionalProperties: false
+  required: [code]
+  properties:
+    code:
+      $ref: '#/StudentCode'
+
+StudentUpdateRequest:
+  type: object
+  description: Cập nhật một phần. Field bổ sung sau khi OQ-17 và enum `status` chốt.
+  additionalProperties: false
+  minProperties: 1
+  properties:
+    code:
+      $ref: '#/StudentCode'

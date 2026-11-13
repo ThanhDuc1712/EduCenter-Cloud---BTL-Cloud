@@ -1,0 +1,72 @@
+# CODEOWNERS — EduCenter Cloud
+#
+# TRẠNG THÁI: PENDING — chưa có GitHub username thật của thành viên.
+# Mọi dòng quy tắc bên dưới đang bị comment, nên GitHub CHƯA áp dụng CODEOWNERS.
+#
+# Cách kích hoạt (Đức — TV1):
+#   1. Thay mỗi tên viết tắt bằng @username GitHub thật:
+#        @DUC   = Đức   (TV1, Tech Lead)        @DOANH = Doanh (TV2, Frontend)
+#        @ANH   = Anh   (TV3, Auth & Security)  @HA    = Hà    (TV4, Data & Nghiệp vụ)
+#        @DUONG = Dương (TV5, Multi-Cloud)      @GIANG = Giang (TV6, DevOps/QA)
+#   2. Bỏ dấu "# " ở đầu các dòng quy tắc.
+#   3. Kiểm tra trên GitHub: tab "Code" → mở file này → không có cảnh báo "Unknown owner".
+#
+# Nguồn: ROADMAP §6.1 (pool review A/B/C), §7.4, §15.1; docs/handoff/DUC.md §3.2.
+# Quy tắc: dòng khớp SAU CÙNG thắng → path tổng quát đặt trước, path nhạy cảm đặt sau.
+# Đường dẫn nhạy cảm có ≥ 2 owner để PR của chính owner vẫn có người duyệt.
+
+# --- Mặc định: Tech Lead ---
+# *                                           @DUC
+
+# --- Frontend (TV2) ---
+# /apps/web/                                  @DOANH @DUC
+
+# --- Backend nghiệp vụ ---
+# /apps/api/src/students/                     @HA @ANH
+# /apps/api/src/classrooms/                   @HA @ANH
+# /apps/api/src/enrollments/                  @HA @ANH
+# /apps/api/src/attendance/                   @HA @ANH
+# /apps/api/src/grades/                       @HA @ANH
+# /apps/api/src/teachers/                     @DUONG @ANH
+# /apps/api/src/courses/                      @DUONG @ANH
+# /apps/api/src/users/                        @DUONG @ANH
+# /apps/api/src/materials/                    @DUONG @ANH
+# /apps/api/src/common/audit/                 @DUC @ANH
+# /apps/api/src/dashboard/                    @DUC @HA
+# /apps/api/src/app.module.ts                 @DUC @ANH
+
+# --- Schema / migration (TV4 owner duy nhất; pool B) ---
+# /apps/api/prisma/schema.prisma              @HA @DUC
+# /apps/api/prisma/migrations/                @HA @DUC @ANH
+
+# --- Pool B (TV1, dự phòng TV3): tuition, infra Azure ---
+# /apps/api/src/tuition/                      @DUC @ANH
+# /infra/azure/                               @DUC @ANH
+
+# --- Multi-Cloud (TV5) ---
+# /functions/                                 @DUONG @ANH
+# /infra/aliyun/                              @DUONG @ANH
+
+# --- Pool A (TV3, dự phòng TV1): auth, tenant/authz, prisma wrapper, callback, upload signing, RAM ---
+# /apps/api/src/auth/                         @ANH @DUC
+# /apps/api/src/common/authz/                 @ANH @DUC
+# /apps/api/src/common/prisma/                @ANH @DUC
+# /apps/api/src/materials/internal/           @ANH @DUC
+# /apps/api/src/materials/storage/            @ANH @DUC
+# /infra/aliyun/ram/                          @ANH @DUC
+
+# --- Pool C (TV6, dự phòng TV3): CI/CD ---
+# /.github/workflows/                         @GIANG @ANH
+
+# --- Test & seed ---
+# /tests/                                     @GIANG @HA
+# /scripts/seed/                              @GIANG @HA
+
+# --- API contract (TV1 root, TV2 góc FE) ---
+# /packages/api-contract/                     @DUC @DOANH
+
+# --- Tài liệu điều phối & governance ---
+# /ROADMAP.md                                 @DUC @ANH
+# /docs/handoff/                              @DUC @ANH
+# /.github/CODEOWNERS                         @DUC @GIANG
+# /.github/pull_request_template.md           @DUC @GIANG
