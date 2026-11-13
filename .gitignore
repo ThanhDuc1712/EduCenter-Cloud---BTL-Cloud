@@ -1,0 +1,53 @@
+# --- Node / pnpm ---
+node_modules/
+.pnpm-store/
+npm-debug.log*
+pnpm-debug.log*
+
+# --- Build output ---
+dist/
+build/
+*.tsbuildinfo
+.vite/
+
+# --- Test & coverage reports ---
+coverage/
+playwright-report/
+test-results/
+blob-report/
+tests/load/results/
+*.k6.json
+
+# --- Secrets & env (chỉ commit .env.example) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.publishsettings
+*.PublishSettings
+
+# --- Token session benchmark (D-16) — không bao giờ commit ---
+.secrets/
+tests/load/.secrets/
+
+# --- Python (functions/material-processor) ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# --- Infra state / local ---
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
