@@ -9,7 +9,7 @@
 | Khối lượng theo ROADMAP | ~80 h (§6.2). Ước tính lại theo task: ~90 h — xem §2.6 và C-08 |
 | Reviewer chính của Giang | **Anh (TV3)**: security, IAM, credentials, pipeline · **Đức (TV1)**: architecture, deployment, release, pool B `infra/azure/` · **Hà (TV4)**: benchmark/seed/data integrity (P1-20, P2-18, P4-02, P4-05) |
 | Pool review Giang phụ trách | **Pool C**: `.github/workflows/` và secrets trong pipeline (dự phòng: Anh) |
-| Tài liệu nguồn | `ROADMAP.md` v1.2 (nguồn điều phối, Task ID, dependency, deadline, AC, Decision Log) · `EduCenter_Cloud_Ban_Thiet_Ke_2.md` (V2) · `BTL CK 1.pdf` |
+| Tài liệu nguồn | `ROADMAP.md` v1.3 (nguồn điều phối, Task ID, dependency, deadline, AC, Decision Log) · `EduCenter_Cloud_Ban_Thiet_Ke_2.md` (V2) · `BTL CK 1.pdf` |
 | Tài liệu không khả dụng khi soạn | `DUC.md`, `DOANH.md`, `ANH.md`, `HA.md`, `DUONG.md` — không có trong Project; cấu trúc 7 mục theo yêu cầu trưởng nhóm. Khi các file này có, đối chiếu lại §4.8 |
 | Trạng thái dự án | **PLAN** — chưa có Azure resource, workflow CI/CD, test suite hay ứng dụng. Mọi chỉ số trong file là mục tiêu, không phải kết quả |
 

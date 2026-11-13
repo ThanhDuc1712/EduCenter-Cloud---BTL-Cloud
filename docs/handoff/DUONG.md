@@ -9,7 +9,7 @@
 | Vai trò | Multi-Cloud Engineer / Backend Materials Pipeline |
 | Khối lượng | ~70 h theo ROADMAP §6.2; sau khi cộng phân công §15.2 ước tính ~73–74 h (xem §7.4) |
 | Reviewer | **Anh (TV3)**: security, OSS/RAM/FC, Materials API, cấp tài khoản, LT12, demo reset · **Đức (TV1)**: P0-18, P2-09, video, tích hợp · **Hà (TV4)**: Teachers, Courses · **Giang (TV6)**: CP2, LT09 |
-| Tài liệu nguồn | `ROADMAP.md` v1.2 (bản trong Project, cập nhật 13/11 17:43) · `EduCenter_Cloud_Ban_Thiet_Ke_2.md` (V2) · `BTL CK 1.pdf`. **Không có khi soạn:** DUC.md, DOANH.md, ANH.md, HA.md, GIANG.md → cần đối chiếu chéo khi các file này có mặt |
+| Tài liệu nguồn | `ROADMAP.md` v1.3 (bản trong Project, cập nhật 13/11 17:43) · `EduCenter_Cloud_Ban_Thiet_Ke_2.md` (V2) · `BTL CK 1.pdf`. **Không có khi soạn:** DUC.md, DOANH.md, ANH.md, HA.md, GIANG.md → cần đối chiếu chéo khi các file này có mặt |
 | Trạng thái dự án | **PLAN**: chưa có Cloud resource, code hay pipeline. Không mục nào trong file này là Done, Pass hay Verified |
 | Thứ tự ưu tiên | `ROADMAP.md` (Task ID, deadline, dependency, AC) > V2 (thiết kế) > `DUONG.md`. File này **không** đổi phân công hay kiến trúc |
 

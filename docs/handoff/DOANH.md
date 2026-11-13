@@ -10,10 +10,10 @@
 | Mã vai trò | **TV2** (theo D-01, Accepted — ROADMAP §15.1) |
 | Vai trò | Frontend Engineer — React/Web, UI Admin/Teacher/Student, SPA serving + CSP, UX, Core Web Vitals, CP1 |
 | Người duyệt chính | TV1 — Đức (Tech Lead). Một số task do TV3 (Anh), TV5 (Dương), TV6 (Giang) duyệt — xem từng Task Card |
-| Source of truth | `ROADMAP.md` v1.2 (13/11/2026) · `EduCenter_Cloud_Ban_Thiet_Ke_2.md` (V2, 13/11/2026) · `BTL CK 1.pdf` |
+| Source of truth | `ROADMAP.md` v1.3 (13/11/2026) · `EduCenter_Cloud_Ban_Thiet_Ke_2.md` (V2, 13/11/2026) · `BTL CK 1.pdf` |
 | Trạng thái dự án | **PLAN** — chưa có dòng code, chưa có hạ tầng, chưa có test nào chạy. Mọi chỉ số trong file là mục tiêu, không phải kết quả |
 | Trạng thái tài liệu | Draft — các mục gắn nhãn **Proposed** / **TBD** chưa được trưởng nhóm chốt |
-| Đường dẫn đề xuất trong repo | `docs/members/DOANH.md` (**Proposed** — repo chưa tồn tại, TV1 quyết vị trí) |
+| Đường dẫn đề xuất trong repo | `docs/handoff/DOANH.md` (**Proposed** — repo chưa tồn tại, TV1 quyết vị trí) |
 
 > **Quy ước nhãn trong file này**
 > - **[RM]** = trích nguyên từ ROADMAP.md (Task ID, deadline, estimate, owner, reviewer, AC). Không được tự sửa.
@@ -114,7 +114,7 @@ flowchart LR
 
 React + TypeScript + Vite · Tailwind CSS + shadcn/ui · TanStack Query · React Hook Form + validation schema · Vitest · Playwright · (k6 cho CP1, Lighthouse cho CWV) [V2 §4, RM §1.2].
 
-Thư viện validation schema cụ thể (vd Zod) **TBD** — V2 chỉ ghi "validation schema". Router cụ thể **TBD** — RM chỉ ghi "router lazy theo vai trò". Chọn ở P0-10 và ghi lại trong handoff; thêm dependency phải có lý do [AGENTS.md §2].
+Thư viện validation schema cụ thể (vd Zod) **TBD** — V2 chỉ ghi "validation schema". Router cụ thể **TBD** — RM chỉ ghi "router lazy theo vai trò". Chọn ở P0-10 và ghi lại trong handoff; thêm dependency phải có lý do [ROADMAP §7.2].
 
 ---
 
@@ -138,7 +138,7 @@ Thư viện validation schema cụ thể (vd Zod) **TBD** — V2 chỉ ghi "vali
 - Bất kỳ endpoint, schema, response shape, CI job, cấu hình Cloud nào.
 - PWA/offline cache, i18n đa ngôn ngữ, dark mode, animation nặng (không có trong nguồn — không thêm).
 
-### 3.3. Nguyên tắc bắt buộc (rút từ AGENTS.md §2–§3, V2 §7, §11)
+### 3.3. Nguyên tắc bắt buộc (rút từ ROADMAP §7.2, V2 §7, §11)
 
 | # | Nguyên tắc |
 |---|---|
@@ -320,7 +320,7 @@ P2-17 là task Mode **S → G2** trên critical path toàn dự án [RM §3.3]. 
 
 ## 6. Detailed Task Cards — hướng dẫn triển khai từng task theo Phase
 
-> **Cách dùng:** mỗi card có thể copy nguyên văn vào `docs/tasks/<TaskID>.md` (template RM §7.6) và đưa cho AI agent cùng với `AGENTS.md`. Phần đánh dấu **[RM]** là bất biến; phần "Bước triển khai" là hướng dẫn thực thi (**Proposed** ở chỗ nguồn chưa quy định). Prompt AI viết bằng tiếng Anh theo đúng template RM §7.9 mà nhóm đã thống nhất.
+> **Cách dùng:** mỗi card có thể copy nguyên văn vào ROADMAP §5 (dòng task) và DOANH.md và đưa cho AI agent cùng với `ROADMAP.md §7`. Phần đánh dấu **[RM]** là bất biến; phần "Bước triển khai" là hướng dẫn thực thi (**Proposed** ở chỗ nguồn chưa quy định). Prompt AI viết bằng tiếng Anh theo đúng template RM §7.9 mà nhóm đã thống nhất.
 >
 > **DoD chung cho mọi task code** (không lặp lại trong từng card): xem §12.3.
 
@@ -342,11 +342,11 @@ P2-17 là task Mode **S → G2** trên critical path toàn dự án [RM §3.3]. 
 
 **Điều kiện bắt đầu.** P0-04 đã merge (có `pnpm-workspace.yaml`, `apps/`, lockfile, branch protection). P0-09 đã merge hoặc ít nhất client sinh được từ nhánh của TV1. Nếu P0-09 chưa xong → làm phần không phụ thuộc client (Vite, Tailwind, layout, router, state components) trước, cắm client sau.
 
-**Allowed paths.** `apps/web/**` · `docs/tasks/P0-10.md` · `docs/handoffs/P0-10.md` · `docs/evidence/P0-10/`
+**Allowed paths.** `apps/web/**` · `docs/evidence/P0-10/`
 **Không được sửa.** `packages/api-contract/**` (chỉ import), `.github/workflows/**` (cần job CI cho web → nhờ TV6), root `package.json`/`pnpm-workspace.yaml` (trừ khi P0-04 chưa khai báo `apps/web` — báo TV1).
 
 **Bước triển khai.**
-1. Đọc `AGENTS.md`, V2 §7, RM §7.3 (convention FE). Kiểm tra `pnpm install --frozen-lockfile` chạy được ở root.
+1. Đọc `ROADMAP.md §7`, V2 §7, RM §7.3 (convention FE). Kiểm tra `pnpm install --frozen-lockfile` chạy được ở root.
 2. Khởi tạo Vite React TS trong `apps/web`, bật `strict: true`.
 3. Cài Tailwind + shadcn/ui; chỉ thêm component shadcn khi cần (không import cả bộ). Không import toàn bộ thư viện icon [V2 §7.2].
 4. Cấu trúc thư mục theo V2 §12.2 (`src/features/`, `src/components/`, `src/lib/`). Chi tiết bên trong (vd `src/app/` cho router + providers, `src/lib/api/`, `src/lib/query-keys.ts`) là **Proposed** — ghi vào handoff để các task sau dùng thống nhất.
@@ -372,7 +372,7 @@ P2-17 là task Mode **S → G2** trên critical path toàn dự án [RM §3.3]. 
 - [RM] JS ban đầu của route core ≤ 250 KB gzip — **ghi số đo thật**, kể cả khi vượt (vượt → mở issue, không xóa chức năng chỉ để đạt số [V2 §7.2]).
 - Kiểm chứng bổ sung (**Proposed**): `index.html` build ra không chứa thẻ `<script>` inline; grep `localStorage|sessionStorage` trong `apps/web/src` = 0 kết quả.
 
-**Deliverables & evidence.** PR `feat/P0-10-react-skeleton`; `docs/evidence/P0-10/P0-10_20261115_<shortSHA>/` (log build, bảng size, log Vitest).
+**Deliverables & evidence.** PR từ branch `doanh` vào `main`; `docs/evidence/P0-10/P0-10_20261115_<shortSHA>/` (log build, bảng size, log Vitest).
 
 **Handoff.** → chính Doanh (P1-15, P1-24), TV1 (review, P2-14 dùng chung component/query key), TV6 (cần job CI chạy `vitest` + `build` cho `apps/web`). Ghi rõ: cấu trúc thư mục, cách tạo query key, cách gọi client, component trạng thái.
 
@@ -384,7 +384,7 @@ P2-17 là task Mode **S → G2** trên critical path toàn dự án [RM §3.3]. 
 **AI prompt.**
 ```text
 You are implementing P0-10 (React skeleton) in EduCenter Cloud.
-Read AGENTS.md, docs/tasks/P0-10.md, docs/members/DOANH.md §2 and §9, V2 §7, and packages/api-contract first.
+Read ROADMAP.md (§2.3, §5, §7), docs/handoff/DOANH.md, docs/handoff/DOANH.md §2 and §9, V2 §7, and packages/api-contract first.
 Objective: Vite + React + TS (strict), Tailwind, shadcn/ui, TanStack Query with a query-key factory scoped by
 {tenantId, userId} from GET /me, lazy role-based routing (Admin/Teacher/Student), 3 role layouts, shared
 Loading/Empty/Error/Success components, API client wrapper over the generated contract client that normalizes
@@ -395,7 +395,7 @@ index.html; no new dependency without a one-line justification; no endpoints out
 Step 1: propose the folder layout and the exact files you will create. Wait for approval.
 Step 2: write Vitest smoke tests (render, query keys differ per user/tenant, error normalizer).
 Step 3: implement. Step 4: run lint, typecheck, vitest, production build; report gzip size of initial JS for the
-core route with the real command output. Step 5: write docs/handoffs/P0-10.md.
+core route with the real command output. Step 5: fill PR description using .github/pull_request_template.md.
 Do not claim tests passed if they were not executed.
 ```
 
@@ -415,7 +415,7 @@ Do not claim tests passed if they were not executed.
 
 **Mục tiêu & giá trị.** Hard gate HG6 "không giả mạo kết quả" chỉ kiểm chứng được khi mọi bằng chứng có quy ước thống nhất. Template Word đúng định dạng BTL ngay từ 15/11 để báo cáo viết liên tục từ 17/11 [RM §3.1].
 
-**Allowed paths.** `docs/evidence/README.md` · `docs/report/**` · `docs/tasks/P0-20.md` · `docs/handoffs/P0-20.md`
+**Allowed paths.** `docs/evidence/README.md` · `docs/report/**`
 
 **Bước triển khai.**
 1. `docs/evidence/README.md`:
@@ -468,7 +468,7 @@ Output Markdown only. Allowed paths: docs/evidence/README.md, docs/report/README
 
 **Điều kiện bắt đầu.** Contract `paths/auth.yaml` (login có `tenantSlug`, logout, me) đã merge trong P1-14 hoặc P0-09. Backend P1-01/P1-02 có thể chưa xong lúc bắt đầu → code theo contract, tích hợp thật ở IP-2 tối 17/11.
 
-**Allowed paths.** `apps/web/src/features/auth/**` · `apps/web/src/lib/api/**` (chỉ phần CSRF + xử lý 401/403 toàn cục) · router/guard trong `apps/web/src/app/**` (nếu dùng cấu trúc P0-10) · `tests/e2e/**` (spec login — phối hợp TV6) · docs task/handoff.
+**Allowed paths.** `apps/web/src/features/auth/**` · `apps/web/src/lib/api/**` (chỉ phần CSRF + xử lý 401/403 toàn cục) · router/guard trong `apps/web/src/app/**` (nếu dùng cấu trúc P0-10) · `tests/e2e/**` (spec login — phối hợp TV6).
 
 **Bước triển khai.**
 1. Đọc contract auth: body login (`tenantSlug`, `email`, `password`), response, mã lỗi (401 chung, 429 + `Retry-After`), `GET /me` (role, tenant, user, cờ `must_change_password` nếu có), cơ chế CSRF (OQ-07).
@@ -511,7 +511,7 @@ Output Markdown only. Allowed paths: docs/evidence/README.md, docs/report/README
 **AI prompt.**
 ```text
 You are implementing P1-15 (FE auth) in EduCenter Cloud.
-Read AGENTS.md, docs/tasks/P1-15.md, handoffs of P0-10, P1-01, P1-02, P1-14, and packages/api-contract/paths/auth.yaml.
+Read ROADMAP.md (§2.3, §5, §7), docs/handoff/DOANH.md, handoffs of P0-10, P1-01, P1-02, P1-14, and packages/api-contract/paths/auth.yaml.
 Objective: login page (tenantSlug + email + password per D-24), logout, GET /me bootstrap, CSRF header on all
 mutations per the contract, global 401 (clear TanStack cache, go to login) and 403 handling, role-based routing
 (UX only), clear the whole query cache on logout or when /me returns a different user/tenant/role.
@@ -523,7 +523,7 @@ change-password unless the task card says so.
 Step 1: list the contract endpoints and error codes you will use and the files you will touch. Wait for approval.
 Step 2: write failing Vitest tests (CSRF header on mutations only; 401 clears cache) and a Playwright login spec
 (valid login per role, invalid login, logout clears cache, no token in web storage).
-Step 3: implement. Step 4: run lint, typecheck, vitest, playwright; paste real output. Step 5: docs/handoffs/P1-15.md.
+Step 3: implement. Step 4: run lint, typecheck, vitest, playwright; paste real output. Step 5: fill PR description using .github/pull_request_template.md.
 Stop and ask if the contract lacks something you need (CSRF retrieval, must_change_password).
 ```
 
@@ -545,7 +545,7 @@ Stop and ask if the contract lacks something you need (CSRF retrieval, must_chan
 
 **Mục tiêu & giá trị.** Admin quản lý hồ sơ học viên/giáo viên — luồng đầu tiên trong video (0:50–1:40) và IP-3.
 
-**Allowed paths.** `apps/web/src/features/students/**` · `apps/web/src/features/teachers/**` · `apps/web/src/components/**` (chỉ thêm component dùng chung mới, không phá API component cũ) · docs task/handoff.
+**Allowed paths.** `apps/web/src/features/students/**` · `apps/web/src/features/teachers/**` · `apps/web/src/components/**` (chỉ thêm component dùng chung mới, không phá API component cũ).
 
 **Bước triển khai.**
 1. Đọc contract `paths/students.yaml`, `paths/teachers.yaml`: tham số `page`, `pageSize` (≤ 100), tham số tìm kiếm (mã/tên theo P1-09), trường trả về, mã lỗi (trùng mã học viên → 409, `fieldErrors`).
@@ -569,14 +569,14 @@ Stop and ask if the contract lacks something you need (CSRF retrieval, must_chan
 **AI prompt.**
 ```text
 You are implementing P1-16 (FE Admin Students + Teachers) in EduCenter Cloud.
-Read AGENTS.md, docs/tasks/P1-16.md, handoffs of P0-10, P1-15, P1-09, P1-10, and contract paths students.yaml,
+Read ROADMAP.md (§2.3, §5, §7), docs/handoff/DOANH.md, handoffs of P0-10, P1-15, P1-09, P1-10, and contract paths students.yaml,
 teachers.yaml. Objective: server-paginated list (pageSize<=100) with debounced search that cancels stale requests,
 create/edit forms with React Hook Form + schema mapping API fieldErrors, teachers list/create, all four UI states
 (loading/empty/error/success), invalidate the right queries after mutations, query keys via the existing factory.
 Allowed paths: apps/web/src/features/students/**, apps/web/src/features/teachers/**, apps/web/src/components/**
 (add-only). Forbidden: fetching the full list, sending tenant_id/role, endpoints not in the contract, account
 provisioning (out of scope). Step 1: plan + files, wait. Step 2: failing Vitest component tests. Step 3: implement.
-Step 4: lint, typecheck, vitest with real output. Step 5: docs/handoffs/P1-16.md.
+Step 4: lint, typecheck, vitest with real output. Step 5: fill PR description using .github/pull_request_template.md.
 ```
 
 ---
@@ -623,7 +623,7 @@ Step 4: lint, typecheck, vitest with real output. Step 5: docs/handoffs/P1-16.md
 **AI prompt.**
 ```text
 You are implementing P1-17 (FE Admin Courses/Classes/Schedule/Enrollment) in EduCenter Cloud.
-Read AGENTS.md, docs/tasks/P1-17.md, handoffs of P1-16, P1-11, P1-12, P1-13 and the contract paths for courses,
+Read ROADMAP.md (§2.3, §5, §7), docs/handoff/DOANH.md, handoffs of P1-16, P1-11, P1-12, P1-13 and the contract paths for courses,
 classrooms, sessions, enrollments. Objective: courses list/create with money as string (never Number/parseFloat),
 classrooms list/create, create class sessions (local Asia/Ho_Chi_Minh input -> UTC ISO-8601), enrollment with an
 Idempotency-Key generated once per user intent and reused on retry, clear UI for 409 capacity-exceeded and 409
@@ -632,7 +632,7 @@ Allowed paths: apps/web/src/features/courses/**, apps/web/src/features/classroom
 (add-only), tests/e2e/** (admin flow spec only). Use only contract error codes; do not invent endpoints — if a read
 endpoint you need is missing, stop and report it.
 Steps: plan+files (wait) -> failing Vitest + Playwright admin-flow spec -> implement -> lint/typecheck/tests with real
-output -> docs/handoffs/P1-17.md.
+output -> fill PR description using .github/pull_request_template.md.
 ```
 
 ---
@@ -675,7 +675,7 @@ output -> docs/handoffs/P1-17.md.
 
 **AI prompt.**
 ```text
-Task P1-21 (CP1) in EduCenter Cloud. Read AGENTS.md, docs/tasks/P1-21.md, V2 §15.3–15.5, handoffs of P1-09, P1-20, P0-12.
+Task P1-21 (CP1) in EduCenter Cloud. Read ROADMAP.md (§2.3, §5, §7), docs/handoff/DOANH.md, V2 §15.3–15.5, handoffs of P1-09, P1-20, P0-12.
 Write two k6 scripts under tests/load/cp1/: (1) LT01 closed model 1–10 VUs for 5 minutes, (2) constant-arrival-rate
 30 RPS for 10 minutes; endpoints GET /api/v1/me, students list, classrooms list; tag kind:read; each VU uses its own
 pre-seeded bench-* session read from a local git-ignored file path passed via env var; checks on status 200; report
@@ -726,7 +726,7 @@ Allowed paths: tests/load/cp1/**, docs/evidence/perf/CP1/**. Do not fabricate an
 **AI prompt.**
 ```text
 You are implementing P1-24 (serve SPA same-origin + CSP) in EduCenter Cloud (decision D-03).
-Read AGENTS.md, docs/tasks/P1-24.md, handoffs of P0-07, P0-10, P0-12, V2 §7.2 and §11.2.
+Read ROADMAP.md (§2.3, §5, §7), docs/handoff/DOANH.md, handoffs of P0-07, P0-10, P0-12, V2 §7.2 and §11.2.
 Objective: a NestJS static module in apps/api/src/static/ that serves the apps/web build, excludes /api/* from SPA
 fallback, sets long-lived cache for hashed assets and no-cache for index.html, and sends CSP: default-src 'self';
 connect-src and form-action add the OSS upload origin; img-src adds the OSS published origin; frame-ancestors 'none';
@@ -734,7 +734,7 @@ plus Referrer-Policy. OSS origins come from env config. No 'unsafe-inline' or 'u
 Allowed paths: apps/api/src/static/**, apps/web/vite.config.ts, and exactly one import line in
 apps/api/src/app.module.ts. Do not edit main.ts or other modules — if helmet in main.ts conflicts, stop and report.
 Steps: plan+files (wait) -> failing header tests -> implement -> lint/typecheck/tests with real output ->
-docs/handoffs/P1-24.md (mark "upload/preview under CSP" as to-verify at IP-4).
+PR description (mark "upload/preview under CSP" as to-verify at IP-4).
 ```
 
 ---
@@ -782,7 +782,7 @@ docs/handoffs/P1-24.md (mark "upload/preview under CSP" as to-verify at IP-4).
 **AI prompt.**
 ```text
 You are implementing P2-11 (FE Teacher: class list, attendance, grades) in EduCenter Cloud.
-Read AGENTS.md, docs/tasks/P2-11.md, handoffs of P2-01, P2-02, P1-17 and the contract paths for classrooms,
+Read ROADMAP.md (§2.3, §5, §7), docs/handoff/DOANH.md, handoffs of P2-01, P2-02, P1-17 and the contract paths for classrooms,
 attendance, assessments, grades. Objective: teacher class list; attendance screen reachable in <=3 primary actions
 for a 30-student class (open session -> mark all present + adjust exceptions -> save); local optimistic marks but the
 "Saved" label only after a 2xx from PUT /sessions/:id/attendance; on error keep selections and offer retry;
@@ -792,7 +792,7 @@ Allowed paths: apps/web/src/features/attendance/**, apps/web/src/features/grades
 (add-only). If a read endpoint (sessions of a class, roster, existing attendance, assessments) is missing from the
 contract, stop and report — do not guess URLs.
 Steps: plan+files (wait) -> failing Vitest + Playwright teacher spec -> implement -> real test output ->
-docs/handoffs/P2-11.md.
+mục 'Kết quả & bàn giao' trong PR.
 ```
 
 ---
@@ -838,7 +838,7 @@ docs/handoffs/P2-11.md.
 **AI prompt.**
 ```text
 You are implementing P2-12 (FE Student) in EduCenter Cloud.
-Read AGENTS.md, docs/tasks/P2-12.md, handoffs of P2-03, P2-05, P2-06, P1-24 and the contract.
+Read ROADMAP.md (§2.3, §5, §7), docs/handoff/DOANH.md, handoffs of P2-03, P2-05, P2-06, P1-24 and the contract.
 Objective: student-only read views — schedule (Asia/Ho_Chi_Minh), own grades, own attendance history, own invoices
 (money as string, no payment actions), materials of enrolled classes; preview via
 GET /materials/:id/download-url?variant=preview and download via GET /materials/:id/download-url requested only on
@@ -846,7 +846,7 @@ click (no prefetch, no long caching, never logged, never put in SPA URLs); handl
 Allowed paths: apps/web/src/features/student/**, apps/web/src/components/** (add-only). If schedule/grades/attendance
 read endpoints are missing from the contract, stop and report.
 Steps: plan+files (wait) -> failing Playwright student spec incl. access to another student's resource shows
-403/404 state -> implement -> real output -> docs/handoffs/P2-12.md.
+403/404 state -> implement -> real output -> fill PR description using .github/pull_request_template.md.
 ```
 
 ---
@@ -894,7 +894,7 @@ Steps: plan+files (wait) -> failing Playwright student spec incl. access to anot
 **AI prompt.**
 ```text
 You are implementing P2-13 (FE material upload to OSS) in EduCenter Cloud.
-Read AGENTS.md, docs/tasks/P2-13.md, handoffs of P0-17, P2-05, P1-24 and the materials contract.
+Read ROADMAP.md (§2.3, §5, §7), docs/handoff/DOANH.md, handoffs of P0-17, P2-05, P1-24 and the materials contract.
 Objective: teacher selects a PDF (client pre-check <=10 MB and PDF type for UX only), calls
 POST /classrooms/:id/materials, uploads directly to OSS with the returned PostObject policy fields (multipart),
 shows upload progress, then polls GET /materials/:id with exponential backoff, stops at READY/REJECTED/FAILED/DELETED,
@@ -902,7 +902,7 @@ pauses while the tab is hidden; retry button for FAILED via POST /materials/:id/
 Allowed paths: apps/web/src/features/materials/**, apps/web/src/components/** (add-only). Never handle access keys,
 never log policy/signature, no new upload library without justification.
 Steps: plan+files (wait) -> failing Vitest (backoff/stop/pause with fake timers) + Playwright upload spec ->
-implement -> real output -> docs/handoffs/P2-13.md.
+implement -> real output -> fill PR description using .github/pull_request_template.md.
 ```
 
 ---
@@ -940,7 +940,7 @@ implement -> real output -> docs/handoffs/P2-13.md.
 **AI prompt.**
 ```text
 Task P2-17 (TV2 part: selectors and Page Objects) in EduCenter Cloud.
-Read AGENTS.md, docs/tasks/P2-17.md, handoffs of P2-11, P2-12, P2-13 and tests/e2e conventions agreed with TV6.
+Read ROADMAP.md (§2.3, §5, §7), docs/handoff/DOANH.md, handoffs of P2-11, P2-12, P2-13 and tests/e2e conventions agreed with TV6.
 Create Playwright Page Objects under tests/e2e/pages/ for Login, Admin (students, courses, classrooms, sessions,
 enrollment), Teacher (attendance, grades, materials upload), Student (schedule, grades, invoices, materials).
 Prefer getByRole/getByLabel; use data-testid only where no unique accessible name exists; never select by Tailwind
@@ -981,7 +981,7 @@ Credentials come from env vars; never commit them. Run the sample specs locally 
 **AI prompt.**
 ```text
 Task P3-08 (Core Web Vitals) in EduCenter Cloud, after feature freeze (only fix-labelled changes allowed).
-Read AGENTS.md, docs/tasks/P3-08.md, D-33. Help me (1) write a short procedure to run Lighthouse mobile+desktop
+Read ROADMAP.md (§2.3, §5, §7), docs/handoff/DOANH.md, D-33. Help me (1) write a short procedure to run Lighthouse mobile+desktop
 3 times per core route on the demo env with a test account (no auth bypass), (2) produce a results table template
 (route, device, LCP, CLS, TBT, median, build SHA, date) clearly labelled "lab, not field p75", (3) analyse the Vite
 build output to list the largest chunks of the initial route and propose fixes limited to apps/web/**.
@@ -1020,7 +1020,7 @@ Do not fabricate any numbers; leave cells empty until real runs are pasted.
 **AI prompt.**
 ```text
 Task P3-09 (UX/a11y) in EduCenter Cloud, post-freeze (fix label only, merge before 25/11 12:00 if possible).
-Read AGENTS.md, docs/tasks/P3-09.md, V2 §7.1. Audit apps/web/** against this checklist: responsive at ~375/768/1280 px,
+Read ROADMAP.md (§2.3, §5, §7), docs/handoff/DOANH.md, V2 §7.1. Audit apps/web/** against this checklist: responsive at ~375/768/1280 px,
 keyboard operability, visible focus, dialog focus trap/return, labelled inputs with associated error messages,
 contrast, consistent Vietnamese messages with requestId on system errors, loading/empty/error/success on every screen.
 Output a findings table (screen, issue, severity, proposed fix) first and wait; then fix only approved items within
@@ -1254,7 +1254,7 @@ sequenceDiagram
 |---|---|---|---|---|---|---|---|
 | D1 | TV1 Đức | P0-04 (14/11) | Monorepo, pnpm workspace, branch protection, CODEOWNERS | PR merged | `pnpm install --frozen-lockfile` chạy; có thư mục `apps/web` hoặc được phép tạo | P0-10, P0-20 | Đọc tài liệu, chuẩn bị Node/pnpm theo `.nvmrc` |
 | D2 | TV1 Đức | P0-09 (14/11) | OpenAPI v0 + client sinh tự động | Spec `packages/api-contract/` + generated client | Spec lint + bundle pass; client import được | P0-10 | Dựng phần UI không gọi API |
-| D3 | TV1 Đức | P0-05 (15/11) | `AGENTS.md`, `CLAUDE.md`, ADR log | Files | Merged | Mọi phiên AI | Dùng RM §7.2 làm luật tạm |
+| D3 | TV1 Đức | P0-05 (15/11) | `ROADMAP.md §7`, ADR log | Files | Merged | Mọi phiên AI | Dùng RM §7.2 làm luật tạm |
 | D4 | TV3 Anh | P0-07 (14/11) | Error filter, helmet, request-id | PR merged + handoff | `/health` 200; handoff nêu header helmet | P0-10 (error shape), P1-24 | — |
 | D5 | TV4 Hà | P0-19 (15/11) | docker-compose local + seed demo | Compose + runbook | Chạy local ≤ 15 phút | Mọi task FE tích hợp local | Mock theo contract |
 | D6 | TV6 Giang | P0-12 (15/11) | CD demo, URL demo | Workflow + URL | `/api/v1/health` 200 trên Azure | P1-24, P1-21 | Kiểm header ở local |
@@ -1367,15 +1367,15 @@ TypeScript `strict: true` · feature folders · chỉ gọi API qua client sinh 
 
 | Bước | Việc | Ai | Lưu ý FE |
 |---|---|---|---|
-| 1 | Đọc `AGENTS.md`, `CLAUDE.md`, `DOANH.md` (file này), Task Card trong `docs/tasks/<TaskID>.md`, handoff của task phụ thuộc | Doanh + agent | Không dựa vào lịch sử chat cũ [RM §7.7] |
-| 2 | Kiểm tra repo: `git pull`, dependency đã Done (SHA), contract mới nhất, codegen chạy lại | Doanh | Contract đổi → chạy lại codegen trước khi code |
-| 3 | Tạo nhánh `<type>/<TaskID>-<slug>`, vd `feat/P2-13-oss-upload` | Doanh | 1 task = 1 PR |
+| 1 | Đọc `ROADMAP.md §7`, `DOANH.md` (file này), Task Card trong `ROADMAP §5 (dòng task) + DOANH.md`, handoff/kết quả PR của task phụ thuộc | Doanh + agent | Không dựa vào lịch sử chat cũ [RM §7.7] |
+| 2 | Kiểm tra repo: `git switch doanh && git fetch && git merge origin/main`, dependency đã Done (SHA), contract mới nhất, codegen chạy lại | Doanh | Contract đổi → chạy lại codegen trước khi code |
+| 3 | Làm việc trên branch cá nhân `doanh` (mô hình 7 branch cố định D-35) | Doanh | PR từ branch `doanh` vào `main` theo task hoặc batch task |
 | 4 | Yêu cầu agent đưa **plan + danh sách file** trước khi code; Doanh duyệt | Doanh | Từ chối plan đụng file ngoài Allowed paths |
 | 5 | Agent viết test positive + negative trước (Vitest/Playwright) | Agent | Test negative: 401, 403, 409, lỗi mạng |
 | 6 | Agent triển khai trong phạm vi | Agent | Không thêm dependency khi chưa giải thích |
 | 7 | Chạy `pnpm lint`, `pnpm typecheck`, `pnpm test` (+ Playwright liên quan) — dán **output thật** | Doanh | Không tin "tests passed" tự khai [RM §7.8] |
 | 8 | Tự review diff theo §10.2 | Doanh | Đặc biệt auth, cache, tenant scope, upload, signed URL |
-| 9 | Mở PR theo template (Task ID, phạm vi, test thật, rủi ro bảo mật, ảnh hưởng contract), viết `docs/handoffs/<TaskID>.md`, evidence | Doanh | — |
+| 9 | Mở PR theo template (Task ID, phạm vi, test thật, rủi ro bảo mật, ảnh hưởng contract), điền mục 'Kết quả & bàn giao' trong PR, evidence | Doanh | — |
 | 10 | Chờ reviewer approve → squash merge theo quy trình nhóm. **Agent không được merge, không sửa branch protection/CODEOWNERS** [RM §7.10] | Reviewer | SLA 4h |
 
 ### 10.2. Checklist tự review diff (FE)
@@ -1401,13 +1401,13 @@ Prompt riêng nằm cuối mỗi Task Card ở §6 (P0-10, P0-20, P1-15, P1-16, 
 
 ```text
 You are implementing <TaskID> in EduCenter Cloud.
-Read AGENTS.md, CLAUDE.md, docs/members/DOANH.md, docs/tasks/<TaskID>.md, handoffs of dependencies,
+Read ROADMAP.md (§2.3, §5, §7),  docs/handoff/DOANH.md, ROADMAP §5 (dòng task) + DOANH.md, handoffs of dependencies,
 the OpenAPI contract (packages/api-contract) first.
 Step 1: Propose a plan and the exact files you will modify. Wait for approval.
 Step 2: Write failing positive and negative tests from the acceptance criteria.
 Step 3: Implement only within Allowed paths.
 Step 4: Run lint, typecheck, unit and relevant Playwright tests; paste real command output.
-Step 5: Write docs/handoffs/<TaskID>.md.
+Step 5: Fill PR description using .github/pull_request_template.md.
 Stop and ask if you need to change auth, CSRF, cache scoping, contract, schema, dependencies, CI or files outside
 Allowed paths. Never use real student data or secrets. Never merge to main. Do not claim tests passed if they were
 not executed.
@@ -1498,7 +1498,7 @@ Hard gate liên quan FE: **HG1** (ST24 — cache tenant khác) và **HG6** (khô
 - [ ] Không token/PII/signed URL trong web storage, log, URL
 - [ ] Query key qua factory; mutation qua wrapper (CSRF)
 - [ ] Reviewer đúng người đã approve; merged
-- [ ] `docs/handoffs/<TaskID>.md` đầy đủ (template RM §7.7)
+- [ ] Mục 'Kết quả & bàn giao' trong PR đầy đủ (.github/pull_request_template.md)
 - [ ] Evidence theo quy ước P0-20 (`<TaskID>_<yyyymmdd>_<shortSHA>`)
 - [ ] Trạng thái task cập nhật ở standup: Merged → Verified → Done [RM §7.11]
 
@@ -1608,7 +1608,7 @@ Blocked > 2 giờ trên task S (P1-15, P2-17, P6-03, P6-04) → báo TV1 ngay, k
 **T7 14/11 — Phase 0**
 - [ ] 09:00 Kick-off: theo dõi Accept D-03, D-12, D-23, D-24; khai số giờ khả dụng thực 14–29/11
 - [ ] Cài Node theo `.nvmrc`, pnpm; clone repo sau P0-04
-- [ ] Đọc `AGENTS.md` (bản nháp), V2 §6–§7, §10.3, §10.9, §11.3–11.4, §14
+- [ ] Đọc `ROADMAP.md §7` (bản nháp), V2 §6–§7, §10.3, §10.9, §11.3–11.4, §14
 - [ ] Review PR P0-09 theo checklist §6.18 (SLA 4h)
 - [ ] 21:00 Standup #1
 
@@ -1779,7 +1779,7 @@ Trạng thái: **Todo** = chưa bắt đầu · **Chờ dep** = phụ thuộc ch
 | OQ-16 | Thư viện validation schema và router cụ thể (V2 chỉ ghi "validation schema", RM "router lazy") — Doanh chọn ở P0-10 hay TV1 chốt trong ADR? | V2 §4, RM | P0-10 | TV1 | 15/11 |
 | OQ-17 | Công cụ codegen client và cách web tiêu thụ (workspace package?) | P0-09 | P0-10 | TV1 | 14/11 |
 | OQ-18 | File video lớn: lưu trong repo (`docs/video/`) hay chỉ Drive + link? | P6-04 Module/File | Repo size | TV1 | 27/11 |
-| OQ-19 | Có dùng công cụ mock API (cần thêm dependency) để làm FE trước khi backend xong không? | AGENTS.md §2 | P1-15..P2-13 | TV1 | 16/11 |
+| OQ-19 | Có dùng công cụ mock API (cần thêm dependency) để làm FE trước khi backend xong không? | ROADMAP §7.2 | P1-15..P2-13 | TV1 | 16/11 |
 | OQ-20 | Project có 2 bản `ROADMAP.md` và `claude/ROADMAP.md` (cùng v1.2, nội dung đọc được trùng khớp). Bản nào là chính thức khi có thay đổi sau này? | Project docs | Source of truth | TV1 | 14/11 |
 | OQ-21 | Header ROADMAP ghi "v1.2 (bỏ gán tên…)" và §6.1 ghi "chưa gán người", nhưng §15/D-01 đã Accepted gán tên. File này theo §15. Xác nhận? | RM header, §6.1 vs §15 | Mapping | TV1 | 14/11 |
 | OQ-22 | Giá trị Referrer-Policy và cache-control cụ thể cho asset (RM không nêu số) | P1-24 | P1-24 | TV3 | 18/11 |
@@ -1802,4 +1802,4 @@ Trạng thái: **Todo** = chưa bắt đầu · **Chờ dep** = phụ thuộc ch
 | 10 | Mâu thuẫn/thiếu dữ liệu đã vào Open Questions? | **Có** — 24 câu hỏi | §17.1 |
 | 11 | Có thể lấy 1 Task Card bất kỳ để mở phiên AI coding độc lập? | **Có** cho các task code: mỗi card có Allowed paths, bước, test, AC, prompt. Các task phụ thuộc OQ chưa trả lời (OQ-05, OQ-07, OQ-08) phải dừng ở bước "plan" cho đến khi có câu trả lời — prompt đã yêu cầu agent dừng và báo | §6, §10.3 |
 
-**Giới hạn của tài liệu này:** chưa có repo, `AGENTS.md`, contract hay handoff thật — mọi đường dẫn con trong `apps/web/src/`, route và giá trị cấu hình gắn nhãn Proposed phải được xác nhận ở P0-10 và cập nhật lại file này (phiên bản 1.1) sau G0.
+**Giới hạn của tài liệu này:** chưa có repo, `ROADMAP.md §7`, contract hay handoff thật — mọi đường dẫn con trong `apps/web/src/`, route và giá trị cấu hình gắn nhãn Proposed phải được xác nhận ở P0-10 và cập nhật lại file này (phiên bản 1.1) sau G0.

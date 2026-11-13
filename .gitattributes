@@ -1,0 +1,55 @@
+# Enforce LF line endings for source code and config files.
+# This overrides core.autocrlf per-repo so all platforms
+# commit LF regardless of local settings.
+
+# Default: auto-detect (binary vs text)
+* text=auto eol=lf
+
+# Source code
+*.ts        text eol=lf
+*.tsx       text eol=lf
+*.js        text eol=lf
+*.jsx       text eol=lf
+*.json      text eol=lf
+*.yaml      text eol=lf
+*.yml       text eol=lf
+*.md        text eol=lf
+*.html      text eol=lf
+*.css       text eol=lf
+*.scss      text eol=lf
+*.py        text eol=lf
+*.sql       text eol=lf
+*.sh        text eol=lf
+*.env*      text eol=lf
+
+# Config
+.gitignore  text eol=lf
+.gitattributes text eol=lf
+.nvmrc      text eol=lf
+.editorconfig text eol=lf
+Dockerfile* text eol=lf
+docker-compose* text eol=lf
+
+# Lock files — keep exact content
+pnpm-lock.yaml text eol=lf -diff
+
+# Shell scripts must be LF
+*.sh        text eol=lf
+
+# Windows batch files — keep CRLF
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+*.ps1       text eol=crlf
+
+# Binary files — no conversion
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.woff      binary
+*.woff2     binary
+*.ttf       binary
+*.eot       binary
+*.pdf       binary
+*.zip       binary

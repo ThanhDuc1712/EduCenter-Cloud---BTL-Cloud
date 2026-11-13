@@ -10,7 +10,7 @@
 | Mã vai trò | **TV4** (D-01, **Accepted** — ROADMAP §15.1) |
 | Vai trò | Backend Engineer — Data & Business Logic; **owner duy nhất của Prisma schema và database migration** |
 | Khối lượng | ~79 giờ theo ROADMAP §6.2 (đối chiếu chi tiết ở §5.4 và §17) |
-| Source of Truth | `ROADMAP.md` (header v1.2, 13/11/2026; phần thân chủ yếu v1.1; **§15 là phân công thực tế đã chốt**) · `EduCenter_Cloud_Ban_Thiet_Ke_2.md` (V2.0) · `BTL CK 1.pdf` |
+| Source of Truth | `ROADMAP.md` (v1.3, 14/11/2026; Decision Log §2.3, §5, §7, §8, §15) · `EduCenter_Cloud_Ban_Thiet_Ke_2.md` (V2.0) · `BTL CK 1.pdf` |
 | Trạng thái dự án | **PLAN** — chưa có dòng code, chưa có hạ tầng, chưa có bằng chứng. Mọi số liệu trong tài liệu này là mục tiêu (SLO) hoặc ước lượng, **không phải kết quả đo**. Không task nào được coi là Done khi chưa có evidence (commit SHA + log test + handoff). |
 | Hạn nộp BTL | 30/11/2026 (mục tiêu nội bộ 29/11/2026 22:00) |
 | Mốc quan trọng nhất của Hà | **Schema v1 Freeze — 16/11/2026 lúc 20:00** (P1-08, D-27) |
@@ -79,7 +79,7 @@
 | Script khởi tạo DB roles, `ALTER DEFAULT PRIVILEGES` (`apps/api/prisma/roles/`) | TV3 (P1-23) — **không phải migration của Hà**; Hà không sửa | §5.2 P1-23 |
 | Chạy `prisma migrate deploy` trong CD, firewall rule tạm | TV6 (P0-12, D-25) | §5.1 P0-12 |
 | Migration có nguy cơ mất dữ liệu | R = TV4; A = TV4 + TV3; C = TV1; I = TV6 | §6.3 RACI |
-| Ai approve PR `migration` | **Chưa đồng bộ** giữa §6.1 ("TV4 reviewer mọi PR migration"), §7.4 ("TV4 approve"), Pool B/AGENTS.md (`prisma/migrations/` → TV1, dự phòng TV3). Xem **OQ-02** và đề xuất [ADD] ở §12 | §6.1, §7.2, §7.4 |
+| Ai approve PR `migration` | **Chưa đồng bộ** giữa §6.1 ("TV4 reviewer mọi PR migration"), §7.4 ("TV4 approve"), Pool B/ROADMAP §7.2 (`prisma/migrations/` → TV1, dự phòng TV3). Xem **OQ-02** và đề xuất [ADD] ở §12 | §6.1, §7.2, §7.4 |
 
 ### 1.5. Decision Log liên quan trực tiếp tới Hà
 
@@ -148,7 +148,7 @@ flowchart TB
 | Teachers/Courses APIs | TV5 | P1-10, P1-11 | `classrooms.teacher_id`, `course_id` | Xem Handoff Matrix §8 |
 | Helper idempotency dùng chung | **Chưa có owner trong nguồn** | — | Enrollment + Payment | **OQ-04** |
 
-### 2.3. Quy tắc tích hợp bắt buộc (áp dụng cho mọi module của Hà) — [SRC AGENTS.md §7.2, D-26, V2 §9.2]
+### 2.3. Quy tắc tích hợp bắt buộc (áp dụng cho mọi module của Hà) — [SRC ROADMAP §7.2, D-26, V2 §9.2]
 
 1. Mọi truy cập DB nghiệp vụ đi qua **`TenantTx`** (common/prisma). Không import `PrismaClient` trực tiếp ngoài `common/prisma`.
 2. Không dùng `$queryRawUnsafe`; không nối chuỗi SQL. Nếu cần `FOR UPDATE`/SQL thô cho lock → dùng API an toàn của TenantTx đã được TV3 cung cấp (**[TBD]** cách TenantTx cho phép raw lock — hỏi TV3 trong review P1-04, OQ-05).
@@ -490,7 +490,7 @@ Kết luận: khối lượng Hà khớp ~79 h trên bảng gốc (chênh 0,25 h
 
 ## 6. Detailed Task Cards — hướng dẫn triển khai theo Phase
 
-> **Cách dùng một Task Card độc lập.** Mỗi card có đủ: mục tiêu, dependency, tài liệu, file được phép, entities, business rules, bước triển khai (subtask), transaction/concurrency, invariants, tenant scope, validation/HTTP, audit, edge cases, test, AC, deliverables, handoff, DoD và **prompt riêng cho AI coding agent** (tiếng Anh, theo mẫu V2 §12.5 / ROADMAP §7.9). Khi bắt đầu phiên AI: (1) dán prompt của card; (2) bảo AI đọc `AGENTS.md`, `CLAUDE.md`, `HA.md` (card này), task card `docs/tasks/<TaskID>.md`, handoff của các dependency; (3) xác nhận dependency sẵn sàng (§8) trước khi code.
+> **Cách dùng một Task Card độc lập.** Mỗi card có đủ: mục tiêu, dependency, tài liệu, file được phép, entities, business rules, bước triển khai (subtask), transaction/concurrency, invariants, tenant scope, validation/HTTP, audit, edge cases, test, AC, deliverables, handoff, DoD và **prompt riêng cho AI coding agent** (tiếng Anh, theo mẫu V2 §12.5 / ROADMAP §7.9). Khi bắt đầu phiên AI: (1) dán prompt của card; (2) bảo AI đọc ROADMAP.md (§2.3, §5, §7), `HA.md` (card này), dòng task trong ROADMAP §5, handoff/PR của các dependency; (3) xác nhận dependency sẵn sàng (§8) trước khi code.
 >
 > **Hằng số dùng cho mọi card (ghi một lần ở đây, không lặp lại):**
 > - **HTTP chung** [SRC §7.3 + V2 §14; ánh xạ mã cụ thể theo OpenAPI v1 của TV1 — **[TBD]** cho tới khi P1-14 chốt]: `400` validation (`fieldErrors`), `401` thiếu/hết hạn session, `403` thiếu quyền/route thiếu policy, `404` không tồn tại **hoặc ngoài phạm vi tenant/ownership** (không lộ sự tồn tại — ST01 "403/404"), `409` xung đột nghiệp vụ (sức chứa, trùng lặp, version, trùng lịch, vượt số dư), `429` rate limit (không thuộc Hà). Lỗi theo schema `{code,message,requestId,fieldErrors}`; không trả stack/lỗi DB thô.
@@ -510,7 +510,7 @@ Kết luận: khối lượng Hà khớp ~79 h trên bảng gốc (chênh 0,25 h
 
 **2. Dependency / điều kiện bắt đầu.** P0-04 (monorepo, `pnpm install --frozen-lockfile` chạy được, Prisma đã khóa version); D-04, D-18, D-24 (đều **Proposed** — viết theo nội dung Decision Log, gắn nhãn trong PR); D-12 (tiền BIGINT). *Không cần chờ* P0-07.
 
-**3. Tài liệu / ADR / contract.** V2 §9.1, §9.2, §9.4, §6.3 · ROADMAP §5.1 (P0-08), D-04 (ADR-016), D-18, D-24 (ADR-021), D-25 (migration không giả định superuser) · AGENTS.md §3 · §12 (lịch 14/11 13:00).
+**3. Tài liệu / ADR / contract.** V2 §9.1, §9.2, §9.4, §6.3 · ROADMAP §5.1 (P0-08), D-04 (ADR-016), D-18, D-24 (ADR-021), D-25 (migration không giả định superuser) · ROADMAP §7.2 · §12 (lịch 14/11 13:00).
 
 **4. File được phép sửa.** `apps/api/prisma/` (`schema.prisma`, `migrations/`), `scripts/seed/` (seed 2 tenant). **Cấm:** `apps/api/src/**`, `.github/**`, `packages/api-contract/**`, `docker-compose.yml` (thuộc P0-19), thư mục roles `apps/api/prisma/roles/` (thuộc TV3, P1-23).
 
@@ -540,7 +540,7 @@ d. Sinh migration khởi tạo từ DB rỗng (local); **đọc từng dòng SQL
 e. Bảo đảm migration **không** `CREATE EXTENSION btree_gist` và không giả định quyền superuser (migration chạy bằng `edu_migrator`, D-25); không động vào default privileges (TV3/P1-23).
 f. Seed 2 tenant demo **dữ liệu giả** (slug/tên tổng hợp — tên cụ thể **[TBD]**), mỗi tenant có admin, ≥ 2 teacher, ≥ 3 student, ≥ 1 course, 1 classroom, vài buổi. Mật khẩu demo đọc từ biến môi trường placeholder; **không** hard-code mật khẩu/secret thật. Cách băm Argon2id phụ thuộc thư viện TV3 (P1-01) → **OQ-13**; trong lúc chờ, seed tạo `password_hash` bằng tiện ích tạm do TV3 xác nhận hoặc để tenant/user demo kích hoạt ở P1-01.
 g. Integration test (xem mục 14).
-h. Chạy migrate từ DB rỗng 2 lần liên tiếp (lần 2 không đổi gì); mở PR label `migration`; cập nhật `docs/handoffs/P0-08.md`; gửi thông báo TV3, TV5, TV1, TV6.
+h. Chạy migrate từ DB rỗng 2 lần liên tiếp (lần 2 không đổi gì); mở PR label `migration`; cập nhật mục 'Kết quả & bàn giao' trong PR; gửi thông báo TV3, TV5, TV1, TV6.
 
 **8. Transaction / concurrency.** Không áp dụng ở mức nghiệp vụ. Mỗi file migration PostgreSQL chạy trong transaction của công cụ migrate — không tự chia nhỏ để "né" lỗi.
 
@@ -558,7 +558,7 @@ h. Chạy migrate từ DB rỗng 2 lần liên tiếp (lần 2 không đổi gì
 
 **15. Acceptance criteria (nguồn).** Migrate từ DB rỗng thành công; tạo enrollment chéo tenant bị DB từ chối; seed 2 tenant demo (dữ liệu giả).
 
-**16. Deliverables / evidence.** PR `migration` đã merge; log migrate (SHA, ngày); log test FK chéo tenant; ERD v0 (Mermaid, §7); `docs/handoffs/P0-08.md`; evidence theo quy ước `<TaskID>_<yyyymmdd>_<shortSHA>`.
+**16. Deliverables / evidence.** PR `migration` đã merge; log migrate (SHA, ngày); log test FK chéo tenant; ERD v0 (Mermaid, §7); mục "Kết quả & bàn giao" trong PR; evidence theo quy ước `<TaskID>_<yyyymmdd>_<shortSHA>`.
 
 **17. Handoff.** → TV1 (P0-09 OpenAPI v0: tên field/enums), TV3 (P0-07/P1-01: auth_sessions, users), TV5 (teachers/courses), Hà (P0-19, P1-08).
 
@@ -567,7 +567,7 @@ h. Chạy migrate từ DB rỗng 2 lần liên tiếp (lần 2 không đổi gì
 **19. Prompt cho AI agent.**
 ```text
 You are implementing P0-08 (Prisma schema v0 + initial migration + seed) in EduCenter Cloud as the sole schema/migration owner (TV4).
-Read first: AGENTS.md, CLAUDE.md, HA.md section 6.1, docs/adr (ADR-016 class_sessions, ADR-021 login tenantSlug, D-18), EduCenter_Cloud_Ban_Thiet_Ke_2.md sections 9.1, 9.2, 9.4, apps/api/prisma/.
+Read first: ROADMAP.md (§2.3, §5, §7), HA.md section 6.1, Decision Log (D-04 class_sessions, D-24 login tenantSlug, D-18), EduCenter_Cloud_Ban_Thiet_Ke_2.md sections 9.1, 9.2, 9.4, apps/api/prisma/.
 OBJECTIVE: schema v0 for tenants, users, auth_sessions, students, teachers, courses, classrooms, class_sessions (with teacher_id), enrollments + seed of 2 demo tenants with synthetic data.
 ALLOWED FILES: apps/api/prisma/ (schema.prisma, migrations/), scripts/seed/. Nothing else.
 PROHIBITED: btree_gist or any extension requiring superuser; raw $queryRawUnsafe; changing the pinned Prisma version; editing src/**, .github/**, docker-compose.yml, prisma/roles/; inventing columns not in the source (list unknowns as questions instead); real data or real secrets; destructive migration or database reset; touching the DEMO database.
@@ -577,7 +577,7 @@ TRANSACTION/CONCURRENCY: n/a (schema only).
 TESTS & ACCEPTANCE: integration test proving a cross-tenant enrollment is rejected by the DB; unique tests for slug/email/student code; migration applies from an empty DB and is a no-op on rerun; seed is idempotent.
 STEP 1: propose the table/column/constraint list and list every unknown as a question; WAIT for approval. STEP 2: write failing tests first. STEP 3: implement. STEP 4: run lint, typecheck, tests and paste real output.
 EXPECTED OUTPUT: files modified; design assumptions; real test results; security risks; unresolved questions. Never claim tests passed if not executed.
-HANDOFF: write docs/handoffs/P0-08.md (PR/SHA, ERD v0, open questions, notes for TV3/TV5/TV1).
+HANDOFF: ghi vào mục 'Kết quả & bàn giao' trong PR (.github/pull_request_template.md) (PR/SHA, ERD v0, open questions, notes for TV3/TV5/TV1).
 ```
 
 ---
@@ -629,7 +629,7 @@ f. Nhờ 1 thành viên khác chạy theo runbook, bấm giờ.
 **19. Prompt.**
 ```text
 You are implementing P0-19 (local docker-compose + local-dev runbook) in EduCenter Cloud.
-Read first: AGENTS.md, HA.md section 6.2, the P0-07 and P0-08 handoffs, .env.example, docs/runbooks/.
+Read first: ROADMAP.md (§2.3, §5, §7), HA.md section 6.2, the P0-07 and P0-08 handoffs, .env.example, docs/runbooks/.
 OBJECTIVE: docker-compose with PostgreSQL, api and web; placeholder-only env; migrate+seed flow; health checks; a runbook so a new member runs everything locally in <= 15 minutes.
 ALLOWED FILES: docker-compose.yml, docs/runbooks/local-dev.md. (.env.example only if TV1 approves.)
 PROHIBITED: real secrets or cloud credentials; inventing image versions/ports not agreed (write TBD instead); touching .github/, infra/, apps/api/src; any command that resets or migrates the demo/cloud database.
@@ -637,7 +637,7 @@ BUSINESS RULES: local only (Azure infra and cloud CI/CD belong to TV6); seed dat
 TESTS & ACCEPTANCE: another member runs it from a clean checkout in <= 15 minutes; /api/v1/health returns 200 with DB ready; migrate+seed work on an empty volume.
 STEP 1: report what exists (api/web start commands, migrate/seed commands) and what is missing; WAIT for approval. STEP 2: implement. STEP 3: run it for real and paste the output.
 EXPECTED OUTPUT: files modified; assumptions; real command output; troubleshooting table; unresolved issues.
-HANDOFF: docs/handoffs/P0-19.md (how to start/stop, known issues, notes for TV3's DB init in P1-23).
+HANDOFF: ghi vào mục 'Kết quả & bàn giao' trong PR (.github/pull_request_template.md) (how to start/stop, known issues, notes for TV3's DB init in P1-23).
 ```
 
 ---
@@ -660,13 +660,13 @@ HANDOFF: docs/handoffs/P0-19.md (how to start/stop, known issues, notes for TV3'
 | **PR migration** (owner migration) + giữ one-PR-rule + ERD/ghi chú | review nội dung policy | ✔ |
 | Test ST20 (A/B cùng pool, thiếu context) | ✔ viết | ✔ chạy lại & xác nhận kết quả |
 | Đo overhead TenantTx vs RLS (k6 nhỏ, tái dùng với CP1 của TV2/P1-21) | hỗ trợ | ✔ phân tích số liệu, viết báo cáo |
-| ADR-020 (`docs/adr/ADR-020.md`) | ✔ owner | ✔ phần số liệu |
+| ADR-020 (Decision Log §2.3 (D-05, ADR-020) + PR) | ✔ owner | ✔ phần số liệu |
 
 **2. Dependency.** P1-04 (TenantTx, TV3 17–18/11), P1-23 (runtime role không owner/BYPASSRLS), D-05, D-26; bảng `students` có từ P0-08.
 
 **3. Tài liệu.** V2 §9.3 (thiết kế RLS, test đặc biệt), ROADMAP §5.2 P1-05, D-05/ADR-020, D-26/ADR-023, §10.1 Risk R-05.
 
-**4. File được phép.** `apps/api/prisma/migrations/` (qua PR migration của TV4), `docs/adr/ADR-020.md`, `docs/evidence/perf/` cho số liệu. Không sửa module code.
+**4. File được phép.** `apps/api/prisma/migrations/` (qua PR migration của TV4), Decision Log §2.3 (D-05, ADR-020) + PR, `docs/evidence/perf/` cho số liệu. Không sửa module code.
 
 **5. Entities.** `students` (+ context `app.tenant_id` trong transaction).
 
@@ -703,14 +703,14 @@ f. Chốt số phận migration PoC (merge/đóng) theo kết quả — **OQ-14*
 **19. Prompt.**
 ```text
 You are helping implement P1-05 (RLS proof of concept on students) in EduCenter Cloud. You own the MIGRATION PR and the measurement analysis; TV3 owns the policy design and TenantTx.
-Read first: AGENTS.md, HA.md section 6.3, V2 section 9.3, ADR-020/ADR-023, the P1-04 and P1-23 handoffs.
+Read first: ROADMAP.md (§2.3, §5, §7), HA.md section 6.3, V2 section 9.3, ADR-020/ADR-023, the P1-04 and P1-23 handoffs.
 OBJECTIVE: prove (or disprove) that RLS on students works through TenantTx using the edu_runtime role, and measure overhead for decision D-05.
-ALLOWED FILES: apps/api/prisma/migrations/ (one migration PR, label "migration"), docs/adr/ADR-020.md, docs/evidence/perf/. No module code changes.
+ALLOWED FILES: apps/api/prisma/migrations/ (one migration PR, label "migration"), Decision Log §2.3 (D-05, ADR-020) + PR, docs/evidence/perf/. No module code changes.
 PROHIBITED: bypassing TenantTx; using a superuser/BYPASSRLS role for tests; SET tenant context outside the transaction; opening a second migration PR; disabling RLS or loosening policies to "make tests pass"; claiming a GO/NO-GO (TV3 + TV1 decide).
 BUSINESS RULES: policy has USING and WITH CHECK on tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid; missing context returns zero rows; runtime role is not the table owner.
 TESTS: ST20 - tenants A and B alternating on the same pool never see each other's rows; no tenant context returns 0 rows; overhead measurement p95 with/without RLS using identical data and build SHA.
 EXPECTED OUTPUT: migration PR; test output; measurement table (p50/p95/p99, pool wait, CPU) with SHA and date; recommendation text for TV1/TV3 against the D-05 threshold (p95 overhead <= 20% and no notable pool wait).
-HANDOFF: docs/handoffs/P1-05.md with raw numbers, method, open issues.
+HANDOFF: ghi vào mục 'Kết quả & bàn giao' trong PR (.github/pull_request_template.md) with raw numbers, method, open issues.
 ```
 
 ---
@@ -781,7 +781,7 @@ h. **20:00 — FREEZE:** ghi commit SHA, thông báo; từ đây chỉ change re
 
 **15. AC (nguồn).** Migration backward-compatible; ERD sinh được; mọi task backend P1–P2 tìm thấy bảng/cột mình cần; integration constraint tests pass.
 
-**16. Deliverables.** PR migration merged, commit SHA freeze, ERD v1, bảng "tầng bảo đảm", biên bản xác nhận của TV3/TV5/TV6/TV1, `docs/handoffs/P1-08.md`, thông báo freeze.
+**16. Deliverables.** PR migration merged, commit SHA freeze, ERD v1, bảng "tầng bảo đảm", biên bản xác nhận của TV3/TV5/TV6/TV1, mục "Kết quả & bàn giao" trong PR, thông báo freeze.
 
 **17. Handoff.** → **TV3** (P1-23, P1-01, P1-06 dùng `login_attempts`), **TV5** (P1-22, P2-05..09), **TV6** (P1-20 seed, P1-18 CI), **TV1** (P1-14 OpenAPI, P1-07 audit), Hà (P1-09, P1-12, P1-13, P2-xx).
 
@@ -790,7 +790,7 @@ h. **20:00 — FREEZE:** ghi commit SHA, thông báo; từ đây chỉ change re
 **19. Prompt.**
 ```text
 You are implementing P1-08 (Schema v1 FREEZE, 16/11/2026 20:00) in EduCenter Cloud as the sole schema/migration owner (TV4).
-Read first: AGENTS.md, HA.md sections 6.4, 7, 9, ROADMAP D-12/D-13/D-18/D-27/D-28/D-32, V2 section 9, the P0-08 handoff, existing prisma/migrations.
+Read first: ROADMAP.md (§2.3, §5, §7), HA.md sections 6.4, 7, 9, ROADMAP D-12/D-13/D-18/D-27/D-28/D-32, V2 section 9, the P0-08 handoff, existing prisma/migrations.
 OBJECTIVE: complete schema v1 for ALL P0 modules on top of v0: assessments, grades(version), attendance, materials(attempt, source_version_id), processing_events(event_id unique, payload_hash), invoices(status, due_date, paid_vnd, version), payments, audit_logs, idempotency_keys, background_jobs, login_attempts, users.must_change_password, plus all constraints and indexes from V2 9.4.
 ALLOWED FILES: apps/api/prisma/ (schema.prisma, migrations/). Nothing else.
 PROHIBITED: btree_gist/exclusion constraints; destructive or non-backward-compatible changes (drop/rename/retype columns); inventing columns or enums that are not in the sources - list them as questions for the dependent owner instead; adding indexes "just in case"; resetting any database; editing roles/ or src/.
@@ -799,7 +799,7 @@ DATA INVARIANTS: classify each invariant as DB-enforced or transaction-enforced 
 TESTS: integration tests for every CHECK/UNIQUE/composite FK (including cross-tenant rejections); migration applies on empty DB and on v0.
 STEP 1: output a table of every table/column/constraint, marking source vs unknown, and the questions for TV3/TV5/TV6/TV1; WAIT for approval. STEP 2: write failing constraint tests. STEP 3: implement the migration. STEP 4: run tests and paste real output.
 EXPECTED OUTPUT: files modified; assumptions; real test results; risks; unresolved questions; updated ERD.
-HANDOFF: docs/handoffs/P1-08.md with freeze SHA, ERD, per-table owner notes, and the change-request process.
+HANDOFF: ghi vào mục 'Kết quả & bàn giao' trong PR (.github/pull_request_template.md) with freeze SHA, ERD, per-table owner notes, and the change-request process.
 ```
 
 ---
@@ -814,7 +814,7 @@ HANDOFF: docs/handoffs/P1-08.md with freeze SHA, ERD, per-table owner notes, and
 
 **2. Dependency.** P1-04 (TenantTx), P1-08 (schema v1). Chuẩn bị song song trước khi P1-04 merge: viết test trước (xem §10).
 
-**3. Tài liệu.** V2 §6.2 (ma trận quyền), §8.4 (pagination 25–50, max 100), §11.4–11.5 · ROADMAP §5.2 P1-09, §7.3 · OpenAPI v1 (P1-14) · AGENTS.md.
+**3. Tài liệu.** V2 §6.2 (ma trận quyền), §8.4 (pagination 25–50, max 100), §11.4–11.5 · ROADMAP §5.2 P1-09, §7.3 · OpenAPI v1 (P1-14) · ROADMAP §7.2.
 
 **4. File được phép.** `apps/api/src/students/**`; `packages/api-contract/paths/students.yaml` **chỉ khi** TV1 đồng ý (OpenAPI do TV1 duyệt; owner module sửa path của mình — §7.1); 1 dòng import trong `app.module.ts` (quy tắc §7.1). Cấm: `schema.prisma` (đã freeze), `common/**`.
 
@@ -862,7 +862,7 @@ h. PR + handoff cho Doanh (endpoint, request/response, lỗi).
 **19. Prompt.**
 ```text
 You are implementing P1-09 (Students module, F02) in EduCenter Cloud (NestJS + Prisma + PostgreSQL, multi-tenant).
-Read first: AGENTS.md, CLAUDE.md, HA.md section 6.5, OpenAPI v1 (students), prisma/schema.prisma (frozen v1), handoffs P1-04 (TenantTx), P1-03 (@Policy), P1-08.
+Read first: ROADMAP.md (§2.3, §5, §7), HA.md section 6.5, OpenAPI v1 (students), prisma/schema.prisma (frozen v1), handoffs P1-04 (TenantTx), P1-03 (@Policy), P1-08.
 OBJECTIVE: list (search by code/name, pagination max 100, select only needed columns), create, get, patch students with role-based scope: Admin = whole own tenant; Teacher = students enrolled in classrooms assigned to that teacher; Student = self only.
 ALLOWED FILES: apps/api/src/students/**, the students path file in packages/api-contract (only with TV1 approval), one import line in app.module.ts.
 PROHIBITED: touching schema.prisma or migrations (send a change request to TV4 instead - you are TV4, so open one in docs/ rather than editing ad hoc); importing PrismaClient directly; $queryRawUnsafe; accepting tenant_id/role/user_id from the body; adding endpoints or features beyond list/create/get/patch; creating login accounts; removing or weakening guards or tests.
@@ -872,7 +872,7 @@ TRANSACTION: one TenantTx per request; no N+1 (assert query count in tests).
 TESTS & ACCEPTANCE: positive + negative authz for all three roles; ST01, ST02, ST04; pagination edges (1, 100, 101); invalid payloads; non-existent IDs; negative tests must FAIL if the guard is removed.
 STEP 1: propose a plan and exact files, list unknowns (name column, status enum, audit requirement) as questions; WAIT. STEP 2: write failing tests. STEP 3: implement. STEP 4: run lint, typecheck, unit and integration tests and paste real output.
 EXPECTED OUTPUT: files modified; assumptions; real test output; query-count table; security risks; unresolved issues.
-HANDOFF: docs/handoffs/P1-09.md including API summary for the frontend owner (Doanh).
+HANDOFF: ghi vào mục 'Kết quả & bàn giao' trong PR (.github/pull_request_template.md) including API summary for the frontend owner (Doanh).
 ```
 
 ---
@@ -887,7 +887,7 @@ HANDOFF: docs/handoffs/P1-09.md including API summary for the frontend owner (Do
 
 **2. Dependency.** P1-08, **P1-10 (Teachers, TV5)**, **P1-11 (Courses, TV5)**; P1-04 coi là điều kiện bắt đầu **[ADD — OQ-08]**. Nếu chưa merge **19/11 12:00** → contingency: TV5 nhận phần `class_sessions` (§10.3, §14.4).
 
-**3. Tài liệu.** D-18 (Proposed), D-04, D-26, V2 §6.3, §9.5, §14 · ROADMAP §5.2 P1-12 · AGENTS.md.
+**3. Tài liệu.** D-18 (Proposed), D-04, D-26, V2 §6.3, §9.5, §14 · ROADMAP §5.2 P1-12 · ROADMAP §7.2.
 
 **4. File được phép.** `apps/api/src/classrooms/**`; path OpenAPI classrooms (cùng quy tắc P1-09); 1 dòng `app.module.ts`. Cấm: `schema.prisma`, `students/**`, `teachers/**`, `courses/**`.
 
@@ -941,7 +941,7 @@ g. PR + handoff cho Doanh (P1-17).
 **19. Prompt.**
 ```text
 You are implementing P1-12 (Classrooms + class_sessions + teacher schedule conflict prevention, D-18) in EduCenter Cloud.
-Read first: AGENTS.md, CLAUDE.md, HA.md section 6.6, ROADMAP D-18/D-04/D-26, prisma/schema.prisma (frozen v1), OpenAPI v1, handoffs P1-04, P1-08, P1-10, P1-11.
+Read first: ROADMAP.md (§2.3, §5, §7), HA.md section 6.6, ROADMAP D-18/D-04/D-26, prisma/schema.prisma (frozen v1), OpenAPI v1, handoffs P1-04, P1-08, P1-10, P1-11.
 OBJECTIVE: classroom create/list/get (links course + teacher, capacity > 0) and class_session creation. A teacher must never have two overlapping sessions, even under concurrent requests.
 ALLOWED FILES: apps/api/src/classrooms/**, classrooms path file in packages/api-contract (with TV1 approval), one import line in app.module.ts.
 PROHIBITED: btree_gist or exclusion constraints; checking overlap outside the transaction or only in the frontend; schema.prisma/migrations edits; direct PrismaClient; $queryRawUnsafe; accepting tenant_id from the body; new endpoints beyond the agreed contract.
@@ -950,7 +950,7 @@ DATA INVARIANTS: no overlapping sessions per teacher; end_at > start_at; no cros
 TESTS & ACCEPTANCE: 10 parallel requests creating overlapping sessions for one teacher -> exactly 1 success and 9 x 409; 10 non-overlapping -> all succeed; different teachers do not block each other; post-test SQL shows zero overlapping pairs; authz tests (Admin, assigned teacher, other teacher, student, other tenant); negative tests must fail if guards are removed.
 STEP 1: propose a plan, the lock order and every unknown (endpoint for editing schedules, 409 error code, overlap boundary rule); WAIT. STEP 2: write failing tests including the concurrency test. STEP 3: implement. STEP 4: run lint, typecheck, unit and integration tests and paste real output.
 EXPECTED OUTPUT: files modified; assumptions; real test output (repeat the concurrency test at least 5 times); risks; unresolved issues.
-HANDOFF: docs/handoffs/P1-12.md (API summary for Doanh, 409 behavior, lock order).
+HANDOFF: ghi vào mục 'Kết quả & bàn giao' trong PR (.github/pull_request_template.md) (API summary for Doanh, 409 behavior, lock order).
 ```
 
 ---
@@ -1014,7 +1014,7 @@ g. PR + handoff cho Doanh (P1-17).
 **19. Prompt.**
 ```text
 You are implementing P1-13 (Enrollment with capacity control, invoice creation and idempotency) in EduCenter Cloud.
-Read first: AGENTS.md, CLAUDE.md, HA.md section 6.7, ROADMAP D-13/D-12/D-26, V2 sections 9.5 and 6.3, prisma/schema.prisma (frozen v1), OpenAPI v1, handoffs P1-12, P1-08, P1-07.
+Read first: ROADMAP.md (§2.3, §5, §7), HA.md section 6.7, ROADMAP D-13/D-12/D-26, V2 sections 9.5 and 6.3, prisma/schema.prisma (frozen v1), OpenAPI v1, handoffs P1-12, P1-08, P1-07.
 OBJECTIVE: POST /classrooms/:id/enrollments - enroll a student without exceeding capacity, without duplicates, creating the invoice (status OPEN, due_date, paid_vnd 0) in the SAME transaction, supporting an Idempotency-Key header.
 ALLOWED FILES: apps/api/src/enrollments/**, enrollments path file in packages/api-contract (with TV1 approval), one import line in app.module.ts.
 PROHIBITED: schema.prisma/migrations edits; direct PrismaClient; $queryRawUnsafe; accepting tenant_id from the body; network calls inside the transaction; splitting enrollment and invoice into separate transactions; floating-point money; weakening tests; adding endpoints not in the contract.
@@ -1023,7 +1023,7 @@ DATA INVARIANTS: enrollments <= capacity; no duplicate (tenant, classroom, stude
 TESTS & ACCEPTANCE: 20 concurrent enrollments (20 different students) into a capacity-10 classroom -> exactly 10 enrollments and 10 invoices, others 409; same student x5 in parallel -> 1 created; idempotent replay; same key different payload; forced failure while creating the invoice -> nothing persisted; cross-tenant IDs; authz negative tests; ST02; after the run execute SQL invariant checks.
 STEP 1: propose a plan, lock order, and list unknowns (due_date rule, invoice amount source, whether Idempotency-Key is required, error codes); WAIT. STEP 2: write failing tests incl. the 20-request test. STEP 3: implement. STEP 4: run lint, typecheck, unit and integration tests (repeat concurrency >= 5 times) and paste real output.
 EXPECTED OUTPUT: files modified; assumptions; real test output; risks; unresolved issues.
-HANDOFF: docs/handoffs/P1-13.md (API/409 contract for Doanh, idempotency behavior, SQL invariant checks).
+HANDOFF: ghi vào mục 'Kết quả & bàn giao' trong PR (.github/pull_request_template.md) (API/409 contract for Doanh, idempotency behavior, SQL invariant checks).
 ```
 
 ---
@@ -1089,7 +1089,7 @@ f. Chạy test + đếm query; PR + handoff cho Doanh (P2-11).
 **19. Prompt.**
 ```text
 You are implementing P2-01 (Attendance, PUT /sessions/:id/attendance) in EduCenter Cloud.
-Read first: AGENTS.md, CLAUDE.md, HA.md section 6.8, V2 prompt example for F07, prisma/schema.prisma (frozen v1), OpenAPI v1, handoffs P1-13, P1-12, P1-07, P1-04.
+Read first: ROADMAP.md (§2.3, §5, §7), HA.md section 6.8, V2 prompt example for F07, prisma/schema.prisma (frozen v1), OpenAPI v1, handoffs P1-13, P1-12, P1-07, P1-04.
 OBJECTIVE: bulk upsert attendance for one class_session inside a TenantTx; batch size max 200; resubmitting the same payload creates no duplicates; only the assigned teacher (or admin) may write.
 ALLOWED FILES: apps/api/src/attendance/**, attendance path file in packages/api-contract (with TV1 approval), one import line in app.module.ts.
 PROHIBITED: schema.prisma/migrations edits; direct PrismaClient; $queryRawUnsafe; accepting tenant_id/teacher id from the body; per-row loops that create N+1 queries; partial success (the batch is all-or-nothing); weakening guards/tests; returning private student data outside the authorized scope.
@@ -1099,7 +1099,7 @@ TRANSACTION: one TenantTx per request; upsert rows ordered by enrollment_id; no 
 TESTS & ACCEPTANCE: assigned teacher OK; teacher of another classroom -> 403 (ST03); student -> 403; foreign-tenant IDs -> 404; missing session; batch 200 OK and 201 rejected; resubmit -> row count unchanged; invalid payloads; audit record present with the right fields; two parallel requests on the same session -> no duplicates, no deadlock; negative tests fail if the guard is removed.
 STEP 1: propose a plan and list unknowns (status enum, audit shape, error codes); WAIT. STEP 2: write failing tests. STEP 3: implement. STEP 4: run lint, typecheck, unit and integration tests and paste real output.
 EXPECTED OUTPUT: files modified; assumptions; real test output; query counts; risks; unresolved issues.
-HANDOFF: docs/handoffs/P2-01.md (API for the frontend owner Doanh incl. optimistic-UI guidance).
+HANDOFF: ghi vào mục 'Kết quả & bàn giao' trong PR (.github/pull_request_template.md) (API for the frontend owner Doanh incl. optimistic-UI guidance).
 ```
 
 ---
@@ -1162,7 +1162,7 @@ f. Concurrency test; PR; handoff cho Doanh.
 **19. Prompt.**
 ```text
 You are implementing P2-02 (Assessments + Grades with optimistic locking) in EduCenter Cloud.
-Read first: AGENTS.md, CLAUDE.md, HA.md section 6.9, V2 sections 6.3, 9.5, 14, prisma/schema.prisma (frozen v1), OpenAPI v1, handoffs P1-13, P1-08, P1-07.
+Read first: ROADMAP.md (§2.3, §5, §7), HA.md section 6.9, V2 sections 6.3, 9.5, 14, prisma/schema.prisma (frozen v1), OpenAPI v1, handoffs P1-13, P1-08, P1-07.
 OBJECTIVE: POST /classrooms/:id/assessments and PUT /assessments/:id/grades. Scores are in [0,10]. Updates use optimistic locking on grades.version: the client sends the version it read; the server updates WHERE version matches; otherwise HTTP 409; a successful update increments the version. Never silently overwrite another user's score.
 ALLOWED FILES: apps/api/src/grades/**, grades path file in packages/api-contract (with TV1 approval), one import line in app.module.ts.
 PROHIBITED: schema.prisma/migrations edits; direct PrismaClient; $queryRawUnsafe; accepting tenant_id from the body; floating-point scores persisted via JS floats where a decimal type is required; last-write-wins updates; weakening guards/tests.
@@ -1172,7 +1172,7 @@ TRANSACTION: one TenantTx per request; conditional update by version; batch is a
 TESTS & ACCEPTANCE: two concurrent updates with the same version -> exactly one succeeds, the other gets 409 and the stored score is the winner's; boundary scores 0 and 10 accepted, -0.1 and 10.1 rejected; teacher of another classroom -> 403 (ST03); student reading another student's grade -> blocked (ST01); foreign-tenant IDs; audit record exists; negative tests fail if the guard is removed.
 STEP 1: propose a plan and list unknowns (score numeric type, assessment payload, error code, batch limit); WAIT. STEP 2: write failing tests including the concurrency test. STEP 3: implement. STEP 4: run lint, typecheck, unit and integration tests (repeat the concurrency test >= 5 times) and paste real output.
 EXPECTED OUTPUT: files modified; assumptions; real test output; risks; unresolved issues.
-HANDOFF: docs/handoffs/P2-02.md including how the frontend must detect 409 and reload before retrying.
+HANDOFF: ghi vào mục 'Kết quả & bàn giao' trong PR (.github/pull_request_template.md) including how the frontend must detect 409 and reload before retrying.
 ```
 
 ---
@@ -1254,7 +1254,7 @@ h. PR (TV3 + TV1 duyệt) + handoff cho Doanh (P2-14, P2-12).
 **19. Prompt.**
 ```text
 You are implementing P2-03 (Tuition: invoices + manual payments, idempotent) in EduCenter Cloud. This is a financial module: be conservative and never weaken a check.
-Read first: AGENTS.md, CLAUDE.md, HA.md section 6.10 (including transaction T-PAY), ROADMAP D-12/D-13, V2 sections 9.4, 9.5, 11.8, 7.4, prisma/schema.prisma (frozen v1), OpenAPI v1, handoffs P1-13, P1-07, P1-08.
+Read first: ROADMAP.md (§2.3, §5, §7), HA.md section 6.10 (including transaction T-PAY), ROADMAP D-12/D-13, V2 sections 9.4, 9.5, 11.8, 7.4, prisma/schema.prisma (frozen v1), OpenAPI v1, handoffs P1-13, P1-07, P1-08.
 OBJECTIVE: GET /invoices (role-scoped: Admin = tenant, Student = own, Teacher = forbidden) and POST /invoices/:id/payments with a REQUIRED Idempotency-Key.
 ALLOWED FILES: apps/api/src/tuition/**, invoices/payments path file in packages/api-contract (with TV1 approval), one import line in app.module.ts.
 PROHIBITED: any JavaScript Number/float for VND (use BigInt/integer SQL; JSON money is a STRING); schema.prisma/migrations edits; direct PrismaClient; $queryRawUnsafe; network calls or payment gateways; optimistic frontend assumptions; splitting payment + invoice update into separate transactions; trusting the cache for balances; weakening/removing tests; accepting tenant_id from the body; online payment, refunds or adjustments (not in scope).
@@ -1263,7 +1263,7 @@ DATA INVARIANTS: payment amount > 0; 0 <= paid_vnd <= amount_vnd; paid_vnd == SU
 TESTS & ACCEPTANCE: valid payment; same key + same payload -> same result and exactly 1 payment; same key + different payload -> contract error; two concurrent payments whose sum exceeds the balance -> exactly 1 accepted; 5 parallel requests with the same key -> 1 payment; amount 0 and negative; fully paid invoice; cross-tenant invoice; forced failure after the invoice update -> no payment, paid_vnd unchanged, key not burned; money above 2^53 round-trips exactly as a string; audit record; student reading another student's invoice blocked (ST01); ST23. After concurrency tests run SQL invariant checks.
 STEP 1: propose a plan and list unknowns (status values, error codes/HTTP for key reuse and overpayment, idempotency retention); WAIT for approval from the human owner. STEP 2: write failing tests. STEP 3: implement. STEP 4: run lint, typecheck, unit and integration tests (repeat concurrency tests >= 5 times) and paste real output.
 EXPECTED OUTPUT: files modified; assumptions; real test output; risks; unresolved issues. Never claim ST23 passed unless it was executed.
-HANDOFF: docs/handoffs/P2-03.md (contract for the frontend: string money, Idempotency-Key lifecycle, error handling; SQL invariant checks for TV6).
+HANDOFF: ghi vào mục 'Kết quả & bàn giao' trong PR (.github/pull_request_template.md) (contract for the frontend: string money, Idempotency-Key lifecycle, error handling; SQL invariant checks for TV6).
 ```
 
 ---
@@ -1317,7 +1317,7 @@ f. Tổng hợp `docs/evidence/P2-20/` theo quy ước `<TaskID>_<yyyymmdd>_<sho
 **19. Prompt.**
 ```text
 You are helping implement P2-20 (database performance baseline) in EduCenter Cloud.
-Read first: AGENTS.md, HA.md section 6.11, V2 sections 9.4, 15.6, prisma/schema.prisma and migrations, the P1-20 seed handoff, CP1/CP2 reports if present.
+Read first: ROADMAP.md (§2.3, §5, §7), HA.md section 6.11, V2 sections 9.4, 15.6, prisma/schema.prisma and migrations, the P1-20 seed handoff, CP1/CP2 reports if present.
 OBJECTIVE: run EXPLAIN (ANALYZE, BUFFERS) for the 10 heaviest queries on a 10k-student dataset and document plans, index usage and query counts; propose index/query changes with before/after numbers.
 ALLOWED FILES: docs/evidence/P2-20/ and, via the migration workflow only, apps/api/prisma/migrations/. Query fixes only inside TV4-owned modules, with tests.
 PROHIBITED: creating indexes directly on any shared/demo database; adding indexes "just in case"; touching other owners' modules; destructive migrations; changing business behavior; inventing or estimating numbers - every figure must come from a real run with SHA, date, dataset size and environment.
@@ -1325,7 +1325,7 @@ BUSINESS RULES: queries must run through the real application path (TenantTx, ru
 TESTS & ACCEPTANCE: no sequential scan on large tables for main queries; EXPLAIN evidence for all 10 queries; endpoint query counts show no N+1.
 STEP 1: list the candidate queries and your ranking method; WAIT. STEP 2: run and record. STEP 3: propose changes. STEP 4: after approval implement the migration and re-measure.
 EXPECTED OUTPUT: evidence files; comparison table; proposed migrations; residual risks.
-HANDOFF: docs/handoffs/P2-20.md (findings for TV6, TV1, TV3).
+HANDOFF: ghi vào mục 'Kết quả & bàn giao' trong PR (.github/pull_request_template.md) (findings for TV6, TV1, TV3).
 ```
 
 ---
@@ -1405,7 +1405,7 @@ d. Cuối W1: bàn giao danh sách Fail + giả thuyết nút thắt cho P4-04.
 **19. Prompt (hỗ trợ phân tích — không chạy tải thật).**
 ```text
 You are helping TV4 analyse W1 benchmark results (P4-03) in EduCenter Cloud. You do NOT run load tests or touch any cloud environment; you analyse the artifacts the humans give you.
-Read first: AGENTS.md, HA.md section 6.12, V2 sections 15.5 and 15.6, k6 outputs, DB metrics exports, invariant-check outputs, the build SHA.
+Read first: ROADMAP.md (§2.3, §5, §7), HA.md section 6.12, V2 sections 15.5 and 15.6, k6 outputs, DB metrics exports, invariant-check outputs, the build SHA.
 OBJECTIVE: classify each LT03/LT04/LT05/LT08/LT10 run as Pass/Fail/Not run against the stated criteria, summarise DB-side evidence (pool wait, slow queries, lock waits, deadlocks), and list data-invariant results.
 PROHIBITED: inventing or estimating numbers; excluding 429/5xx; treating target SLOs as results; marking Pass without evidence; changing schema/indexes; proposing to disable auth/rate limit/RLS to improve numbers.
 BUSINESS RULES: 409 from legitimate contention is reported separately from 5xx; every figure carries SHA, date, environment.
@@ -1462,13 +1462,13 @@ f. Danh sách Fail còn lại → chạy lại ở W2 (P4-05, Hà review).
 **19. Prompt.**
 ```text
 You are helping TV4 fix performance bottlenecks found in W1 (P4-04) in EduCenter Cloud. Only performance fixes may enter rc0.2.
-Read first: AGENTS.md, HA.md section 6.13, V2 section 15.6, W1 evidence (k6 + DB metrics + invariants), P2-20 EXPLAIN evidence, prisma migrations.
+Read first: ROADMAP.md (§2.3, §5, §7), HA.md section 6.13, V2 section 15.6, W1 evidence (k6 + DB metrics + invariants), P2-20 EXPLAIN evidence, prisma migrations.
 OBJECTIVE: for each failing W1 scenario identify the bottleneck in the V2 15.6 order and propose the smallest safe fix with before/after measurements.
 ALLOWED FILES: only the files named in the finding (TV4-owned modules) and, through the migration workflow, apps/api/prisma/migrations/ (one migration PR at a time, backward-compatible).
 PROHIBITED: changing business behavior or API semantics; bypassing TenantTx, RLS, rate limiting or authorization; removing locks, CHECK constraints, idempotency or tests; scaling up before diagnosing; destructive migrations or DB reset; inventing measurements.
 TESTS: re-run the failing scenario's functional/concurrency tests and the SQL invariant checks after each fix.
 EXPECTED OUTPUT: finding -> hypothesis -> evidence -> fix -> before/after table; migration PR if an index is needed; list of items deferred.
-HANDOFF: docs/handoffs/P4-04.md (rc0.2 contents, residual risks for W2).
+HANDOFF: ghi vào mục 'Kết quả & bàn giao' trong PR (.github/pull_request_template.md) (rc0.2 contents, residual risks for W2).
 ```
 
 ---
@@ -1489,7 +1489,7 @@ HANDOFF: docs/handoffs/P4-04.md (rc0.2 contents, residual risks for W2).
 
 **5. Entities.** `login_attempts`, `auth_sessions`, `users` (đọc để thống kê).
 
-**6. Business rules.** **Không bypass rate limit/auth** (D-16, AGENTS.md); đo riêng: số bị giới hạn (429), số thành công, số sai thông tin; **tác động lên API cốt lõi** (chạy kèm một mức tải đọc nền nhẹ và đo p95 — **[ADD]**); dùng tài khoản/tenant `bench-*`; dùng tài khoản dành riêng cho burst để không khóa nhầm tài khoản của kịch bản khác **[ADD]**; Argon2id tạo tải CPU có chủ đích.
+**6. Business rules.** **Không bypass rate limit/auth** (D-16, ROADMAP §7.2); đo riêng: số bị giới hạn (429), số thành công, số sai thông tin; **tác động lên API cốt lõi** (chạy kèm một mức tải đọc nền nhẹ và đo p95 — **[ADD]**); dùng tài khoản/tenant `bench-*`; dùng tài khoản dành riêng cho burst để không khóa nhầm tài khoản của kịch bản khác **[ADD]**; Argon2id tạo tải CPU có chủ đích.
 
 **7. Các bước.** a. Phối hợp TV6 chốt script (100 login/giây × 10 giây, tag riêng, không tính vào error rate bình thường); b. chạy sau cùng của W1; c. thu: tổng, 200/401/429, thời gian login, CPU, pool, p95 API cốt lõi đồng thời; d. đối chiếu `login_attempts` (số bản ghi, lockout) và audit login thất bại; e. ghi kết quả (Pass/Fail) + giả thuyết; f. phối hợp P4-11 (TV6 xóa dữ liệu bench).
 
@@ -1516,7 +1516,7 @@ HANDOFF: docs/handoffs/P4-04.md (rc0.2 contents, residual risks for W2).
 **19. Prompt.**
 ```text
 You are helping TV4 prepare the LT07 login-burst scenario (P4-06) for k6 in EduCenter Cloud.
-Read first: AGENTS.md, HA.md section 6.14, V2 sections 8.5 and 15.3, the existing tests/load conventions, P1-06 handoff.
+Read first: ROADMAP.md (§2.3, §5, §7), HA.md section 6.14, V2 sections 8.5 and 15.3, the existing tests/load conventions, P1-06 handoff.
 OBJECTIVE: a k6 scenario of 100 login attempts per second for 10 seconds against bench-* test accounts, tagged separately, that reports counts of 200/401/429 and measures core API latency during the burst.
 ALLOWED FILES: tests/load/ (LT07 scenario only), docs/evidence/perf/.
 PROHIBITED: any code path, flag or config that bypasses rate limiting or authentication; using real accounts or committing credentials/tokens; running against anything except the bench-* tenants in the benchmark window; counting these attempts in the normal-workload error rate.
@@ -1576,7 +1576,7 @@ h. Viết `restore.md` (quy trình lặp lại được) và so sánh **đo th�
 **19. Prompt.**
 ```text
 You are helping TV4 write the restore-drill runbook and evidence template (P4-10) for EduCenter Cloud. You do NOT execute anything against Azure; you draft documents for humans to execute.
-Read first: AGENTS.md, HA.md section 6.15, V2 sections 18.2-18.3, infra/azure/README.md and the P0-11 evidence.
+Read first: ROADMAP.md (§2.3, §5, §7), HA.md section 6.15, V2 sections 18.2-18.3, infra/azure/README.md and the P0-11 evidence.
 OBJECTIVE: produce docs/runbooks/restore.md and an evidence checklist for a PITR restore into an ISOLATED server, measuring real RPO and RTO and verifying data, API, privileges and tenant isolation afterwards.
 ALLOWED FILES: docs/runbooks/restore.md, docs/evidence/P4-10/ (templates only).
 PROHIBITED: any step that overwrites or modifies the demo environment; commands containing real secrets; claiming success without data+API verification; presenting target RPO/RTO (15 min/60 min) as measured results; leaving the restored server running.
@@ -1604,12 +1604,12 @@ HANDOFF: notes for TV6 about required permissions and cost cleanup.
 **Prompt hỗ trợ cho phần có code của Phase 3 (script ST23 và fix có test hồi quy; không phải task mới):**
 ```text
 You are helping TV4 (Ha) in the Phase 3 hardening window of EduCenter Cloud. Feature freeze is active: only fix/test/docs/security changes.
-Read first: AGENTS.md; HA.md sections 6.10, 6.16, 11.2, 11.4; the failing test or issue; the module handoff.
+Read first: ROADMAP.md (§2.3, §5, §7); HA.md sections 6.10, 6.16, 11.2, 11.4; the failing test or issue; the module handoff.
 OBJECTIVE (a): prepare or review the ST23 duplicate-payment scenario (same Idempotency-Key sent repeatedly and concurrently -> exactly one payment) against the demo environment's test tenant, or (b): fix a defect in a TV4-owned module with a regression test.
 ALLOWED FILES: only the module named in the issue and tests/security (ST23 script, owned by TV6 for automation); NEVER schema.prisma or migrations (data-integrity fixes require a change request to TV4).
 PROHIBITED: new features; touching auth/TenantTx/CI; weakening or deleting tests; marking ST23 as Pass without a real run (use "Not implemented" if the script is missing); real data or secrets.
 EXPECTED OUTPUT: the scenario steps and expected results, or the fix plan + regression test + real test output; list of residual risks.
-HANDOFF: docs/handoffs/<TaskID of the issue>.md and the evidence entry (date, SHA, environment, result).
+HANDOFF: ghi vào mục 'Kết quả & bàn giao' trong PR and the evidence entry (date, SHA, environment, result).
 ```
 
 **Phase 5 (26–27/11):** Hà **không có Task ID TV4**. Hỗ trợ khi cần: (1) hotfix DB/nghiệp vụ theo P5-05 (cần **2 approval TV1 + TV3**, cơ chế theo D-23); (2) regression P5-02 (TV6) — trả lời lỗi liên quan dữ liệu; (3) P5-03 — cung cấp ERD cập nhật cho gói tài liệu (TV1 owner); (4) P5-06 — hỗ trợ TV5 giữ script reset demo tương thích schema; (5) **P5-04 Go/No-Go — Hà là một trong 6 người ký**, xác nhận HG5 (không sai/mất giao dịch quan trọng) dựa trên ST23, LT08, LT10 invariant SQL **thực tế**. Sau G5 **không** thay đổi schema.
@@ -1659,7 +1659,7 @@ EXPECTED OUTPUT: draft text in Vietnamese, a list of figures (<= half page each)
 **Mẫu review prompt (dùng chung, đổi phần `FOCUS`):**
 ```text
 You are reviewing PR <task id> in EduCenter Cloud as the schema/data-integrity reviewer (TV4). Do NOT rewrite the code; produce review findings only.
-Read first: AGENTS.md, HA.md sections 3.3 (invariants), 6.18, 9, 12, prisma/schema.prisma (frozen v1), the PR diff and the task card.
+Read first: ROADMAP.md (§2.3, §5, §7), HA.md sections 3.3 (invariants), 6.18, 9, 12, prisma/schema.prisma (frozen v1), the PR diff and the task card.
 FOCUS: <see checklist for the task>.
 CHECK ALWAYS: (1) every DB access goes through TenantTx, no direct PrismaClient, no $queryRawUnsafe; (2) tenant_id never taken from the client; (3) cross-tenant IDs rejected; (4) transactions contain no network calls and keep locks short; lock order teacher < classroom < invoice; (5) money is BIGINT/string, no floats; (6) no schema change outside the migration workflow; (7) negative tests exist and fail when the guard is removed; (8) test claims match CI logs.
 EXPECTED OUTPUT: a list of findings (blocker / major / minor) with file+line, the invariant or rule violated, and a suggested fix described in words; an explicit APPROVE / REQUEST CHANGES recommendation. Do not claim anything you did not verify.
@@ -1997,7 +1997,7 @@ flowchart LR
 
 > **Cách đọc:** mỗi dòng là một quan hệ phụ thuộc hai chiều giữa Hà và một thành viên. "Task nguồn" là Task ID đã có trong ROADMAP; ngày deadline lấy từ ROADMAP, ô nào nguồn chưa có ngày ghi **TBD**. "Điều kiện sẵn sàng" là dấu hiệu **kiểm chứng được** để Hà (hoặc người nhận) biết có thể bắt đầu. "Phương án song song" = việc Hà vẫn làm được khi đầu vào chưa tới (không tự đổi quyết định, không tự đoán contract).
 >
-> Mọi artifact đặt ở đường dẫn quy ước: `docs/handoffs/<TaskID>.md` (AGENTS.md) và evidence `docs/evidence/<TaskID>_<yyyymmdd>_<shortSHA>`.
+> Mọi artifact đặt ở đường dẫn quy ước: mục 'Kết quả & bàn giao' trong PR (.github/pull_request_template.md) và evidence `docs/evidence/<TaskID>_<yyyymmdd>_<shortSHA>`.
 
 ### 8.1. Hà ↔ TV1 — Đức (Contract, Audit, Dashboard, Release)
 
@@ -2005,9 +2005,9 @@ flowchart LR
 |---|---|---|---|---|---|---|---|---|
 | 1 | TV1 → Hà | TV1 · P0-09 (OpenAPI v0) | Tên field/enum/mã lỗi trong contract mà schema phải khớp | `packages/api-contract/` | 14/11 (theo ROADMAP P0-09) | Contract v0 đã merge; tên field Students/Classrooms/Enrollment có trong contract | P0-08, P1-08 | Dùng tên khái niệm V2 §9.1; ghi khác biệt vào bảng đối chiếu để TV1 sửa contract hoặc Hà sửa cột **trước 20:00 16/11** |
 | 2 | Hà → TV1 | Hà · P0-08 | Bản nháp schema + ERD để TV1 xác nhận cột (status enums, invoice, payment, assessment) | Draft PR + ERD | ~14:00 16/11 (**ADD**) | TV1 trả lời bằng văn bản (comment PR) trước ~17:00 | P1-08 | Quá hạn trả lời → Hà dùng giá trị Proposed trong §6.4, ghi vào OQ, mọi thay đổi sau 20:00 là change request |
-| 3 | Hà → TV1 | Hà · P1-08 | Schema v1 đã freeze, ERD, bảng "tầng bảo đảm DB vs TX" cho mỗi bảng | Tag/SHA freeze + `docs/handoffs/P1-08.md` | 16/11 20:00 | CI migrate xanh, PR đã merge, SHA đã công bố | P1-14 (OpenAPI), mọi P1/P2 | — (đây là mốc cứng) |
-| 4 | TV1 → Hà | TV1 · P1-07 (Audit Service) | Giao diện ghi audit + trường bắt buộc (V2 §11.8) | Service + `docs/handoffs/P1-07.md` | 17/11 | Hà gọi được audit trong cùng TenantTx | P1-13, P2-01..03 | Viết service với điểm gọi audit tách riêng (một hàm), nối thật khi P1-07 merge; **không** tự tạo bảng/ghi trực tiếp vào `audit_logs` |
-| 5 | Hà → TV1 | Hà · P1-09/P1-12/P1-13/P2-01..03 | Danh sách endpoint, request/response, mã lỗi, enum chính xác để cập nhật OpenAPI | `docs/handoffs/<TaskID>.md` | Cùng ngày merge task tương ứng | PR module đã merge, test xanh | P1-14, P2-19 (audit coverage) | Gửi bản mô tả endpoint dạng nháp trong PR |
+| 3 | Hà → TV1 | Hà · P1-08 | Schema v1 đã freeze, ERD, bảng "tầng bảo đảm DB vs TX" cho mỗi bảng | Tag/SHA freeze + mục bàn giao trong PR | 16/11 20:00 | CI migrate xanh, PR đã merge, SHA đã công bố | P1-14 (OpenAPI), mọi P1/P2 | — (đây là mốc cứng) |
+| 4 | TV1 → Hà | TV1 · P1-07 (Audit Service) | Giao diện ghi audit + trường bắt buộc (V2 §11.8) | Service + mục bàn giao trong PR P1-07 | 17/11 | Hà gọi được audit trong cùng TenantTx | P1-13, P2-01..03 | Viết service với điểm gọi audit tách riêng (một hàm), nối thật khi P1-07 merge; **không** tự tạo bảng/ghi trực tiếp vào `audit_logs` |
+| 5 | Hà → TV1 | Hà · P1-09/P1-12/P1-13/P2-01..03 | Danh sách endpoint, request/response, mã lỗi, enum chính xác để cập nhật OpenAPI | mục 'Kết quả & bàn giao' trong PR | Cùng ngày merge task tương ứng | PR module đã merge, test xanh | P1-14, P2-19 (audit coverage) | Gửi bản mô tả endpoint dạng nháp trong PR |
 | 6 | TV1 → Hà | TV1 · P2-04 (Dashboard) | Hà phản hồi truy vấn tổng hợp, index, EXPLAIN | Review comment | 22/11 | Truy vấn nộp kèm EXPLAIN | P2-20 | Hà chuẩn bị checklist (§6.18) |
 | 7 | Hà ↔ TV1 | TV1 · D-27/ADR-024 | Quyết định change request đổi nghĩa/phá tương thích sau freeze | ADR + PR `migration` | Sau 16/11 20:00 | TV1 đồng ý bằng văn bản | PR migration | Không có — **chặn** cho tới khi có ADR |
 | 8 | Hà → TV1 | TV1 · P5-03 (gói tài liệu) | ERD cập nhật đúng schema thực tế | `docs/` ERD | 26–27/11 | ERD sinh từ schema v1 + migration đã merge | P6-01 | — |
@@ -2019,11 +2019,11 @@ flowchart LR
 |---|---|---|---|---|---|---|---|---|
 | 1 | TV2 → Hà | TV2 · P0-10 (React skeleton) | Web service chạy trong docker-compose (P0-19) | Skeleton FE | 15/11 | `docker compose up` chạy được web | P0-19 | **P0-10 không có trong cột Dep của P0-19** → Hà làm phần api+db trước, web sau khi có skeleton |
 | 2 | Hà → TV2 | Hà · P0-19 | Runbook dev, seed dữ liệu giả, lệnh chạy | `docs/runbooks/dev.md` | 15/11 | Máy thành viên khác chạy được (AC) | Mọi task FE | — |
-| 3 | Hà → TV2 | Hà · P1-09 | Endpoint Students: phân trang ≤ 100, tìm theo mã/tên, mã lỗi, enum status | `docs/handoffs/P1-09.md` | 18/11 | PR merge, test xanh, contract cập nhật | **P1-16** (18/11) | Doanh code theo contract + mock; nối thật khi merge |
-| 4 | Hà → TV2 | Hà · P1-12 | Endpoint Classrooms/Sessions, **409 trùng lịch** + thông điệp | `docs/handoffs/P1-12.md` | 18–19/11 | Test concurrency 10 request xanh | **P1-17** | Giao diện tạo buổi dùng mock 409 |
-| 5 | Hà → TV2 | Hà · P1-13 | `POST /classrooms/:id/enrollments`, header `Idempotency-Key`, tiền = **string**, 409 hết chỗ/trùng | `docs/handoffs/P1-13.md` | 19/11 | 20 request đồng thời → 10 enrollment + 10 invoice | P1-17 | Mock 409 |
-| 6 | Hà → TV2 | Hà · P2-01/P2-02 | Điểm danh (≤ 200 bản ghi); điểm 0–10, **409 conflict → tải lại version** | `docs/handoffs/P2-01.md`, `P2-02.md` | 20–21/11 | Test xanh; **endpoint đọc điểm danh/điểm cần TV1 bổ sung contract (OQ-06)** | **P2-11** | Doanh dựng UI theo payload ghi; phần hiển thị đọc chờ contract |
-| 7 | Hà → TV2 | Hà · P2-03 | Contract invoice/payment, tiền string; `Idempotency-Key` giữ nguyên khi retry; **không optimistic update số dư** | `docs/handoffs/P2-03.md` | 21–22/11 | ST23 + concurrency payment xanh | **P2-14, P2-12** | Mock trạng thái invoice |
+| 3 | Hà → TV2 | Hà · P1-09 | Endpoint Students: phân trang ≤ 100, tìm theo mã/tên, mã lỗi, enum status | PR merge (mục bàn giao) | 18/11 | PR merge, test xanh, contract cập nhật | **P1-16** (18/11) | Doanh code theo contract + mock; nối thật khi merge |
+| 4 | Hà → TV2 | Hà · P1-12 | Endpoint Classrooms/Sessions, **409 trùng lịch** + thông điệp | PR merge (mục bàn giao) | 18–19/11 | Test concurrency 10 request xanh | **P1-17** | Giao diện tạo buổi dùng mock 409 |
+| 5 | Hà → TV2 | Hà · P1-13 | `POST /classrooms/:id/enrollments`, header `Idempotency-Key`, tiền = **string**, 409 hết chỗ/trùng | PR merge (mục bàn giao) | 19/11 | 20 request đồng thời → 10 enrollment + 10 invoice | P1-17 | Mock 409 |
+| 6 | Hà → TV2 | Hà · P2-01/P2-02 | Điểm danh (≤ 200 bản ghi); điểm 0–10, **409 conflict → tải lại version** | PR merge (mục bàn giao) | 20–21/11 | Test xanh; **endpoint đọc điểm danh/điểm cần TV1 bổ sung contract (OQ-06)** | **P2-11** | Doanh dựng UI theo payload ghi; phần hiển thị đọc chờ contract |
+| 7 | Hà → TV2 | Hà · P2-03 | Contract invoice/payment, tiền string; `Idempotency-Key` giữ nguyên khi retry; **không optimistic update số dư** | PR merge (mục bàn giao) | 21–22/11 | ST23 + concurrency payment xanh | **P2-14, P2-12** | Mock trạng thái invoice |
 | 8 | TV2 → Hà | TV2 · P0-20 (template báo cáo) | Template Word để ghép chương R-03/R-05/R-10 | `.docx` template | 15/11 | Template có sẵn | R-03, P6-01 | Viết chương dạng Markdown rồi chuyển |
 | 9 | Hà → TV2 | Hà · P6-02/R-03/R-05 | Nội dung chương + hình (ERD hình 3, biểu đồ) | Bản nháp | nháp 21–22/11, cuối 27/11 | Có evidence thật | P6-01 | — |
 
@@ -2032,7 +2032,7 @@ flowchart LR
 | # | Chiều | Owner · Task nguồn | Đầu vào / Đầu ra của Hà | Artifact | Deadline | Điều kiện sẵn sàng | Task kế tiếp | Phương án song song |
 |---|---|---|---|---|---|---|---|---|
 | 1 | TV3 → Hà | TV3 · P0-07 (NestJS skeleton) | Khung API + `/api/v1/health` để chạy seed/compose | Skeleton | 14/11 | Merge main | P0-08, P0-19 | **Lịch P0-19 (15/11) có thể trước khi P0-07 xong** → làm phần DB/seed trước (OQ-09) |
-| 2 | Hà → TV3 | Hà · P0-08 | Schema v0, ràng buộc auth (`users`, `auth_sessions`), seed placeholder hash | PR + `docs/handoffs/P0-08.md` | 14–15/11 | Integration test FK chéo tenant xanh | P1-01, P1-23 | — |
+| 2 | Hà → TV3 | Hà · P0-08 | Schema v0, ràng buộc auth (`users`, `auth_sessions`), seed placeholder hash | PR (mục bàn giao) | 14–15/11 | Integration test FK chéo tenant xanh | P1-01, P1-23 | — |
 | 3 | TV3 → Hà | TV3 · P1-04 (TenantTx) | API TenantTx + cách thực hiện `SELECT … FOR UPDATE` **an toàn** (OQ-05); ánh xạ lỗi DB | Module + doc | 17–18/11 | Merge; có ví dụ khóa dòng không dùng `$queryRawUnsafe` | **P1-09, P1-12, P1-13** (OQ-08) | Hà viết service theo interface giả định (hàm `tx.run`), **không** dùng Prisma trực tiếp; nối khi P1-04 merge |
 | 4 | Hà ↔ TV3 | TV3 · P1-05/P2-10 (RLS) | Hà viết PoC + đo overhead (D-05 ≤ 20%); TV3 triển khai rollout | Evidence `P1-05_*` | 18/11 (PoC) · 20–21/11 (rollout) | PoC có số đo thật | Quyết định GO/NO-GO | NO-GO ⇒ giữ app-level scope + negative test (không tự bật RLS) |
 | 5 | TV3 → Hà | TV3 · P1-03 (RolesGuard, policy) | Cách khai báo policy ownership/class membership cho từng module | Guard + docs | 17/11 | Guard dùng được | P1-09, P1-12, P2-xx | Viết service tách khỏi controller; thêm test authz khi có guard |
@@ -2078,7 +2078,7 @@ flowchart LR
 | Chủ đề | Quy tắc | Nguồn |
 |---|---|---|
 | Công cụ | Prisma (version **pin**), PostgreSQL Flexible Server (Azure); local dùng docker-compose (P0-19) | V2 §5, §9 |
-| Truy cập | Mọi truy cập DB nghiệp vụ qua **TenantTx**; cấm PrismaClient trực tiếp, `$queryRawUnsafe`, `tenant_id` từ body (lint) | D-26, AGENTS.md |
+| Truy cập | Mọi truy cập DB nghiệp vụ qua **TenantTx**; cấm PrismaClient trực tiếp, `$queryRawUnsafe`, `tenant_id` từ body (lint) | D-26, ROADMAP §7.2 |
 | Tenant | `tenant_id` mọi bảng nghiệp vụ + composite FK; `set_config('app.tenant_id', …, true)` trong transaction | V2 §9.2–9.3 |
 | Quyền DB | `edu_migrator` (owner, migration) / `edu_runtime` (DML, không owner, không BYPASSRLS); `audit_logs` chỉ INSERT/SELECT | D-25 |
 | RLS | Chỉ rollout nếu P1-05 đạt D-05 (p95 overhead ≤ 20%, pool wait không đáng kể); NO-GO ⇒ app-level + negative test | D-05, P1-05, P2-10 |
@@ -2182,13 +2182,13 @@ AI agent **không có quyền** chỉnh `schema.prisma`/`migrations/` trừ khi 
 
 ## 10. AI Coding Workflow và Task Prompts
 
-> **Nguồn:** ROADMAP §7 (AGENTS.md, task card, handoff, checklist §7.8) + V2 §12.5. Phần "cách Hà áp dụng" là **[ADD]**. Mỗi Task Card ở §6 có một prompt **tự đủ**: dán prompt + chỉ rõ các file cần đọc là có thể mở một phiên AI mới mà không cần lịch sử chat.
+> **Nguồn:** ROADMAP §7 (quy tắc làm việc chung §7.2, PR template, checklist §7.8) + V2 §12.5. Phần "cách Hà áp dụng" là **[ADD]**. Mỗi Task Card ở §6 có một prompt **tự đủ**: dán prompt + chỉ rõ các file cần đọc là có thể mở một phiên AI mới mà không cần lịch sử chat.
 
 ### 10.1. Quy trình 12 bước cho mọi task có code
 
 | # | Bước | Người | Cổng kiểm tra trước khi sang bước sau |
 |---|---|---|---|
-| 1 | **Đọc context:** `AGENTS.md`, `docs/tasks/<TaskID>.md` (task card trong repo), Task Card tương ứng ở §6 của HA.md, handoff của các task phụ thuộc, contract OpenAPI, `schema.prisma` hiện hành | Hà + AI | Liệt kê được file đã đọc |
+| 1 | **Đọc context:** ROADMAP.md (§2.3, §5, §7), Task Card tương ứng trong HA.md ở §6 của HA.md, handoff của các task phụ thuộc, contract OpenAPI, `schema.prisma` hiện hành | Hà + AI | Liệt kê được file đã đọc |
 | 2 | **Xác nhận dependency:** các task phụ thuộc đã Done (có SHA + handoff)? Quyết định Proposed nào đang được dùng làm cơ sở? | Hà | Ghi "dựa trên D-xx (Proposed)" trong PR |
 | 3 | **Kiểm tra có đổi schema/contract không:** có → tách PR riêng (schema: Hà theo §9; contract: TV1). Sau 16/11 20:00 → change request | Hà | Không có thay đổi schema lẫn trong PR module |
 | 4 | **Plan:** AI đề xuất kế hoạch + **danh sách file sẽ sửa**; chờ Hà duyệt | AI → Hà | Hà đồng ý bằng văn bản |
@@ -2199,7 +2199,7 @@ AI agent **không có quyền** chỉnh `schema.prisma`/`migrations/` trừ khi 
 | 9 | **Tự review của Hà:** checklist §7.8 ROADMAP + checklist DB §12.3 | Hà | Không còn mục blocker (§12.4) |
 | 10 | **PR + CI:** label đúng (`migration` nếu đụng schema); reviewer theo pool; CODEOWNERS | Hà | CI xanh; log CI khớp lời khai trong PR |
 | 11 | **Merge + deploy demo** (TV6) | Reviewer + TV6 | Squash merge; không merge module bảo mật tự duyệt |
-| 12 | **Handoff + evidence:** `docs/handoffs/<TaskID>.md` + evidence `<TaskID>_<yyyymmdd>_<shortSHA>` | Hà | Chỉ ghi **Done** khi có SHA + log test + handoff |
+| 12 | **Handoff + evidence:** mục 'Kết quả & bàn giao' trong PR + evidence `<TaskID>_<yyyymmdd>_<shortSHA>` | Hà | Chỉ ghi **Done** khi có SHA + log test + handoff |
 
 **Trạng thái task** theo ROADMAP §7.11: Todo → In Progress → In Review → Merged → Verified → Done (+ Blocked). Toàn bộ task trong HA.md hiện là **Todo (PLAN, chưa có evidence)**.
 
@@ -2208,7 +2208,7 @@ AI agent **không có quyền** chỉnh `schema.prisma`/`migrations/` trừ khi 
 ```text
 ROLE: You are an AI coding assistant working for TV4 (Ha), Backend Data & Business, on EduCenter Cloud (NestJS + Prisma + PostgreSQL, multi-tenant).
 TASK: <Task ID and title>.
-READ FIRST: AGENTS.md; HA.md section <6.x>; docs/tasks/<TaskID>.md; handoffs of dependencies; OpenAPI contract; prisma/schema.prisma.
+READ FIRST: ROADMAP.md (§2.3, §5, §7); HA.md section <6.x>; ROADMAP §5 + HA.md; handoffs of dependencies; OpenAPI contract; prisma/schema.prisma.
 OBJECTIVE: <one paragraph>.
 ALLOWED FILES: <list>. If you need to touch anything else, STOP and report under "Out-of-scope requests".
 DATA RULES: all DB access through TenantTx; tenant_id comes from the session only; money is BIGINT/string (no floats); times are UTC; lock order teacher < classroom < invoice.
@@ -2254,7 +2254,7 @@ Cần sửa schema/contract/dependency/IAM/CI · giá trị status/enum chưa c�
 
 ### 10.6. Bàn giao giữa các phiên AI (context handoff)
 
-Mỗi phiên kết thúc bằng `docs/handoffs/<TaskID>.md` theo mẫu ROADMAP §7.7 (Commit/PR, Trạng thái Done/Partial/Blocked, đã làm, quyết định/giả định mới, contract/schema thay đổi, test đã chạy kèm lệnh + kết quả, rủi ro còn lại, Out-of-scope requests, prompt context cho agent kế tiếp). **Phiên mới luôn bắt đầu bằng đọc `AGENTS.md` + card + handoff phụ thuộc, không dựa vào lịch sử chat.**
+Mỗi phiên kết thúc bằng mục 'Kết quả & bàn giao' trong PR theo mẫu ROADMAP §7.7 (Commit/PR, Trạng thái Done/Partial/Blocked, đã làm, quyết định/giả định mới, contract/schema thay đổi, test đã chạy kèm lệnh + kết quả, rủi ro còn lại, Out-of-scope requests, prompt context cho agent kế tiếp). **Phiên mới luôn bắt đầu bằng đọc ROADMAP.md (§2.3, §5, §7) + card + handoff phụ thuộc, không dựa vào lịch sử chat.**
 
 ---
 
@@ -2370,7 +2370,7 @@ Danh sách 11 điều kiện ở §6.12 mục 9 là **bộ SQL kiểm tra chuẩ
 | Contract | PR đổi `openapi.yaml` merge **trước** PR dùng nó (TV1 approve); Hà chỉ sửa `paths/<module>.yaml` của module mình | SRC |
 | Merge | Squash; cấm force-push `main`; xóa nhánh sau merge | SRC |
 | Phụ thuộc Proposed | PR ghi rõ "dựa trên D-xx (Proposed)" | ADD |
-| Handoff trong PR | Đính kèm đường dẫn `docs/handoffs/<TaskID>.md` | ADD (khớp §7.7) |
+| Handoff trong PR | Đính kèm đường dẫn mục 'Kết quả & bàn giao' trong PR | ADD (khớp §7.7) |
 
 **Mẫu mô tả PR của Hà** [ADD — điền đủ trước khi xin review]:
 
@@ -2487,7 +2487,7 @@ Xem §9.8. Tóm tắt: dừng review phần khác → không merge → tách/lo�
 
 ### 12.5. Definition of Done chuẩn (dùng cho mọi Task Card — thẻ nào có thêm điều kiện thì ghi ở thẻ)
 
-☐ Chỉ sửa file trong "File được phép sửa"; không có dependency/file lạ. ☐ Mọi truy cập DB qua TenantTx; không PrismaClient trực tiếp; không `$queryRawUnsafe`. ☐ Tenant lấy từ session; test cross-tenant (403/404) có và fail khi bỏ guard. ☐ Authz positive + negative theo ma trận V2 §6.2. ☐ Tiền BIGINT/string; thời gian UTC; không float. ☐ Transaction/khóa/version/idempotency đúng thẻ; test concurrency chạy thật. ☐ Lỗi theo error schema chuẩn; không lộ stack/lỗi DB. ☐ Gọi audit đúng sự kiện §11.8 V2, không PII đầy đủ. ☐ lint + typecheck + unit + integration (bằng `edu_runtime`) **chạy thật, log khớp CI**. ☐ Không thay đổi schema ngoài workflow; migration (nếu có) đã qua playbook §12.3. ☐ Handoff `docs/handoffs/<TaskID>.md` + evidence `<TaskID>_<yyyymmdd>_<shortSHA>`. ☐ Reviewer đã approve; không tự merge module nhạy cảm. ☐ Chỉ ghi Done khi có SHA + log test + handoff.
+☐ Chỉ sửa file trong "File được phép sửa"; không có dependency/file lạ. ☐ Mọi truy cập DB qua TenantTx; không PrismaClient trực tiếp; không `$queryRawUnsafe`. ☐ Tenant lấy từ session; test cross-tenant (403/404) có và fail khi bỏ guard. ☐ Authz positive + negative theo ma trận V2 §6.2. ☐ Tiền BIGINT/string; thời gian UTC; không float. ☐ Transaction/khóa/version/idempotency đúng thẻ; test concurrency chạy thật. ☐ Lỗi theo error schema chuẩn; không lộ stack/lỗi DB. ☐ Gọi audit đúng sự kiện §11.8 V2, không PII đầy đủ. ☐ lint + typecheck + unit + integration (bằng `edu_runtime`) **chạy thật, log khớp CI**. ☐ Không thay đổi schema ngoài workflow; migration (nếu có) đã qua playbook §12.3. ☐ Handoff mục 'Kết quả & bàn giao' trong PR + evidence `<TaskID>_<yyyymmdd>_<shortSHA>`. ☐ Reviewer đã approve; không tự merge module nhạy cảm. ☐ Chỉ ghi Done khi có SHA + log test + handoff.
 
 ---
 
@@ -2810,7 +2810,7 @@ Word **20–50 trang** (mục tiêu 35–40) · Times New Roman cỡ 12 · **≤
 | 2 | Ai **ghép báo cáo Word** | Backlog **P6-01**: TV1 → TV2 | §15.2: Hà, Giang, Dương | **§15.2** | OQ-01 |
 | 3 | Ai **kiểm tra chéo** | Backlog **P6-06**: TV3 → TV1 | §15.2: cả 6 người | **§15.2** (Hà là một trong 6) | OQ-01 |
 | 4 | Giờ P6 của TV4 | §6.2 = 7 h (P6-02 ½×4 + P6-05 5 h) | §15.2 loại P6-05, thêm P6-01 | Báo cáo cả hai (§5.4): 78,75 h → ≈ 76,45 h | OQ-25 |
-| 5 | Header "bỏ gán tên" | Header ROADMAP v1.2: không gán tên | §15 + D-01 Accepted: có tên | Dùng tên theo §15/D-01 | OQ-26 |
+| 5 | Header "bỏ gán tên" | Header ROADMAP v1.3: không gán tên | §15 + D-01 Accepted: có tên | Dùng tên theo §15/D-01 | OQ-26 |
 | 6 | Người **approve migration** | §6.1: TV4 reviewer mọi PR migration; §7.4: "TV4 approve" | AGENTS §6 Pool B: `prisma/migrations/` → TV1 (dự phòng TV3) | Hà + reviewer 2 (đề xuất) | OQ-02 |
 | 7 | Dep của P1-12 | Cột Dep: P1-08, P1-10, P1-11 | Flowchart §3.3 + D-26: cần P1-04 | Coi P1-04 là điều kiện bắt đầu [ADD] | OQ-08 |
 | 8 | Lịch P0-19 | P0-19 (15/11) dep P0-07 (14/11) | P0-10 (web trong compose) không có trong Dep | Làm api + db trước | OQ-09 |

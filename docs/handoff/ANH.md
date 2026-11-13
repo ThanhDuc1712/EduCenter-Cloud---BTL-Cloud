@@ -11,15 +11,15 @@
 | Vai trò | Backend Engineer — Authentication & Security |
 | Reviewer của Anh | **Đức (TV1)** + **Giang (TV6)** — ROADMAP §6.1, §15.1 |
 | Tải ước tính theo roadmap | ~79 h (ROADMAP §6.2) |
-| Source of truth | `ROADMAP.md` v1.2 (13/11/2026) · `EduCenter_Cloud_Ban_Thiet_Ke_2.md` (V2) · `BTL CK 1.pdf` |
+| Source of truth | `ROADMAP.md` v1.3 (13/11/2026) · `EduCenter_Cloud_Ban_Thiet_Ke_2.md` (V2) · `BTL CK 1.pdf` |
 | Trạng thái dự án | **PLAN** — chưa có dòng code, chưa có hạ tầng, chưa có bằng chứng. Không task nào trong file này là Done |
 | Quy ước tham chiếu | `RM §x` = ROADMAP.md mục x · `V2 §x` = Bản thiết kế 2.0 mục x · `D-xx` = Decision Log · `ST/LT` = Security/Load test · `INV-xx` = Security invariant của file này · `OQ-xx` = Open Question |
 
 > **Cách dùng file này**
 > 1. Đọc §1–§5 một lần để nắm toàn cảnh. Khi bắt đầu một task, đọc **đúng Task Card** ở §6 + các invariant ở §3.3 + quy ước ở §9.
-> 2. Khi dùng AI coding agent: đưa `AGENTS.md` + `CLAUDE.md` + Task Card tương ứng + prompt ở cuối Task Card (§6). Không đưa cả roadmap.
+> 2. Khi dùng AI coding agent: đưa `ROADMAP.md` (§2.3, §5, §7) + Task Card tương ứng trong ANH.md + prompt ở cuối Task Card (§6). Không đưa cả roadmap.
 > 3. Mọi chi tiết đánh dấu **Proposed** hoặc **TBD** là đề xuất của tài liệu này, **chưa** phải quyết định của nhóm. Phải được TV1 (và người liên quan) xác nhận qua ADR/PR trước khi coi là Accepted.
-> 4. Nếu file này mâu thuẫn với ROADMAP.md v1.2 hoặc V2 → **ROADMAP/V2 thắng**; ghi mâu thuẫn vào §17 và báo TV1.
+> 4. Nếu file này mâu thuẫn với ROADMAP.md v1.3 hoặc V2 → **ROADMAP/V2 thắng**; ghi mâu thuẫn vào §17 và báo TV1.
 > 5. `DOANH.md` không có trong Project tại thời điểm viết → cấu trúc Task Card theo đúng mẫu trong yêu cầu giao việc; cần đối chiếu lại khi có DOANH.md (OQ-01).
 
 ---
@@ -50,7 +50,7 @@
 
 ## 1.1. Anh ở đâu trong dự án
 
-Anh xây **nền móng bảo mật mà mọi module khác đứng lên trên**: ứng dụng NestJS gốc, phiên đăng nhập, CSRF, chuỗi guard phân quyền, cơ chế truy cập DB theo tenant (`TenantTx`), vai trò DB, RLS và cổng callback HMAC từ Aliyun. Đồng thời Anh là **reviewer chính của pool nhạy cảm A** và **reviewer dự phòng của pool B và C** (RM §7.2 khung AGENTS.md mục 6).
+Anh xây **nền móng bảo mật mà mọi module khác đứng lên trên**: ứng dụng NestJS gốc, phiên đăng nhập, CSRF, chuỗi guard phân quyền, cơ chế truy cập DB theo tenant (`TenantTx`), vai trò DB, RLS và cổng callback HMAC từ Aliyun. Đồng thời Anh là **reviewer chính của pool nhạy cảm A** và **reviewer dự phòng của pool B và C** (RM §7.2 khung ROADMAP §7.2 mục 6).
 
 Hai điều quan trọng nhất:
 
@@ -105,7 +105,7 @@ Các task dưới đây Anh **chỉ review** (hoặc không liên quan). Không 
 1. **Nền tảng trước, tính năng sau.** Đầu ra của Anh là interface để người khác dùng — publish interface + hướng dẫn sớm (kể cả trước khi implementation xong) để người khác không bị chặn.
 2. **Deny-by-default ở mọi tầng.** Thiếu session → 401, thiếu policy → 403, thiếu tenant context → 0 dòng/throw, thiếu chữ ký → 401.
 3. **Test âm tính phải fail khi bỏ guard.** Một test bảo mật chỉ có giá trị nếu nó bắt được lỗi khi tắt biện pháp bảo vệ (RM §7.8).
-4. **Không có ngoại lệ "chỉ để demo/benchmark".** Không cờ bypass auth/CSRF/rate limit/HMAC (D-16, AGENTS.md §3).
+4. **Không có ngoại lệ "chỉ để demo/benchmark".** Không cờ bypass auth/CSRF/rate limit/HMAC (D-16, ROADMAP §7.2).
 5. **Không tự duyệt module bảo mật của mình.** PR của Anh do Đức + Giang duyệt (RM §6.1).
 
 ---
@@ -150,7 +150,7 @@ Màu sắc trách nhiệm: mọi khối có mã task P0-xx/P1-xx/P2-xx trong sơ
 | CSRF | `apps/api/src/auth/csrf/` | P1-02 | TV2 (FE gửi header), mọi route mutation | CSRF contract |
 | Authorization framework | `apps/api/src/common/authz/` | P1-03 | Mọi module; TV6 (harness P1-19) | `@Policy()`, `@InternalHmacPolicy()`, guard chain, route inventory test |
 | TenantTx + lint | `apps/api/src/common/prisma/`, `.eslintrc` | P1-04 | Mọi module truy cập DB | API `TenantTx` + lint rule |
-| RLS PoC / rollout | `apps/api/prisma/migrations/` (**qua PR migration của Hà**), `docs/adr/ADR-020.md` | P1-05, P2-10 | Đức (quyết định D-05), Hà | Báo cáo PoC + SQL policy đề xuất + test |
+| RLS PoC / rollout | `apps/api/prisma/migrations/` (**qua PR migration của Hà**), Decision Log §2.3 (D-05, ADR-020) + PR | P1-05, P2-10 | Đức (quyết định D-05), Hà | Báo cáo PoC + SQL policy đề xuất + test |
 | Audit coverage test | `apps/api/test/audit/` | P2-19 | Đức (G2), owner module | Test + issue |
 | IDOR sweep | `tests/security/idor/` | P3-03 | Giang (P3-02), G3 | Script + báo cáo |
 | Scanner triage + xoay key | `docs/evidence/scanners/` | P3-05 | G3, HG3/HG4 | Bảng triage + log xoay key |
@@ -200,14 +200,14 @@ Màu sắc trách nhiệm: mọi khối có mã task P0-xx/P1-xx/P2-xx trong sơ
 | P1-02 | `apps/api/src/auth/csrf/` | Như trên |
 | P1-03 | `apps/api/src/common/authz/` | — |
 | P1-04 | `apps/api/src/common/prisma/`, `.eslintrc` | — |
-| P1-05, P2-10 | `apps/api/prisma/migrations/` (**qua PR migration của Hà**), `docs/adr/ADR-020.md` | Anh soạn SQL + test; Hà mở/merge PR migration |
+| P1-05, P2-10 | `apps/api/prisma/migrations/` (**qua PR migration của Hà**), Decision Log §2.3 (D-05, ADR-020) + PR | Anh soạn SQL + test; Hà mở/merge PR migration |
 | P2-19 | `apps/api/test/audit/` | Không sửa code module |
 | P3-03 | `tests/security/idor/` | — |
 | P3-05 | `docs/evidence/scanners/` | Xoay key thao tác trên Key Vault/FC cùng Dương + Giang |
 | P3-06 | — (chỉ issue) | Không sửa code |
 | P4-04 | Theo phát hiện — chỉ module của Anh (auth, common/authz, common/prisma, materials/internal) | Fix ở module người khác → owner module sửa |
 
-Cần sửa ngoài danh sách → **DỪNG**, ghi vào handoff mục "Out-of-scope requests" và nhắn owner (AGENTS.md §1).
+Cần sửa ngoài danh sách → **DỪNG**, ghi vào handoff mục "Out-of-scope requests" và nhắn owner (ROADMAP §7.2).
 
 ## 3.3. Security Invariants (bất biến phải giữ ở mọi task)
 
@@ -224,7 +224,7 @@ Cần sửa ngoài danh sách → **DỪNG**, ghi vào handoff mục "Out-of-sco
 | INV-09 | `edu_runtime`: không superuser, không BYPASSRLS, không owner bảng, không DDL; `audit_logs` chỉ INSERT/SELECT | D-25; P1-23 | Integration DDL/UPDATE audit → lỗi |
 | INV-10 | Integration test chạy bằng `edu_runtime` (không superuser) — điều kiện để ST20 có ý nghĩa | RV-05; P1-23 | Kiểm tra `current_user` trong test setup |
 | INV-11 | Lỗi trả theo `{code,message,requestId,fieldErrors}`; không lộ stack, lỗi DB, hay nguyên nhân đăng nhập sai (tenant/email/password) | V2 §14; P0-07, P1-01 | Unit error filter; test login 3 kiểu sai → cùng phản hồi |
-| INV-12 | Không có cờ/biến môi trường bypass auth, CSRF, rate limit, HMAC cho test, benchmark hay demo | D-16; AGENTS.md §3 | Review + grep cấu hình |
+| INV-12 | Không có cờ/biến môi trường bypass auth, CSRF, rate limit, HMAC cho test, benchmark hay demo | D-16; ROADMAP §7.2 | Review + grep cấu hình |
 | INV-13 | Callback: không tin tenant/role từ worker; chỉ nhận kết quả terminal đầu tiên hợp lệ của mỗi attempt, gắn `source_version_id`; attempt cũ/version khác không đổi trạng thái | P2-07; RV-12 | ST11, ST12, ST13, ST16 |
 | INV-14 | Upload: không trả Access Key cho browser; policy giới hạn key cố định do server sinh, ≤ 10 MB, hết hạn 5 phút | D-21; P0-17 | 3 case thử thật P0-17 |
 | INV-15 | Không có secret trong repo, ảnh chụp, video, prompt AI | V2 §11.7; P0-06 | gitleaks PR + full history (ST22) |
@@ -232,9 +232,9 @@ Cần sửa ngoài danh sách → **DỪNG**, ghi vào handoff mục "Out-of-sco
 | INV-17 | Không dùng dữ liệu thật; chỉ dữ liệu tổng hợp; mọi kiểm thử chủ động chỉ trên local/CI/demo env của nhóm | V2 §16; RM §5.4 P3-04 | — |
 | INV-18 | Sau đổi mật khẩu/logout/thu hồi: phiên cũ không dùng được ngay ở request tiếp theo, trên mọi instance | V2 §11.3 | ST06, test P1-25 |
 
-## 3.4. Trạng thái các quyết định liên quan (theo ROADMAP v1.2)
+## 3.4. Trạng thái các quyết định liên quan (theo ROADMAP v1.3)
 
-> Ngoại trừ D-01, mọi Decision dưới đây đang **Proposed** trong ROADMAP v1.2. Kick-off 14/11 09:00 dự kiến Accept D-23, D-24, D-25 (bắt buộc trước P0-04). Anh cập nhật cột "Trạng thái thực" sau kick-off — **không tự đổi thành Accepted**.
+> Ngoại trừ D-01, mọi Decision dưới đây đang **Proposed** trong ROADMAP v1.3. Kick-off 14/11 09:00 dự kiến Accept D-23, D-24, D-25 (bắt buộc trước P0-04). Anh cập nhật cột "Trạng thái thực" sau kick-off — **không tự đổi thành Accepted**.
 
 | ID | Nội dung rút gọn | Người quyết | Hạn | Ảnh hưởng tới task của Anh | Trạng thái thực |
 |---|---|---|---|---|---|
@@ -442,7 +442,7 @@ gantt
 | ID | Owner | Ngày | Trọng tâm review của Anh | Pool | Checklist |
 |---|---|---|---|---|---|
 | P0-03 | TV5 Dương | 14/11 | MFA root, không dùng root cho ứng dụng, RAM admin, budget alert | A (IAM) | §12.4-F |
-| P0-05 | TV1 Đức | 15/11 sáng | AGENTS.md có đủ mục cấm/bắt buộc bảo mật; pool A/B/C; không mâu thuẫn CLAUDE.md | — | §12.4-G |
+| P0-05 | TV1 Đức | 15/11 sáng | Quy tắc làm việc chung trong ROADMAP §7 thay AGENTS.md/CLAUDE.md đầy đủ mục bảo mật; pool A/B/C | — | §12.4-G |
 | P0-08 | TV4 Hà | 14–15/11 | `tenants.slug` unique, `users(tenant_id,email)` unique, cột `auth_sessions` đủ cho P1-01, composite FK, test FK chéo tenant | B (migration) | §12.4-B |
 | P0-11 | TV6 Giang | 14–15/11 | Key Vault RBAC + MI, `edu_runtime` không admin, TLS PG, firewall không "all Azure services", pool budget | B (infra) | §12.4-F |
 | P0-13 | TV5 Dương | 14/11 | Bucket private, chặn public, versioning, lifecycle noncurrent, CORS chỉ origin demo + localhost | A (IAM/storage) | §12.4-F |
@@ -528,7 +528,7 @@ gantt
 > - Phần "(bổ sung)" là chi tiết hóa của tài liệu này; mục nào là quyết định chưa có trong V2/RM được đánh dấu **Proposed** hoặc **TBD** và phải xác nhận trước khi merge.
 > - Mỗi card dùng được độc lập: copy card + §3.3 + prompt ở cuối card vào phiên AI mới.
 > - Không có source code hoàn chỉnh trong file này; tên hàm/lớp chỉ là gợi ý (Proposed).
-> - Trước khi bắt đầu mỗi task: tạo `docs/tasks/<TaskID>.md` theo mẫu RM §7.6 (copy phần đầu card). Khi xong: `docs/handoffs/<TaskID>.md` theo RM §7.7.
+> - Theo mô hình tối giản (D-34): không tạo `docs/tasks/` hay `docs/handoffs/`. Tra cứu task tại ROADMAP §5 + ANH.md §6; kết quả và bàn giao ghi trực tiếp trong PR theo `.github/pull_request_template.md`.
 
 ---
 
@@ -587,12 +587,12 @@ gantt
 
 **Handoff:** Giang (P1-18 thêm integration/SAST/SCA/Trivy vào cùng workflow), Đức (required checks), cả nhóm (cách chạy CI local).
 
-**Definition of Done:** AC tick đủ + Giang approve + evidence + `docs/handoffs/P0-06.md`.
+**Definition of Done:** AC tick đủ + Giang approve + evidence + mục 'Kết quả & bàn giao' trong PR.
 
 **Prompt AI — P0-06**
 ```text
 You are implementing task P0-06 (CI baseline) for EduCenter Cloud. Owner: Anh (TV3). Reviewer: Giang (TV6).
-Read first: AGENTS.md, CLAUDE.md, ANH.md §3.3 and §6.1, docs/tasks/P0-06.md, root package.json, .nvmrc, pnpm-workspace.yaml.
+Read first: ROADMAP.md (§2.3, §5, §7), ANH.md §3.3 and §6.1, root package.json, .nvmrc, pnpm-workspace.yaml.
 Goal: create .github/workflows/ci.yml with jobs lint, typecheck, unit, gitleaks for pull_request and push to main.
 Allowed files: .github/workflows/ci.yml only. Do NOT touch branch protection, CODEOWNERS, deploy workflows, or add SAST/SCA/Trivy.
 Requirements:
@@ -603,7 +603,7 @@ Requirements:
 - No allowlist/ignore entries. No continue-on-error. timeout-minutes on each job.
 Step 1: Output a short threat model (token permissions, action supply chain, secret exposure in logs) and the plan. STOP and wait for approval.
 Step 2: Write the workflow. Step 3: Describe exactly how to run the fake-secret PR test (fake string only, never a real key).
-Output: Files modified · Design assumptions · Test results (real run links/outputs only; never claim a run you did not see) · Security risks & mitigation · Unresolved issues · Draft docs/handoffs/P0-06.md.
+Output: Files modified · Design assumptions · Test results (real run links/outputs only; never claim a run you did not see) · Security risks & mitigation · Unresolved issues · Fill PR description using .github/pull_request_template.md.
 Never add real secrets. Never weaken checks to make CI green.
 ```
 
@@ -690,7 +690,7 @@ Never add real secrets. Never weaken checks to make CI green.
 **Prompt AI — P0-07**
 ```text
 You are implementing P0-07 (NestJS skeleton) for EduCenter Cloud. Owner: Anh (TV3). Reviewer: Duc (TV1).
-Read first: AGENTS.md, CLAUDE.md, ANH.md §3.3, §6.2 and §9, docs/tasks/P0-07.md, Design V2 §8.3, §8.4, §11.5, §14.
+Read first: ROADMAP.md (§2.3, §5, §7), ANH.md §3.3, §6.2 and §9, Design V2 §8.3, §8.4, §11.5, §14.
 Stack is fixed: NestJS + TypeScript strict, Express adapter, Prisma, PostgreSQL. Do not change it.
 Allowed files: apps/api/src/main.ts, apps/api/src/app.module.ts, apps/api/src/common/**, apps/api/src/health/**, apps/api/package.json (justify each new dependency).
 Prohibited: editing prisma/schema.prisma, apps/web, the OpenAPI root; enabling CORS; global raw body; any auth bypass flag; logging secrets, cookies or request bodies.
@@ -698,7 +698,7 @@ Implement: /api/v1 prefix; helmet (CSP left configurable for task P1-24); bounde
 Step 1: list threats (info leakage, DoS via body size, raw body misuse, config leakage) and your file plan. STOP for approval.
 Step 2: write failing tests first: error filter unit, config validation, health e2e, unknown DTO field 400, oversized body 413, SIGTERM drains in-flight request.
 Step 3: implement within allowed files. Step 4: run pnpm lint, typecheck, test, test:integration and paste real output.
-Output: Files modified · Design assumptions · Test results (real) · Security risks & mitigation · Unresolved issues · Out-of-scope requests · Draft docs/handoffs/P0-07.md.
+Output: Files modified · Design assumptions · Test results (real) · Security risks & mitigation · Unresolved issues · Out-of-scope requests · Fill PR description using .github/pull_request_template.md.
 ```
 
 ---
@@ -778,7 +778,7 @@ Output: Files modified · Design assumptions · Test results (real) · Security 
 **Prompt AI — P0-16**
 ```text
 You are implementing P0-16 (HMAC callback PoC) for EduCenter Cloud. Owner: Anh (TV3). Reviewer: Duong (TV5).
-Read first: AGENTS.md, CLAUDE.md, ANH.md §3.3 and §6.3 (contains the signature spec agreed with TV5), Design V2 §10.7, handoff P0-07.
+Read first: ROADMAP.md (§2.3, §5, §7), ANH.md §3.3 and §6.3 (contains the signature spec agreed with TV5), Design V2 §10.7, handoff P0-07.
 Allowed files: apps/api/src/materials/internal/** only.
 Prohibited: functions/**, infra/**, materials/domain/**, any secret in code or tests (generate random test keys at runtime), parsing JSON before signature verification, logging signatures/secrets/full payloads, any bypass flag.
 Implement: route POST /api/v1/internal/material-events using the raw body; a pure verifier (no Nest dependency) that checks required headers (X-Event-ID, X-Timestamp, X-Key-ID, X-Signature), known key id (max 2 active keys from config), |now - timestamp| <= 300s, HMAC-SHA256 over the canonical string from ANH.md §6.3, constant-time compare with length check; respond 401 CALLBACK_UNAUTHORIZED for every auth failure (single generic response) and 202 when valid; PoC only logs eventId, materialId, attempt, keyId, correlationId.
@@ -786,7 +786,7 @@ Step 1: threat model (forgery, replay, timing attack, key confusion, log leakage
 Step 2: failing unit tests: valid with key1 and key2; wrong signature; 1-byte body tamper; timestamp -301s and +301s; unknown key id; missing headers; wrong-length signature. E2E: valid -> 202.
 Step 3: implement. Step 4: run lint, typecheck, unit, e2e; paste real output.
 State clearly in the handoff that replay protection inside the 300s window is NOT implemented in the PoC (P2-07 adds it).
-Output: Files modified · Design assumptions · Test results (real) · Security risks & mitigation · Unresolved issues · Draft docs/handoffs/P0-16.md.
+Output: Files modified · Design assumptions · Test results (real) · Security risks & mitigation · Unresolved issues · Fill PR description using .github/pull_request_template.md.
 ```
 
 ---
@@ -851,13 +851,13 @@ Không được dùng "shared secret header" làm auth tạm (đó là một d�
 **Prompt AI — P0-17**
 ```text
 You are implementing P0-17 (OSS PostObject upload signer PoC) for EduCenter Cloud. Owner: Anh (TV3). Reviewer: Duong (TV5).
-Read first: AGENTS.md, CLAUDE.md, ANH.md §3.3 and §6.4 (including the decision recorded for OQ-08 on how the dev-only signer is exposed), Design V2 §10.3, decision D-21, handoffs P0-07 and P0-14.
+Read first: ROADMAP.md (§2.3, §5, §7), ANH.md §3.3 and §6.4 (including the decision recorded for OQ-08 on how the dev-only signer is exposed), Design V2 §10.3, decision D-21, handoffs P0-07 and P0-14.
 Allowed files: apps/api/src/materials/storage/** only.
 Prohibited: returning or logging the AccessKey Secret; accepting the object key or size limit from the client; adding an unauthenticated public route unless OQ-08 explicitly allows it; any shared-secret "temporary auth"; new dependencies without justification.
 Implement a pure signing service: expiration now+300s; conditions = bucket, exact key generated server-side (random UUID based), content-length-range [1, 10485760], exact x-oss-meta-correlation-id generated server-side. Return only the form fields the browser needs. Confirm the OSS signature version from official Alibaba Cloud docs and cite the page; if unsure, STOP and ask.
 Step 1: threat model (oversized upload, key substitution, policy reuse, credential exposure, unauthenticated abuse) + plan. STOP.
 Step 2: unit tests for policy structure and expiry. Step 3: implement. Step 4: give me a manual script/checklist for the 3 real OSS tests (11 MB rejected, different key rejected, expired policy rejected) — do not fake results.
-Output: Files modified · Design assumptions · Test results (real) · Security risks & mitigation · Unresolved issues · Draft docs/handoffs/P0-17.md.
+Output: Files modified · Design assumptions · Test results (real) · Security risks & mitigation · Unresolved issues · Fill PR description using .github/pull_request_template.md.
 ```
 
 
@@ -927,14 +927,14 @@ Output: Files modified · Design assumptions · Test results (real) · Security 
 **Prompt AI — P1-23**
 ```text
 You are implementing P1-23 (database roles) for EduCenter Cloud. Owner: Anh (TV3). Reviewer: Giang (TV6).
-Read first: AGENTS.md, CLAUDE.md, ANH.md §3.3 and §6.5, decision D-25 / ADR-022, Design V2 §9.3, apps/api/prisma/schema.prisma (read-only, frozen), docker-compose.yml, existing CI workflow.
+Read first: ROADMAP.md (§2.3, §5, §7), ANH.md §3.3 and §6.5, decision D-25 / ADR-022, Design V2 §9.3, apps/api/prisma/schema.prisma (read-only, frozen), docker-compose.yml, existing CI workflow.
 Allowed files: apps/api/prisma/roles/**, docker-compose.yml (DB init part only, owner TV4 must be told), .github/workflows/** (DB init steps only).
 Prohibited: editing schema.prisma or migrations; hardcoding any password; granting SUPERUSER, BYPASSRLS, CREATEROLE or ownership to edu_runtime; opening database firewall rules.
 Implement idempotent SQL: create/alter roles edu_migrator (schema owner, used only for migrate deploy) and edu_runtime (LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE); schema ownership and USAGE; ALTER DEFAULT PRIVILEGES FOR ROLE edu_migrator granting SELECT, INSERT, UPDATE, DELETE on tables and USAGE, SELECT on sequences to edu_runtime; grants on existing tables; a post-migrate script revoking UPDATE/DELETE/TRUNCATE on audit_logs and all privileges on _prisma_migrations from edu_runtime (follow the OQ-11 decision recorded in ANH.md).
 Wire docker-compose and CI so migrations run as edu_migrator and the app/tests connect as edu_runtime.
 Step 1: plan + threat model (privilege escalation, RLS bypass, password leakage). STOP.
 Step 2: failing integration tests listed in ANH.md §6.5. Step 3: implement. Step 4: run integration tests as edu_runtime and paste real output, including SELECT current_user, rolsuper, rolbypassrls.
-Output: Files modified · Design assumptions · Test results (real) · Security risks & mitigation · Unresolved issues · Out-of-scope requests · Draft docs/handoffs/P1-23.md.
+Output: Files modified · Design assumptions · Test results (real) · Security risks & mitigation · Unresolved issues · Out-of-scope requests · Fill PR description using .github/pull_request_template.md.
 ```
 
 ---
@@ -1034,13 +1034,13 @@ Output: Files modified · Design assumptions · Test results (real) · Security 
 **Prompt AI — P1-01**
 ```text
 You are implementing P1-01 (authentication and session) for EduCenter Cloud. Owner: Anh (TV3). Reviewer: Duc (TV1).
-Read first: AGENTS.md, CLAUDE.md, ANH.md §3.3, §6.6, §7.1, §7.2 and §9, ADR-021 (login with tenantSlug), Design V2 §11.3 and §14, packages/api-contract/paths/auth.yaml (already merged), schema.prisma (read-only), handoffs P0-07 and P1-23.
+Read first: ROADMAP.md (§2.3, §5, §7), ANH.md §3.3, §6.6, §7.1, §7.2 and §9, ADR-021 (login with tenantSlug), Design V2 §11.3 and §14, packages/api-contract/paths/auth.yaml (already merged), schema.prisma (read-only), handoffs P0-07 and P1-23.
 Allowed files: apps/api/src/auth/** (except auth/csrf and auth/rate-limit which belong to other tasks).
 Prohibited: changing schema or contract in this PR; JWT or localStorage tokens; storing raw tokens; logging email/password/token; distinguishing wrong tenant vs wrong email vs wrong password in responses or timing; any flag that disables Secure cookies, rate limiting or auth.
 Implement: POST /api/v1/auth/login {tenantSlug,email,password}; POST /api/v1/auth/logout; GET /api/v1/me. Argon2id via a vetted library (justify the dependency; benchmark parameters and report numbers). Dummy Argon2 verification when tenant/user not found. 256-bit CSPRNG token, base64url, store only SHA-256 hash with user_id and tenant_id; rotate on login by revoking any session presented; cookie __Host-educenter_session with Secure, HttpOnly, SameSite=Lax, Path=/, no Domain. SessionService.validate (revoked, absolute expiry, idle expiry with throttled last_seen update, active user and tenant) returning principal {userId, tenantId, role, sessionId, mustChangePassword}. SessionService.revokeAllForUser. A limiter interface hook for task P1-06 (no disable switch). Timeout values from validated config.
 Step 1: threat model (credential stuffing, user enumeration incl. timing, session fixation, token theft, cross-tenant login, DoS via Argon2) + file plan. STOP for approval.
 Step 2: write failing integration tests from ANH.md §6.6 (run as edu_runtime). Step 3: implement. Step 4: run lint, typecheck, unit, integration; paste real output; grep DB and captured logs for the raw token value.
-Output: Files modified · Design assumptions · Test results (real) · Argon2 benchmark numbers · Security risks & mitigation · Unresolved issues · Out-of-scope requests · Draft docs/handoffs/P1-01.md (include the contract notes for TV2 and the session seed spec for TV6).
+Output: Files modified · Design assumptions · Test results (real) · Argon2 benchmark numbers · Security risks & mitigation · Unresolved issues · Out-of-scope requests · Fill PR description using .github/pull_request_template.md (include the contract notes for TV2 and the session seed spec for TV6).
 ```
 
 ---
@@ -1108,13 +1108,13 @@ Output: Files modified · Design assumptions · Test results (real) · Argon2 be
 **Prompt AI — P1-02**
 ```text
 You are implementing P1-02 (CSRF + Origin validation) for EduCenter Cloud. Owner: Anh (TV3). Reviewer: Giang (TV6).
-Read first: AGENTS.md, CLAUDE.md, ANH.md §3.3, §6.7 (the CSRF mechanism chosen for OQ-14 is recorded there), §7.3, Design V2 §11.3, handoff P1-01, packages/api-contract/paths/auth.yaml.
+Read first: ROADMAP.md (§2.3, §5, §7), ANH.md §3.3, §6.7 (the CSRF mechanism chosen for OQ-14 is recorded there), §7.3, Design V2 §11.3, handoff P1-01, packages/api-contract/paths/auth.yaml.
 Allowed files: apps/api/src/auth/csrf/**. Contract changes go in a separate PR approved by TV1.
 Prohibited: relying on SameSite alone; exempting routes by URL prefix lists; accepting tokens from query strings; non-constant-time comparison; any disable switch.
 Implement a guard for POST/PUT/PATCH/DELETE: validate Origin against configured allowed origins (reject missing or mismatching), then validate the CSRF token from header X-CSRF-Token bound to the current session using the chosen mechanism; return 403 CSRF_REJECTED. Login route: Origin check only. Routes marked @InternalHmacPolicy are not subject to CSRF (metadata-based exemption).
 Step 1: threat model + plan. STOP.
 Step 2: failing tests from ANH.md §6.7 including a test proving the negative tests fail when the guard is disabled in a test module. Step 3: implement. Step 4: run tests; paste real output.
-Output: Files modified · Design assumptions · Test results (real) · Security risks · Unresolved issues · Draft docs/handoffs/P1-02.md with exact FE instructions for TV2.
+Output: Files modified · Design assumptions · Test results (real) · Security risks · Unresolved issues · Fill PR description using .github/pull_request_template.md with exact FE instructions for TV2.
 ```
 
 ---
@@ -1193,13 +1193,13 @@ Các policy riêng của từng tài nguyên do owner module viết bằng frame
 **Prompt AI — P1-03**
 ```text
 You are implementing P1-03 (authorization framework) for EduCenter Cloud. Owner: Anh (TV3). Reviewer: Duc (TV1).
-Read first: AGENTS.md, CLAUDE.md, ANH.md §3.3, §6.8, §7.4 and §9.3, Design V2 §11.4 and §6.2, handoffs P0-07, P0-16, P1-01, P1-02.
+Read first: ROADMAP.md (§2.3, §5, §7), ANH.md §3.3, §6.8, §7.4 and §9.3, Design V2 §11.4 and §6.2, handoffs P0-07, P0-16, P1-01, P1-02.
 Allowed files: apps/api/src/common/authz/** (plus adding decorators on the health, login and internal callback handlers is allowed only if TV1 agrees; otherwise list it as an out-of-scope request).
 Prohibited: reading role or tenant from request body/query/headers; allowing routes without policy; path-prefix based exemptions; a global "skip auth" flag; letting business code mutate the request context.
 Implement (PR1): AsyncLocalStorage TenantContext initialised per request by middleware and filled only by AuthGuard; global guards in fixed order AuthGuard -> CsrfGuard -> RolesGuard -> PolicyGuard -> deny-by-default; decorators @Roles, @Policy, @PublicPolicy (allowlisted routes only), @InternalHmacPolicy (no session, no CSRF, HMAC verifier from P0-16 required, cookies ignored); a route inventory test that boots the real app, enumerates every route and fails listing routes without exactly one valid policy type.
 Step 1: threat model (missing policy, privilege escalation, context bleed between concurrent requests, internal route abuse) + plan. STOP.
 Step 2: failing tests from ANH.md §6.8 including proof that negative tests fail when a guard is removed. Step 3: implement. Step 4: run lint, typecheck, unit, integration; paste real output.
-Output: Files modified · Design assumptions · Test results (real) · Security risks · Unresolved issues · Out-of-scope requests · Draft docs/handoffs/P1-03.md including the mandatory rules for business modules.
+Output: Files modified · Design assumptions · Test results (real) · Security risks · Unresolved issues · Out-of-scope requests · Fill PR description using .github/pull_request_template.md including the mandatory rules for business modules.
 ```
 
 ---
@@ -1267,14 +1267,14 @@ Output: Files modified · Design assumptions · Test results (real) · Security 
 **Prompt AI — P1-04**
 ```text
 You are implementing P1-04 (TenantTx and lint rules) for EduCenter Cloud. Owner: Anh (TV3). Reviewer: Ha (TV4).
-Read first: AGENTS.md, CLAUDE.md, ANH.md §3.3, §6.9, §7.5 and §9.3, ADR-023 (D-26), Design V2 §9.2, §9.3, §9.5, handoffs P0-07, P1-01, P1-03, P1-23, schema.prisma (read-only).
+Read first: ROADMAP.md (§2.3, §5, §7), ANH.md §3.3, §6.9, §7.5 and §9.3, ADR-023 (D-26), Design V2 §9.2, §9.3, §9.5, handoffs P0-07, P1-01, P1-03, P1-23, schema.prisma (read-only).
 Allowed files: apps/api/src/common/prisma/**, .eslintrc (or the repo's ESLint config file).
 Prohibited: accepting tenantId as a parameter of TenantTx.run; $queryRawUnsafe/$executeRawUnsafe anywhere; session-level SET; network calls inside transactions; weakening existing lint rules; editing business modules.
 Implement: TenantTx.run(fn, opts) reading tenantId from TenantContext (throw if absent), Prisma interactive transaction whose first statement is a parameterised SELECT set_config('app.tenant_id', $1, true), a scoped client extension (adds tenant filter on reads/updates/deletes, sets tenant on create, throws on mismatching tenant), root client guard that throws for model queries outside TenantTx except the restricted AuthDataAccess and SystemTenantTx accessors described in ANH.md §6.9 (follow the OQ-12 decision), configurable timeout/maxWait, ESLint rules (no @prisma/client value imports outside common/prisma, ban Unsafe raw APIs, ban tenantId/tenant_id properties in *.dto.ts, restrict accessor imports).
 Step 0: publish the interface + short README first so TV4/TV5 can code against it.
 Step 1: threat model (tenant bleed across pooled connections, missing context, raw SQL injection, accessor misuse) + plan. STOP.
 Step 2: failing tests from ANH.md §6.9 (pool size 1 alternating A/B, rollback, outside-tx throw, lint fixtures). Step 3: implement. Step 4: run tests as edu_runtime; paste real output and a micro-benchmark of TenantTx overhead.
-Output: Files modified · Design assumptions · Test results (real) · Overhead numbers · Security risks · Unresolved issues · Draft docs/handoffs/P1-04.md with usage examples for business modules.
+Output: Files modified · Design assumptions · Test results (real) · Overhead numbers · Security risks · Unresolved issues · Fill PR description using .github/pull_request_template.md with usage examples for business modules.
 ```
 
 ---
@@ -1287,7 +1287,7 @@ Output: Files modified · Design assumptions · Test results (real) · Overhead 
 | Owner → Reviewer | **Anh (TV3) + Hà (TV4)** → Đức (TV1) |
 | Dependency | P1-04 |
 | Tài liệu | V2 §9.3; RM D-05 / ADR-020, A-07, R-05; ST20 |
-| Allowed paths | `apps/api/prisma/migrations/` (**qua PR migration của Hà**), `docs/adr/ADR-020.md` |
+| Allowed paths | `apps/api/prisma/migrations/` (**qua PR migration của Hà**), Decision Log §2.3 (D-05, ADR-020) + PR |
 
 **Phân công trong cặp (Proposed — xác nhận với Hà; RM §10.3 ghi "TV4 nhận phần RLS PoC đo đạc")**
 
@@ -1330,7 +1330,7 @@ Output: Files modified · Design assumptions · Test results (real) · Overhead 
 **Prompt AI — P1-05 (phần của Anh)**
 ```text
 You are helping Anh (TV3) with P1-05 (RLS proof of concept on table students), co-owned with Ha (TV4). Reviewer: Duc (TV1).
-Read first: AGENTS.md, ANH.md §3.3, §6.10 and §6.9, ADR-020, Design V2 §9.3, handoff P1-04, schema.prisma (read-only).
+Read first: ROADMAP.md (§2.3, §5, §7), ANH.md §3.3, §6.10 and §6.9, ADR-020, Design V2 §9.3, handoff P1-04, schema.prisma (read-only).
 Your scope: draft the SQL policy text for the migration PR that TV4 will open (do NOT create or edit migration files yourself unless TV4 asks), write ST20 integration tests, and draft the ADR-020 results section.
 Prohibited: FORCE RLS without the documented rationale; BYPASSRLS; running tests as superuser; claiming performance numbers you did not measure.
 Policy: ENABLE ROW LEVEL SECURITY on students; USING and WITH CHECK comparing tenant_id with NULLIF(current_setting('app.tenant_id', true), '')::uuid.
@@ -1381,12 +1381,12 @@ Output: SQL draft · Test results (real) · ADR-020 draft section with a results
 **Prompt AI — P2-10**
 ```text
 You are helping Anh (TV3) with P2-10 for EduCenter Cloud. Reviewer: Ha (TV4). Decision D-05 = <GO|NO-GO> (fill in from the Decision Log; if it is not decided, STOP).
-Read first: AGENTS.md, ANH.md §3.3, §6.10, §6.11, ADR-020, handoffs P1-04, P1-05, the OQ-12 decision.
+Read first: ROADMAP.md (§2.3, §5, §7), ANH.md §3.3, §6.10, §6.11, ADR-020, handoffs P1-04, P1-05, the OQ-12 decision.
 If GO: draft RLS policies (USING + WITH CHECK on app.tenant_id) for students, enrollments, attendance, grades, invoices, payments, materials as text for TV4's migration PR; do not edit business modules; write extended ST20 tests per table (pool size 1 A/B alternation, rollback, background job via SystemTenantTx, wrong-tenant insert rejected), and verify callback/reconciliation flows still work.
 If NO-GO: draft the ADR-020 limitation section and write cross-tenant negative API tests for each table using the authz harness.
 Prohibited: BYPASSRLS, running as superuser, changing TenantTx semantics, claiming RLS coverage that is not implemented.
 Step 1: plan. STOP. Step 2: tests. Step 3: SQL/doc drafts. Step 4: run tests as edu_runtime; paste real output.
-Output: Drafts · Test results (real) · Risks · Unresolved issues · Draft docs/handoffs/P2-10.md.
+Output: Drafts · Test results (real) · Risks · Unresolved issues · Fill PR description using .github/pull_request_template.md.
 ```
 
 ---
@@ -1463,13 +1463,13 @@ Không gọi OSS/mạng trong transaction (INV-04). Kết quả xử lý do FC l
 **Prompt AI — P2-07**
 ```text
 You are implementing P2-07 (production material callback) for EduCenter Cloud. Owner: Anh (TV3). Reviewer: Duong (TV5).
-Read first: AGENTS.md, CLAUDE.md, ANH.md §3.3, §6.12 (response-code table agreed with TV5), §7.6, Design V2 §10.4, §10.6-§10.8, handoffs P0-16, P1-03, P1-04, P1-22, P2-05, schema.prisma (read-only).
+Read first: ROADMAP.md (§2.3, §5, §7), ANH.md §3.3, §6.12 (response-code table agreed with TV5), §7.6, Design V2 §10.4, §10.6-§10.8, handoffs P0-16, P1-03, P1-04, P1-22, P2-05, schema.prisma (read-only).
 Allowed files: apps/api/src/materials/internal/**.
 Prohibited: editing materials/domain (TV5) or materials API; trusting tenant/role from the payload; network calls inside the transaction; disabling HMAC; logging signatures or signed URLs; re-implementing state transition rules instead of using the domain module.
 Implement: HMAC verification (reuse P0-16 verifier) -> strict DTO -> X-Event-ID must equal payload eventId -> resolve material and its tenant via the system accessor -> SystemTenantTx.runForTenant(material.tenantId) { insert processing_events with unique event_id and payload_hash (same id + same hash = idempotent, same id + different hash = 409 + security log); SELECT material FOR UPDATE; ignore stale attempts with log; accept only the first terminal result per attempt and bind source_version_id, otherwise security log and no state change; verify source key equals the issued key and published/preview keys are under the expected prefix; apply transition via the domain module; persist }. Expose MaterialResultApplier.apply(result, source) for reconciliation (P2-09).
 Step 1: threat model (forgery, replay, reordering, version swap after scan, cross-tenant key injection, concurrency) + plan. STOP.
 Step 2: failing tests from ANH.md §6.12 including concurrency (10 parallel runs). Step 3: implement. Step 4: run unit + integration as edu_runtime; paste real output.
-Output: Files modified · Design assumptions · Test results (real) · Security risks · Unresolved issues · Draft docs/handoffs/P2-07.md (API of the applier for TV5).
+Output: Files modified · Design assumptions · Test results (real) · Security risks · Unresolved issues · Fill PR description using .github/pull_request_template.md (API of the applier for TV5).
 ```
 
 ---
@@ -1509,11 +1509,11 @@ Output: Files modified · Design assumptions · Test results (real) · Security 
 **Prompt AI — P2-19**
 ```text
 You are implementing P2-19 (audit coverage test) for EduCenter Cloud. Owner: Anh (TV3). Reviewer: Duc (TV1).
-Read first: AGENTS.md, ANH.md §6.13, Design V2 §11.8, handoffs P1-07, P1-19, P2-01..P2-06, P1-25, P1-06.
+Read first: ROADMAP.md (§2.3, §5, §7), ANH.md §6.13, Design V2 §11.8, handoffs P1-07, P1-19, P2-01..P2-06, P1-25, P1-06.
 Allowed files: apps/api/test/audit/** only. Do NOT modify any module code, even if an audit call is missing.
 For each event in the ANH.md §6.13 matrix, perform the real API action with harness actors, then assert an audit_logs row exists (queried as edu_runtime) with actor_id, tenant_id, action, resource, timestamp, request_id and without full PII or secrets.
 For any missing event, keep the test failing with a clear message and draft a GitHub issue (title, owner, module, reproduction, expected fields).
-Output: Files modified · Test results (real) · Draft issues · Unresolved issues · Draft docs/handoffs/P2-19.md.
+Output: Files modified · Test results (real) · Draft issues · Unresolved issues · Fill PR description using .github/pull_request_template.md.
 ```
 
 ---
@@ -1547,12 +1547,12 @@ Output: Files modified · Test results (real) · Draft issues · Unresolved issu
 **Prompt AI — P3-03**
 ```text
 You are implementing P3-03 (IDOR / cross-tenant sweep) for EduCenter Cloud. Owner: Anh (TV3). Reviewer: Giang (TV6).
-Read first: AGENTS.md, ANH.md §6.14 and §11, packages/api-contract (OpenAPI v1), handoffs P1-03 (route inventory) and P1-19 (harness).
+Read first: ROADMAP.md (§2.3, §5, §7), ANH.md §6.14 and §11, packages/api-contract (OpenAPI v1), handoffs P1-03 (route inventory) and P1-19 (harness).
 Allowed files: tests/security/idor/**.
 Rules: run only against local/CI or the team's demo environment with synthetic test tenants; never against any other host; no destructive bulk operations; no real data; do not run during benchmark windows.
 Build a script that enumerates every OpenAPI path with an ID parameter, and for each method calls it as tenant-A actors (admin, assigned teacher, unassigned teacher, student A) using IDs from tenant B and from student B, sending a valid CSRF token for mutations; expect 403/404 and no object data in the body. Report coverage (must be 100%), a results table and contract-vs-code route mismatches.
 Step 1: plan. STOP. Step 2: implement. Step 3: run; paste real output and the coverage number.
-Output: Files modified · Results (real) · Draft issues for findings · Draft docs/handoffs/P3-03.md.
+Output: Files modified · Results (real) · Draft issues for findings · Fill PR description using .github/pull_request_template.md.
 ```
 
 ---
@@ -1879,7 +1879,7 @@ sequenceDiagram
 | Hướng | Task nguồn | Nội dung | File/interface/bằng chứng | Thời điểm | Điều kiện "sẵn sàng" | Task dùng tiếp | Phương án song song |
 |---|---|---|---|---|---|---|---|
 | Đức → Anh | P0-04 | Monorepo, branch protection, CODEOWNERS | Repo + ảnh Settings | 14/11 sáng | `pnpm install --frozen-lockfile` chạy; push `main` bị chặn | P0-06, P0-07 | Viết sẵn workflow/skeleton ở nhánh local |
-| Đức → Anh | P0-05 | AGENTS.md, CLAUDE.md, ADR log | File + ADR-021…027 | 15/11 sáng | Anh đã review | Mọi phiên AI | Dùng §3.3 + §9 của file này tạm thời |
+| Đức → Anh | P0-05 | ROADMAP v1.3 workflow tối giản | File + ADR-021…027 | 15/11 sáng | Anh đã review | Mọi phiên AI | Dùng §3.3 + §9 của file này tạm thời |
 | Đức ↔ Anh | P0-09, P1-14 | Contract auth/CSRF/mã lỗi | `packages/api-contract/paths/auth.yaml` | 16–17/11 | PR contract merged | P1-01, P1-02, P1-15 | Anh soạn PR contract, Đức duyệt |
 | Anh → Đức | P0-07, P1-01, P1-03, P1-05, P2-19, P4-04, P6-06 | PR để Đức review | PR + handoff | Theo lịch | — | — | Giang review thay khi Đức quá SLA (pool A backup = Đức; reviewer thứ hai = Giang) |
 | Đức → Anh | P1-07 | Audit service | `common/audit/` | 17/11 | Anh đã review | P1-03 PR2 (audit deny), P2-19 | P1-03 PR1 không cần audit |
@@ -2017,9 +2017,9 @@ Body luôn `{code, message, requestId, fieldErrors?}`; `message` tiếng Việt 
 
 | # | Bước | Anh làm | AI làm | Điểm dừng bắt buộc |
 |---|---|---|---|---|
-| 1 | Nạp context | Đưa `AGENTS.md`, `CLAUDE.md`, Task Card (§6.x), §3.3, §9 và handoff của task phụ thuộc | Đọc, tóm tắt lại phạm vi | — |
+| 1 | Nạp context | Đưa `ROADMAP.md` (§2.3, §5, §7), Task Card (§6.x), §3.3, §9 và handoff của task phụ thuộc | Đọc, tóm tắt lại phạm vi | — |
 | 2 | Kiểm tra hiện trạng | Xác nhận dependency đã merge (SHA), contract/ADR hiện hành | Đọc code liên quan, liệt kê điểm vào | Dependency chưa merge → dừng |
-| 3 | Nhánh | `git switch -c <type>/<TaskID>-<slug>` (vd `feat/P1-03-authz-guard`) | — | — |
+| 3 | Nhánh | `git switch anh` (mô hình 7 branch cố định D-35) (vd `feat/P1-03-authz-guard`) | — | — |
 | 4 | Threat model + plan | Duyệt | Liệt kê mối đe dọa, file sẽ sửa, test sẽ viết | **AI dừng chờ duyệt** |
 | 5 | Phạm vi | Đối chiếu file plan với Allowed paths | Chỉ sửa file được phép | File ngoài phạm vi → dừng, ghi "Out-of-scope requests" |
 | 6 | Test trước | Duyệt danh sách test (có test âm tính) | Viết test fail trước | — |
@@ -2028,7 +2028,7 @@ Body luôn `{code, message, requestId, fieldErrors?}`; `message` tiếng Việt 
 | 9 | PR + bằng chứng | Mở PR theo template, gắn evidence, viết handoff | Soạn nháp handoff | — |
 | 10 | Merge | Chờ reviewer hợp lệ (Đức/Giang/owner liên quan) | — | **Không tự merge module bảo mật** |
 
-## 10.2. Lệnh cấm tuyệt đối khi làm việc với AI (bổ sung cho AGENTS.md §2)
+## 10.2. Lệnh cấm tuyệt đối khi làm việc với AI (bổ sung cho ROADMAP §7.2)
 
 - Không tạo backdoor, tài khoản ẩn, cờ/biến môi trường bypass auth, CSRF, rate limit, HMAC, tenant scope.
 - Không nới tenant isolation để sửa lỗi nhanh (ví dụ thêm accessor không scope, bỏ điều kiện `tenant_id`).
@@ -2066,7 +2066,7 @@ Body luôn `{code, message, requestId, fieldErrors?}`; `message` tiếng Việt 
 
 ```text
 You are assisting a security code review for EduCenter Cloud. The human reviewer is Anh (TV3, security pool A). You do not approve or merge.
-Inputs: the PR diff, the author's docs/tasks/<TaskID>.md, ANH.md §3.3 (invariants), §9.3 (mandatory module rules) and the relevant checklist from ANH.md §12.4 (<A|B|C|D|E|F|G|H|I|J|K>).
+Inputs: the PR diff, author's PR description / task in ROADMAP §5, ANH.md §3.3 (invariants), §9.3 (mandatory module rules) and the relevant checklist from ANH.md §12.4 (<A|B|C|D|E|F|G|H|I|J|K>).
 Do NOT rewrite the module and do NOT propose a full reimplementation.
 Report:
 1. Files outside the task's Allowed paths, new dependencies, schema/contract changes not in separate PRs.
@@ -2082,7 +2082,7 @@ Classify each finding: Blocker (must fix before merge) / Major / Minor / Questio
 ## 10.5. Mẫu yêu cầu AI viết handoff
 
 ```text
-Draft docs/handoffs/<TaskID>.md using the template in ROADMAP §7.7:
+Draft the PR description using .github/pull_request_template.md (mục "Kết quả & bàn giao"):
 Commit/PR, Status (Done/Partial/Blocked), What was done (3-5 lines), New decisions/assumptions (flag anything not Accepted as Proposed),
 Contract/schema changes (with links), Tests run (exact commands + real results), Remaining risks, Out-of-scope requests,
 Prompt context for the next agent (files to read, entry points, invariants that must not change).
@@ -2236,8 +2236,8 @@ CODEOWNERS cần **username GitHub thật**, mỗi đường dẫn nhạy cảm 
 - [ ] Key Vault RBAC + Managed Identity; không secret trong repo/IaC/output; firewall PG không mở "all Azure services".
 - [ ] Ảnh evidence đã che ID nhạy cảm.
 
-**G — AGENTS.md / CLAUDE.md / ADR (P0-05)**
-- [ ] Đủ mục cấm/bắt buộc RM §7.2; pool A/B/C đúng; CLAUDE.md không mâu thuẫn AGENTS.md; ADR-021…027 có Status/Context/Decision/Verification.
+**G — Workflow tối giản ROADMAP v1.3 (P0-05)**
+- [ ] Đủ mục cấm/bắt buộc RM §7.2; pool A/B/C đúng; ROADMAP §7 thay thế AGENTS.md/CLAUDE.md; ADR-021…027 có Status/Context/Decision/Verification.
 
 **H — CI/CD / observability (P1-18, P2-15)**
 - [ ] Integration chạy bằng `edu_runtime`; đúng 1 SAST theo D-23; SCA; Trivy fail CRITICAL/HIGH có bản sửa; required checks.
@@ -2292,7 +2292,7 @@ Với mỗi biện pháp bảo vệ quan trọng của PR: tạm thời vô hi�
 - [ ] §12.5 đã làm cho test âm tính chính.
 - [ ] Reviewer hợp lệ approve; không tự merge module bảo mật.
 - [ ] Contract/schema thay đổi đã qua PR riêng.
-- [ ] `docs/handoffs/<TaskID>.md` đầy đủ; người nhận handoff xác nhận.
+- [ ] mục 'Kết quả & bàn giao' trong PR đầy đủ; người nhận handoff xác nhận.
 - [ ] Evidence theo quy ước `<TaskID>_<yyyymmdd>_<shortSHA>`.
 - [ ] Trạng thái task trên board: Merged → Verified → Done (RM §7.11). **Không** Done khi thiếu evidence.
 
@@ -2591,7 +2591,7 @@ Trạng thái chung: **PLAN — Chưa bắt đầu** cho mọi mục (không có
 | R-05, R-06, R-13, R-20 | §10.1 | Owner rủi ro | §14.1 | Đang theo dõi |
 | Xoay HMAC key | §9.4 | Owner reliability test | §6.15 | Chưa chạy |
 | Pool A | §6.1, §7.2 | Reviewer chính | §12.2 | — |
-| Pool B, Pool C | §7.2 (AGENTS.md mục 6) | Reviewer dự phòng | §12.2, §12.8 | — |
+| Pool B, Pool C | §7.2 (ROADMAP §7.2 mục 6) | Reviewer dự phòng | §12.2, §12.8 | — |
 | RACI (4 dòng) | §6.3 | A / R | §1.2 | — |
 | Contingency G0, TV5 trễ, TV3 trễ, scope-cut cấp 3 | §8.1, §10.2, §10.3 | Chỉ khi kích hoạt | §5.4 | Chưa kích hoạt |
 | Tải ~79h | §6.2, §15.1 | Đối chiếu | §5.5 | Chênh +6–8h (OQ-05) |
@@ -2657,6 +2657,6 @@ Trạng thái chung: **PLAN — Chưa bắt đầu** cho mọi mục (không có
 
 | Phiên bản | Ngày | Thay đổi |
 |---|---|---|
-| 1.0 | 14/11/2026 | Tạo từ ROADMAP v1.2 + V2 + BTL CK. Chưa có kết quả kick-off; chưa có DOANH.md |
+| 1.0 | 14/11/2026 | Tạo từ ROADMAP v1.3 + V2 + BTL CK. Chưa có kết quả kick-off; chưa có DOANH.md |
 
 > **Quy tắc cuối:** ANH.md là tài liệu giao việc, không phải bằng chứng. Mọi mục chỉ được coi là hoàn thành khi có code đã merge, test chạy thật, evidence gắn SHA và handoff — theo đúng RM §7.11 và V2 §26.
