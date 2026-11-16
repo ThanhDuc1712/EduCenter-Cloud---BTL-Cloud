@@ -1,0 +1,29 @@
+{
+  "name": "@educenter/api-contract",
+  "version": "0.0.0",
+  "private": true,
+  "description": "OpenAPI contract (source of truth) + generated TypeScript types/client for EduCenter Cloud",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./openapi.yaml": "./openapi.yaml"
+  },
+  "scripts": {
+    "lint": "redocly lint openapi.yaml",
+    "bundle": "redocly bundle openapi.yaml --output dist/openapi.bundled.yaml",
+    "generate": "openapi-typescript openapi.yaml --output generated/schema.d.ts",
+    "typecheck": "tsc --noEmit",
+    "check": "pnpm run lint && pnpm run bundle && pnpm run generate && pnpm run typecheck"
+  },
+  "dependencies": {
+    "openapi-fetch": "0.17.0"
+  },
+  "devDependencies": {
+    "@redocly/cli": "2.78.0",
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.9.3"
+  }
+}

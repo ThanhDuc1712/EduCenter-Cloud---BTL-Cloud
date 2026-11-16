@@ -1,0 +1,19 @@
+# Owner endpoint: Anh (P1-01) · Contract: Đức
+
+me:
+  get:
+    operationId: getMe
+    tags: [me]
+    summary: Người dùng đang đăng nhập
+    description: Được phép gọi cả khi `mustChangePassword = true`.
+    responses:
+      '200':
+        description: Principal của phiên hiện tại.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/Principal
+      '401':
+        $ref: ../components/responses.yaml#/Unauthorized
+      '500':
+        $ref: ../components/responses.yaml#/InternalError

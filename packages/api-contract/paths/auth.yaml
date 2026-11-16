@@ -1,0 +1,60 @@
+# Owner endpoint: Anh (P1-01, P1-02) · Contract: Đức
+
+login:
+  post:
+    operationId: login
+    tags: [auth]
+    summary: Đăng nhập vào một tenant
+    description: |
+      Body gồm `tenantSlug` + `email` + `password` (D-24). Thành công → cấp cookie phiên mới
+      (thu hồi phiên cũ nếu có). Mọi nguyên nhân thất bại (sai tenant / email / mật khẩu, tài khoản
+      không hoạt động) trả **cùng** 401 `AUTH_INVALID_CREDENTIALS`. Chỉ kiểm tra Origin, không cần CSRF token.
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/LoginRequest
+    responses:
+      '200':
+        description: Đăng nhập thành công.
+        headers:
+          Set-Cookie:
+            description: '`__Host-educenter_session=<token>; Secure; HttpOnly; SameSite=Lax; Path=/`'
+            schema:
+              type: string
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/Principal
+      '400':
+        $ref: ../components/responses.yaml#/ValidationFailed
+      '401':
+        description: Thông tin đăng nhập không hợp lệ. `code = AUTH_INVALID_CREDENTIALS`.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/Error
+      '403':
+        $ref: ../components/responses.yaml#/Forbidden
+      '429':
+        $ref: ../components/responses.yaml#/RateLimited
+      '500':
+        $ref: ../components/responses.yaml#/InternalError
+
+logout:
+  post:
+    operationId: logout
+    tags: [auth]
+    summary: Đăng xuất (thu hồi phiên hiện tại)
+    description: Cần CSRF token (header chưa chốt — P1-02). Thành công → xóa cookie phiên.
+    responses:
+      '204':
+        description: Đã thu hồi phiên.
+      '401':
+        $ref: ../components/responses.yaml#/Unauthorized
+      '403':
+        $ref: ../components/responses.yaml#/Forbidden
+      '500':
+        $ref: ../components/responses.yaml#/InternalError

@@ -1,0 +1,22 @@
+# Owner endpoint: Anh (P0-07) · Contract: Đức
+
+health:
+  get:
+    operationId: getHealth
+    tags: [health]
+    summary: Liveness + DB readiness
+    description: Dùng làm health check path của App Service (P0-11). Không cần đăng nhập.
+    security: []
+    responses:
+      '200':
+        description: Ứng dụng sống và DB sẵn sàng.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/HealthStatus
+      '503':
+        description: DB chưa sẵn sàng.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/HealthStatus

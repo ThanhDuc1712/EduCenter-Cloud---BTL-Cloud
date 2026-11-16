@@ -1,0 +1,17 @@
+{
+  "name": "educenter-cloud",
+  "version": "0.0.0",
+  "private": true,
+  "description": "EduCenter Cloud — B2B SaaS quản lý trung tâm giáo dục (Azure + Alibaba Cloud)",
+  "packageManager": "pnpm@10.34.9",
+  "engines": {
+    "node": ">=24 <25",
+    "pnpm": ">=10.34.9 <11"
+  },
+  "scripts": {
+    "lint": "pnpm -r --if-present run lint",
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "test": "pnpm -r --if-present run test",
+    "build": "pnpm -r --if-present run build"
+  }
+}

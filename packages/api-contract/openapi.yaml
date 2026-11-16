@@ -1,0 +1,60 @@
+openapi: 3.1.0
+info:
+  title: EduCenter Cloud API
+  version: 0.1.0
+  summary: Contract v0 (P0-09) — health, auth, me, students.
+  description: |
+    Nguồn chân lý cho Frontend và Backend (contract-first, ROADMAP §7.5).
+
+    **Quy ước chung**
+    - Prefix: mọi path nằm dưới `/api/v1` (khai báo ở `servers`).
+    - Lỗi: luôn trả `Error` = `{ code, message, requestId, fieldErrors? }`; không lộ stack trace hay lỗi DB.
+    - Phân trang: `?page` (từ 1) và `?pageSize` (mặc định 25, tối đa 100; vượt → 400 `VALIDATION_FAILED`).
+      Response dạng `{ items, meta }`.
+    - Tiền VND: DB `BIGINT`, JSON là **string chỉ gồm chữ số** (`MoneyVnd`, D-12).
+    - Thời gian: ISO-8601 UTC có hậu tố `Z` (`DateTimeUtc`); FE hiển thị theo Asia/Ho_Chi_Minh.
+    - Idempotency: header `Idempotency-Key` **chỉ** cho `POST /invoices/{id}/payments` (bắt buộc)
+      và `POST /classrooms/{id}/enrollments` (D-13) — endpoint thêm ở v1.
+    - Xác thực: cookie phiên opaque `__Host-educenter_session`; tenant lấy từ phiên, **không bao giờ**
+      nhận `tenantId`/`role` từ body (D-24).
+    - CSRF: mọi POST/PUT/PATCH/DELETE (trừ login) cần token CSRF — tên header và cách cấp token
+      **chưa chốt** (P1-02, Anh), sẽ bổ sung ở v1.
+
+    **Tổ chức file**: `paths/<module>.yaml` do owner module đề xuất, TV1 duyệt; file gốc và
+    `components/` thuộc TV1. Không sửa `generated/` bằng tay.
+servers:
+  - url: /api/v1
+    description: Same-origin (SPA và API cùng App Service, D-03)
+security:
+  - sessionCookie: []
+tags:
+  - name: health
+    description: Liveness và DB readiness
+  - name: auth
+    description: Đăng nhập / đăng xuất (F01)
+  - name: me
+    description: Tài khoản đang đăng nhập
+  - name: students
+    description: Học viên (F02)
+paths:
+  /health:
+    $ref: ./paths/health.yaml#/health
+  /auth/login:
+    $ref: ./paths/auth.yaml#/login
+  /auth/logout:
+    $ref: ./paths/auth.yaml#/logout
+  /me:
+    $ref: ./paths/me.yaml#/me
+  /students:
+    $ref: ./paths/students.yaml#/students
+  /students/{studentId}:
+    $ref: ./paths/students.yaml#/studentById
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-educenter_session
+      description: |
+        Cookie phiên opaque (Secure, HttpOnly, SameSite=Lax, Path=/), do `POST /auth/login` cấp.
+        Phiên gắn cố định với một tenant; đổi tenant = đăng nhập lại.

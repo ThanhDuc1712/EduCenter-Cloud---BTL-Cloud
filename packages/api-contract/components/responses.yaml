@@ -1,0 +1,82 @@
+# Response lỗi dùng chung — owner: TV1 (Đức). Body luôn là schemas.yaml#/Error.
+
+ValidationFailed:
+  description: Request không hợp lệ (DTO sai, field lạ, pageSize > 100…). `code = VALIDATION_FAILED`.
+  headers:
+    X-Request-ID:
+      $ref: '#/_headers/XRequestId'
+  content:
+    application/json:
+      schema:
+        $ref: ./schemas.yaml#/Error
+
+Unauthorized:
+  description: Thiếu / hết hạn / đã thu hồi phiên. `code = AUTH_SESSION_INVALID`.
+  headers:
+    X-Request-ID:
+      $ref: '#/_headers/XRequestId'
+  content:
+    application/json:
+      schema:
+        $ref: ./schemas.yaml#/Error
+
+Forbidden:
+  description: Không đủ quyền (`FORBIDDEN`), CSRF/Origin sai (`CSRF_REJECTED`) hoặc phải đổi mật khẩu (`PASSWORD_CHANGE_REQUIRED`).
+  headers:
+    X-Request-ID:
+      $ref: '#/_headers/XRequestId'
+  content:
+    application/json:
+      schema:
+        $ref: ./schemas.yaml#/Error
+
+NotFound:
+  description: Không tồn tại hoặc nằm ngoài phạm vi tenant/quyền (không tiết lộ sự tồn tại). `code = NOT_FOUND`.
+  headers:
+    X-Request-ID:
+      $ref: '#/_headers/XRequestId'
+  content:
+    application/json:
+      schema:
+        $ref: ./schemas.yaml#/Error
+
+Conflict:
+  description: Xung đột (trùng unique, sai version, Idempotency-Key với body khác). `code = CONFLICT` hoặc mã nghiệp vụ.
+  headers:
+    X-Request-ID:
+      $ref: '#/_headers/XRequestId'
+  content:
+    application/json:
+      schema:
+        $ref: ./schemas.yaml#/Error
+
+RateLimited:
+  description: Vượt giới hạn tần suất. `code = RATE_LIMITED`.
+  headers:
+    X-Request-ID:
+      $ref: '#/_headers/XRequestId'
+    Retry-After:
+      description: Số giây cần chờ trước khi thử lại.
+      schema:
+        type: integer
+        minimum: 0
+  content:
+    application/json:
+      schema:
+        $ref: ./schemas.yaml#/Error
+
+InternalError:
+  description: Lỗi không xác định. `code = INTERNAL_ERROR`; không lộ chi tiết.
+  headers:
+    X-Request-ID:
+      $ref: '#/_headers/XRequestId'
+  content:
+    application/json:
+      schema:
+        $ref: ./schemas.yaml#/Error
+
+_headers:
+  XRequestId:
+    description: ID request do server sinh; trùng `requestId` trong error body.
+    schema:
+      type: string
