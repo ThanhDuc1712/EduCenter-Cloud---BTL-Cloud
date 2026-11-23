@@ -1,0 +1,5 @@
+RequestId:
+  description: Server-generated correlation ID; also returned as `requestId` in error bodies.
+  schema:
+    type: string
+    format: uuid

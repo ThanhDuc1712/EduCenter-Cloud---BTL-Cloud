@@ -1,4 +1,11 @@
-# functions/material-processor là Python (TV5) — nằm ngoài pnpm workspace.
 packages:
-  - "apps/*"
-  - "packages/*"
+  - apps/*
+  - packages/*
+
+# Only these packages may run install scripts (supply-chain hardening).
+onlyBuiltDependencies:
+  - '@nestjs/core'
+  - '@prisma/engines'
+  - '@tailwindcss/oxide'
+  - esbuild
+  - prisma

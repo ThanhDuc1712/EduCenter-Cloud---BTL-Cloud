@@ -1,0 +1,100 @@
+# CI baseline (P0-06): lint, typecheck, unit tests, build, Gitleaks.
+# Security: read-only token, no secrets used, no pull_request_target, every action pinned to a
+# commit SHA (the tag in the comment is informational only — update both together).
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    # main + the 6 personal branches (D-35, ROADMAP §7.4).
+    branches: [main, duc, doanh, anh, ha, duong, giang]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  REDOCLY_TELEMETRY: 'off'
+
+jobs:
+  quality:
+    name: Lint · typecheck · test · build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm (version from package.json "packageManager")
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+
+      - name: Set up Node.js (version from .nvmrc)
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Toolchain versions
+        run: |
+          node -v
+          pnpm -v
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      # typecheck/test import the built package (docs/runbooks/local-dev.md).
+      - name: Build shared package
+        run: pnpm --filter @educenter/shared build
+
+      - name: Lint (ESLint + OpenAPI lint)
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      # The contract client is committed (D-36); the build regenerates it, so any diff is drift.
+      - name: Check generated files are up to date
+        run: git diff --exit-code -- packages/api-contract/generated
+
+  gitleaks:
+    name: Gitleaks secret scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      GITLEAKS_VERSION: 8.30.1
+      # sha256 of gitleaks_8.30.1_linux_x64.tar.gz from the release checksums file.
+      GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install Gitleaks (checksum-verified release binary)
+        run: |
+          set -euo pipefail
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfL -o "$RUNNER_TEMP/$archive" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${archive}"
+          echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/$archive" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP" gitleaks
+          "$RUNNER_TEMP/gitleaks" version
+
+      # Scans every commit reachable from the checkout; findings are redacted in the log.
+      - name: Scan git history
+        run: |
+          "$RUNNER_TEMP/gitleaks" git --redact --no-banner --exit-code 1 .

@@ -1,0 +1,16 @@
+// EduCenter Cloud — Prisma schema.
+// Owner: TV4 (ROADMAP §7.1). Business models (schema v0, P0-08) are added by the owner;
+// schema v1 freezes per D-27. Conventions: snake_case plural tables, tenant_id on every
+// business table, UNIQUE(tenant_id, id) + composite FKs, class_sessions (D-04).
+// The datasource URL lives in prisma.config.ts (migrator role); the app connects
+// at runtime as edu_runtime through the pg driver adapter.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}

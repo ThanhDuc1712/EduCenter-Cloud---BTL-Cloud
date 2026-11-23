@@ -1,22 +1,43 @@
-# Owner endpoint: Anh (P0-07) · Contract: Đức
-
 health:
   get:
     operationId: getHealth
     tags: [health]
-    summary: Liveness + DB readiness
-    description: Dùng làm health check path của App Service (P0-11). Không cần đăng nhập.
+    summary: Readiness — application and database.
+    description: Used as the App Service health check path. Returns 503 when the database is not reachable within the timeout. Never exposes version, hostname or environment.
     security: []
     responses:
       '200':
-        description: Ứng dụng sống và DB sẵn sàng.
+        description: Application and database are ready.
+        headers:
+          X-Request-ID:
+            $ref: ../components/headers/common.yaml#/RequestId
         content:
           application/json:
             schema:
-              $ref: ../components/schemas.yaml#/HealthStatus
+              $ref: ../components/schemas/health.yaml#/HealthResponse
       '503':
-        description: DB chưa sẵn sàng.
+        description: Database not ready.
+        headers:
+          X-Request-ID:
+            $ref: ../components/headers/common.yaml#/RequestId
         content:
           application/json:
             schema:
-              $ref: ../components/schemas.yaml#/HealthStatus
+              $ref: ../components/schemas/health.yaml#/HealthResponse
+
+health-live:
+  get:
+    operationId: getLiveness
+    tags: [health]
+    summary: Liveness — process is up (no dependency checks).
+    security: []
+    responses:
+      '200':
+        description: Process is alive.
+        headers:
+          X-Request-ID:
+            $ref: ../components/headers/common.yaml#/RequestId
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas/health.yaml#/HealthResponse
