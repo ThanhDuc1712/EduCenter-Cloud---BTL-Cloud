@@ -1,0 +1,69 @@
+# Local development only (P0-19). No cloud resources are referenced here.
+#   pnpm db:up                            -> PostgreSQL only (recommended; run api/web with pnpm dev)
+#   docker compose --profile app up -d    -> PostgreSQL + api + web in containers
+name: educenter
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: educenter
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      EDU_MIGRATOR_PASSWORD: ${EDU_MIGRATOR_PASSWORD:?set EDU_MIGRATOR_PASSWORD in .env}
+      EDU_RUNTIME_PASSWORD: ${EDU_RUNTIME_PASSWORD:?set EDU_RUNTIME_PASSWORD in .env}
+    ports:
+      # Bound to loopback only — not reachable from the LAN.
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infra/local/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d educenter"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  api:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: infra/local/Dockerfile.dev
+    command: ["pnpm", "--filter", "api", "start"]
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      LOG_LEVEL: log
+      APP_ORIGIN: http://localhost:5173
+      DATABASE_URL: postgresql://edu_runtime:${EDU_RUNTIME_PASSWORD}@postgres:5432/educenter
+      MIGRATION_DATABASE_URL: postgresql://edu_migrator:${EDU_MIGRATOR_PASSWORD}@postgres:5432/educenter
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/v1/health/live >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 20s
+
+  web:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: infra/local/Dockerfile.dev
+    command: ["pnpm", "--filter", "web", "dev", "--host", "0.0.0.0"]
+    environment:
+      API_PROXY_TARGET: http://api:3000
+    ports:
+      - "127.0.0.1:5173:5173"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  pgdata:

@@ -1,0 +1,19 @@
+ValidationFailed:
+  description: Request failed validation.
+  headers:
+    X-Request-ID:
+      $ref: ../headers/common.yaml#/RequestId
+  content:
+    application/json:
+      schema:
+        $ref: ../schemas/common.yaml#/ErrorResponse
+
+InternalError:
+  description: Unexpected server error (details are never exposed).
+  headers:
+    X-Request-ID:
+      $ref: ../headers/common.yaml#/RequestId
+  content:
+    application/json:
+      schema:
+        $ref: ../schemas/common.yaml#/ErrorResponse

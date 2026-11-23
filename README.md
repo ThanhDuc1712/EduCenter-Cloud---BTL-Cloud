@@ -1,67 +1,50 @@
-
 # EduCenter Cloud
 
-Nền tảng SaaS quản lý trung tâm giáo dục theo kiến trúc Multi-Cloud, kết hợp Microsoft Azure và Alibaba Cloud.
+Multi-tenant B2B SaaS for education centers (Admin / Teacher / Student).
+Modular monolith: NestJS API + React SPA on PostgreSQL, contract-first (OpenAPI) and schema-first (Prisma).
 
-> Bài tập lớn môn Điện toán đám mây — VNU-UET.
+Coordination, decisions and task scope live in `ROADMAP.md` (§2.3 Decision Log, §5 tasks, §7 working rules).
+`ROADMAP.md` is maintained by TV1 and is not yet stored in this repository.
 
-![React](https://img.shields.io/badge/React-Frontend-61DAFB?logo=react)
-![NestJS](https://img.shields.io/badge/NestJS-Backend-E0234E?logo=nestjs)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1?logo=postgresql)
-![Azure](https://img.shields.io/badge/Microsoft-Azure-0078D4)
-![Alibaba Cloud](https://img.shields.io/badge/Alibaba-Cloud-FF6A00)
+Toolchain: Node.js 24 LTS (`.nvmrc`) and pnpm 10.34.9 (`packageManager`) — see the runbook.
 
-## Features
+## Layout
 
-- Quản lý nhiều trung tâm giáo dục (Multi-tenant).
-- Quản lý học viên, giáo viên, lớp học và khóa học.
-- Quản lý điểm danh, điểm số, học phí và thống kê.
-- Lưu trữ và xử lý tài liệu học tập trên Multi-Cloud.
-- Phân quyền Admin, Teacher và Student.
-
-## Architecture
-
-```mermaid
-flowchart LR
-    U[User] --> A[Azure App Service]
-    A --> B[React + NestJS]
-    B --> D[(PostgreSQL)]
-    U -->|Upload| O[Alibaba OSS]
-    O --> F[Function Compute]
-    F -->|Callback| B
-    F --> P[OSS Published]
-    P -->|Download| U
+```
+apps/
+  api/                 NestJS 11 (Express) — /api/v1, Prisma 7 (pg adapter)
+    src/common/        config validation, logging, request ID, body parsing, errors, authz, prisma
+    src/health/        GET /api/v1/health (readiness) · /health/live (liveness)
+    prisma/            schema.prisma (owner TV4) · migrations
+    test/              HTTP foundation, route inventory, integration (DB) tests
+  web/                 React 19 + Vite 8 + Tailwind 4 + shadcn/ui; typed client from the contract
+packages/
+  api-contract/        OpenAPI 3.1 (openapi.yaml + paths/<module>.yaml) → generated/schema.d.ts
+  shared/              framework-agnostic constants (error codes, header names)
+infra/local/           PostgreSQL init (DB roles, D-25) · dev Dockerfile
+docs/runbooks/         local-dev.md
+tests/                 cross-cutting suites (security, load) — added by later tasks
+docker-compose.yml     local PostgreSQL 16 (+ optional api/web profile)
 ```
 
-- **Microsoft Azure:** Application, Database, Security.
-- **Alibaba Cloud:** Object Storage, Serverless Processing.
+## Quick start
 
-## Getting Started
+See [docs/runbooks/local-dev.md](docs/runbooks/local-dev.md).
 
 ```bash
-git clone https://github.com/ThanhDuc1712/EduCenter-Cloud---BTL-Cloud.git
-cd EduCenter-Cloud---BTL-Cloud
-pnpm install
+pnpm install && cp .env.example .env   # fill in change-me-* values
+pnpm db:up && pnpm --filter @educenter/shared build && pnpm db:generate
+pnpm dev                               # http://localhost:5173
 ```
 
-## Branches
+## Foundation guarantees (do not weaken)
 
-| Branch | Description |
-|--------|-------------|
-| `main` | Integration & Release |
-| `front-backend` | Application Development |
-| `azure` | Azure Infrastructure |
-| `aliyun` | Alibaba Cloud Infrastructure |
-
-## Team
-
-Đức · Doanh · Anh · Hà · Dương · Giang
-
-## Documentation
-
-- [Project Roadmap](ROADMAP.md)
-- [API Contract](packages/api-contract/openapi.yaml)
-
----
-
-**Status:** In Development 🚀
+- Config validated at startup; missing/invalid env → process exits non-zero (values never logged).
+- Deny-by-default authorization: a route without an explicit policy returns 403; a test fails if any route lacks one.
+- Standard error body `{ code, message, requestId, fieldErrors? }`; no stack traces, SQL or constraint names.
+- Server-generated `X-Request-ID` on every response and in every log line (JSON lines).
+- DTO validation: `whitelist` + `forbidNonWhitelisted` + `transform`.
+- JSON bodies bounded; raw body only under `/api/v1/internal/*` (HMAC callbacks).
+- No CORS (same-origin, D-03); helmet security headers; no `x-powered-by`.
+- App connects as `edu_runtime` (no superuser, no BYPASSRLS, no DDL); migrations as `edu_migrator`.
+- Unsafe raw SQL (`$queryRawUnsafe` / `$executeRawUnsafe`) is a lint error.

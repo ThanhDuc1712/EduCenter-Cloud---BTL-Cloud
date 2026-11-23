@@ -1,17 +1,27 @@
 {
   "name": "educenter-cloud",
-  "version": "0.0.0",
   "private": true,
-  "description": "EduCenter Cloud — B2B SaaS quản lý trung tâm giáo dục (Azure + Alibaba Cloud)",
+  "version": "0.0.0",
+  "description": "EduCenter Cloud — multi-tenant education center management (modular monolith)",
   "packageManager": "pnpm@10.34.9",
   "engines": {
     "node": ">=24 <25",
-    "pnpm": ">=10.34.9 <11"
+    "pnpm": "10.34.9"
   },
   "scripts": {
-    "lint": "pnpm -r --if-present run lint",
-    "typecheck": "pnpm -r --if-present run typecheck",
-    "test": "pnpm -r --if-present run test",
-    "build": "pnpm -r --if-present run build"
+    "dev": "pnpm --parallel --filter api --filter web dev",
+    "dev:api": "pnpm --filter api dev",
+    "dev:web": "pnpm --filter web dev",
+    "build": "pnpm -r --workspace-concurrency=1 build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "test:integration": "pnpm --filter api test:integration",
+    "contract:lint": "pnpm --filter @educenter/api-contract lint",
+    "contract:generate": "pnpm --filter @educenter/api-contract generate",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:migrate": "pnpm --filter api prisma:migrate",
+    "db:generate": "pnpm --filter api prisma:generate"
   }
 }

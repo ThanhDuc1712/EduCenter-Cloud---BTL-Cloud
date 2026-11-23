@@ -12,8 +12,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Liveness + DB readiness
-         * @description Dùng làm health check path của App Service (P0-11). Không cần đăng nhập.
+         * Readiness — application and database.
+         * @description Used as the App Service health check path. Returns 503 when the database is not reachable within the timeout. Never exposes version, hostname or environment.
          */
         get: operations["getHealth"];
         put?: never;
@@ -24,302 +24,101 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/auth/login": {
+    "/health/live": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
-        put?: never;
-        /**
-         * Đăng nhập vào một tenant
-         * @description Body gồm `tenantSlug` + `email` + `password` (D-24). Thành công → cấp cookie phiên mới
-         *     (thu hồi phiên cũ nếu có). Mọi nguyên nhân thất bại (sai tenant / email / mật khẩu, tài khoản
-         *     không hoạt động) trả **cùng** 401 `AUTH_INVALID_CREDENTIALS`. Chỉ kiểm tra Origin, không cần CSRF token.
-         */
-        post: operations["login"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/auth/logout": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Đăng xuất (thu hồi phiên hiện tại)
-         * @description Cần CSRF token (header chưa chốt — P1-02). Thành công → xóa cookie phiên.
-         */
-        post: operations["logout"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/me": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Người dùng đang đăng nhập
-         * @description Được phép gọi cả khi `mustChangePassword = true`.
-         */
-        get: operations["getMe"];
+        /** Liveness — process is up (no dependency checks). */
+        get: operations["getLiveness"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
-        trace?: never;
-    };
-    "/students": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Danh sách học viên (phân trang, tìm theo mã/tên) */
-        get: operations["listStudents"];
-        put?: never;
-        /**
-         * Tạo học viên (CENTER_ADMIN)
-         * @description Cần CSRF token (P1-02). Trùng `code` trong tenant → 409.
-         */
-        post: operations["createStudent"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/students/{studentId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description ID học viên (UUID). Sai định dạng → 400. */
-                studentId: components["schemas"]["Uuid"];
-            };
-            cookie?: never;
-        };
-        /** Chi tiết học viên */
-        get: operations["getStudent"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * Cập nhật học viên (CENTER_ADMIN)
-         * @description Cần CSRF token (P1-02). Trùng `code` → 409.
-         */
-        patch: operations["updateStudent"];
         trace?: never;
     };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /** @description Proposed — Anh chốt shape ở P0-07. */
-        HealthStatus: {
-            /** @enum {string} */
-            status: "ok" | "unavailable";
-            /**
-             * @description Kết quả kiểm tra DB readiness (`SELECT 1` có timeout).
-             * @enum {string}
-             */
-            database: "up" | "down";
-        };
         /**
-         * @description Định danh tenant dùng khi đăng nhập (D-24). Pattern/độ dài: Proposed.
-         * @example trung-tam-a
-         */
-        TenantSlug: string;
-        LoginRequest: {
-            tenantSlug: components["schemas"]["TenantSlug"];
-            /** Format: email */
-            email: string;
-            /**
-             * Format: password
-             * @description Giới hạn độ dài tối đa để chống DoS Argon2 (Proposed, ANH.md P1-01).
-             */
-            password: string;
-        };
-        /** Format: uuid */
-        Uuid: string;
-        /**
-         * @description Vai trò trong tenant (V2 §6.2). PLATFORM_ADMIN không triển khai trong BTL (D-24). Tên giá trị: Proposed — Anh xác nhận ở P1-01.
+         * @description Machine-readable error code. Feature modules extend this list through the contract. Mirrors packages/shared/src/error-codes.ts.
          * @enum {string}
          */
-        Role: "CENTER_ADMIN" | "TEACHER" | "STUDENT";
-        TenantSummary: {
-            slug: components["schemas"]["TenantSlug"];
-            name: string;
+        ErrorCode: "VALIDATION_FAILED" | "UNAUTHENTICATED" | "FORBIDDEN" | "NOT_FOUND" | "CONFLICT" | "PAYLOAD_TOO_LARGE" | "TOO_MANY_REQUESTS" | "INTERNAL_ERROR" | "SERVICE_UNAVAILABLE";
+        ErrorResponse: {
+            code: components["schemas"]["ErrorCode"];
+            /** @description Human-readable, safe to display. Never contains stack traces, SQL or constraint names. */
+            message: string;
+            /** Format: uuid */
+            requestId: string;
+            fieldErrors?: components["schemas"]["FieldError"][];
         };
-        /**
-         * @description Thông tin tối thiểu của người dùng đang đăng nhập (ANH.md P1-01).
-         *     Thông tin CSRF sẽ bổ sung khi P1-02 chốt cơ chế.
-         */
-        Principal: {
-            userId: components["schemas"]["Uuid"];
-            role: components["schemas"]["Role"];
-            /** @description true → chỉ được gọi `GET /me`, `POST /auth/change-password`, `POST /auth/logout` (D-28). */
-            mustChangePassword: boolean;
-            tenant: components["schemas"]["TenantSummary"];
-        };
-        /**
-         * @description Mã lỗi dạng UPPER_SNAKE_CASE. Module được thêm mã nghiệp vụ riêng (vd `ENROLLMENT_CAPACITY_EXCEEDED`).
-         *     Mã dùng chung (ANH.md §9.2, Proposed):
-         *     `VALIDATION_FAILED` (400), `AUTH_INVALID_CREDENTIALS` (401), `AUTH_SESSION_INVALID` (401),
-         *     `CSRF_REJECTED` (403), `FORBIDDEN` (403), `PASSWORD_CHANGE_REQUIRED` (403), `NOT_FOUND` (404),
-         *     `CONFLICT` (409), `RATE_LIMITED` (429), `INTERNAL_ERROR` (500).
-         * @example VALIDATION_FAILED
-         */
-        ErrorCode: string;
-        /** @description Proposed — shape chi tiết chốt với Anh (error filter P0-07). */
         FieldError: {
-            /** @description Tên field trong request (dạng path, vd `email`). */
+            /**
+             * @description Dotted path of the offending input field.
+             * @example email
+             */
             field: string;
             message: string;
         };
-        /** @description Error body chuẩn cho mọi response lỗi. Không chứa stack trace, lỗi DB hay chi tiết kỹ thuật. */
-        Error: {
-            code: components["schemas"]["ErrorCode"];
-            /** @description Thông điệp thân thiện (tiếng Việt), an toàn để hiển thị. */
-            message: string;
-            /** @description Trùng với header `X-Request-ID` của response; dùng để tra log. */
-            requestId: string;
-            /** @description Chỉ có khi `code = VALIDATION_FAILED`. */
-            fieldErrors?: components["schemas"]["FieldError"][];
-        };
-        /** @description Mã học viên, duy nhất trong tenant (UNIQUE(tenant_id, code)). Độ dài: Proposed. */
-        StudentCode: string;
-        Student: {
-            id: components["schemas"]["Uuid"];
-            code: components["schemas"]["StudentCode"];
-            /** @description Tài khoản đăng nhập gắn với học viên; null nếu chưa cấp (P1-25). */
-            userId: components["schemas"]["Uuid"] | null;
-            /** @description Giá trị enum chưa chốt (HA.md OQ-07) — FE không được giả định danh sách giá trị. */
-            status: string;
-        };
+        /**
+         * @description Amount in VND as a non-negative integer encoded as a string (BIGINT in DB, D-12).
+         * @example 1500000
+         */
+        MoneyVnd: string;
         PageMeta: {
             page: number;
             pageSize: number;
-            /** @description Tổng số bản ghi khớp bộ lọc (trong phạm vi tenant/quyền của người gọi). */
             total: number;
         };
-        StudentPage: {
-            items: components["schemas"]["Student"][];
-            meta: components["schemas"]["PageMeta"];
-        };
-        /** @description Không nhận `tenantId`, `userId`, `role` từ body. Field họ tên/profile bổ sung sau khi OQ-17 chốt. */
-        StudentCreateRequest: {
-            code: components["schemas"]["StudentCode"];
-        };
-        /** @description Cập nhật một phần. Field bổ sung sau khi OQ-17 và enum `status` chốt. */
-        StudentUpdateRequest: {
-            code?: components["schemas"]["StudentCode"];
+        HealthResponse: {
+            /** @enum {string} */
+            status: "ok" | "error";
+            checks: {
+                /** @enum {string} */
+                app: "up";
+                /** @enum {string} */
+                database?: "up" | "down";
+            };
         };
     };
     responses: {
-        /** @description Request không hợp lệ (DTO sai, field lạ, pageSize > 100…). `code = VALIDATION_FAILED`. */
+        /** @description Request failed validation. */
         ValidationFailed: {
             headers: {
-                "X-Request-ID": components["headers"]["XRequestId"];
+                "X-Request-ID": components["headers"]["RequestId"];
                 [name: string]: unknown;
             };
             content: {
-                "application/json": components["schemas"]["Error"];
+                "application/json": components["schemas"]["ErrorResponse"];
             };
         };
-        /** @description Không đủ quyền (`FORBIDDEN`), CSRF/Origin sai (`CSRF_REJECTED`) hoặc phải đổi mật khẩu (`PASSWORD_CHANGE_REQUIRED`). */
-        Forbidden: {
-            headers: {
-                "X-Request-ID": components["headers"]["XRequestId"];
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["Error"];
-            };
-        };
-        /** @description Vượt giới hạn tần suất. `code = RATE_LIMITED`. */
-        RateLimited: {
-            headers: {
-                "X-Request-ID": components["headers"]["XRequestId"];
-                /** @description Số giây cần chờ trước khi thử lại. */
-                "Retry-After"?: number;
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["Error"];
-            };
-        };
-        /** @description Lỗi không xác định. `code = INTERNAL_ERROR`; không lộ chi tiết. */
+        /** @description Unexpected server error (details are never exposed). */
         InternalError: {
             headers: {
-                "X-Request-ID": components["headers"]["XRequestId"];
+                "X-Request-ID": components["headers"]["RequestId"];
                 [name: string]: unknown;
             };
             content: {
-                "application/json": components["schemas"]["Error"];
-            };
-        };
-        /** @description Thiếu / hết hạn / đã thu hồi phiên. `code = AUTH_SESSION_INVALID`. */
-        Unauthorized: {
-            headers: {
-                "X-Request-ID": components["headers"]["XRequestId"];
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["Error"];
-            };
-        };
-        /** @description Xung đột (trùng unique, sai version, Idempotency-Key với body khác). `code = CONFLICT` hoặc mã nghiệp vụ. */
-        Conflict: {
-            headers: {
-                "X-Request-ID": components["headers"]["XRequestId"];
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["Error"];
-            };
-        };
-        /** @description Không tồn tại hoặc nằm ngoài phạm vi tenant/quyền (không tiết lộ sự tồn tại). `code = NOT_FOUND`. */
-        NotFound: {
-            headers: {
-                "X-Request-ID": components["headers"]["XRequestId"];
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["Error"];
+                "application/json": components["schemas"]["ErrorResponse"];
             };
         };
     };
     parameters: {
-        /** @description Số trang, bắt đầu từ 1. */
         Page: number;
-        /** @description Số bản ghi mỗi trang. Tối đa 100; vượt → 400 `VALIDATION_FAILED`. */
         PageSize: number;
+        /** @description Client-generated key (UUID) for safely retrying risky mutations (D-13). */
+        IdempotencyKey: string;
     };
     requestBodies: never;
     headers: {
-        /** @description ID request do server sinh; trùng `requestId` trong error body. */
-        XRequestId: string;
+        /** @description Server-generated correlation ID; also returned as `requestId` in error bodies. */
+        RequestId: string;
     };
     pathItems: never;
 }
@@ -334,66 +133,29 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Ứng dụng sống và DB sẵn sàng. */
+            /** @description Application and database are ready. */
             200: {
                 headers: {
+                    "X-Request-ID": components["headers"]["RequestId"];
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HealthStatus"];
+                    "application/json": components["schemas"]["HealthResponse"];
                 };
             };
-            /** @description DB chưa sẵn sàng. */
+            /** @description Database not ready. */
             503: {
                 headers: {
+                    "X-Request-ID": components["headers"]["RequestId"];
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HealthStatus"];
+                    "application/json": components["schemas"]["HealthResponse"];
                 };
             };
         };
     };
-    login: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["LoginRequest"];
-            };
-        };
-        responses: {
-            /** @description Đăng nhập thành công. */
-            200: {
-                headers: {
-                    /** @description `__Host-educenter_session=<token>; Secure; HttpOnly; SameSite=Lax; Path=/` */
-                    "Set-Cookie"?: string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Principal"];
-                };
-            };
-            400: components["responses"]["ValidationFailed"];
-            /** @description Thông tin đăng nhập không hợp lệ. `code = AUTH_INVALID_CREDENTIALS`. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-            403: components["responses"]["Forbidden"];
-            429: components["responses"]["RateLimited"];
-            500: components["responses"]["InternalError"];
-        };
-    };
-    logout: {
+    getLiveness: {
         parameters: {
             query?: never;
             header?: never;
@@ -402,159 +164,16 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Đã thu hồi phiên. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalError"];
-        };
-    };
-    getMe: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Principal của phiên hiện tại. */
+            /** @description Process is alive. */
             200: {
                 headers: {
+                    "X-Request-ID": components["headers"]["RequestId"];
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Principal"];
+                    "application/json": components["schemas"]["HealthResponse"];
                 };
             };
-            401: components["responses"]["Unauthorized"];
-            500: components["responses"]["InternalError"];
-        };
-    };
-    listStudents: {
-        parameters: {
-            query?: {
-                /** @description Số trang, bắt đầu từ 1. */
-                page?: components["parameters"]["Page"];
-                /** @description Số bản ghi mỗi trang. Tối đa 100; vượt → 400 `VALIDATION_FAILED`. */
-                pageSize?: components["parameters"]["PageSize"];
-                /** @description Tìm theo mã học viên (và họ tên khi OQ-17 chốt). So khớp tham số hóa, không phải pattern. */
-                q?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Một trang học viên. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["StudentPage"];
-                };
-            };
-            400: components["responses"]["ValidationFailed"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalError"];
-        };
-    };
-    createStudent: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["StudentCreateRequest"];
-            };
-        };
-        responses: {
-            /** @description Đã tạo. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Student"];
-                };
-            };
-            400: components["responses"]["ValidationFailed"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            409: components["responses"]["Conflict"];
-            500: components["responses"]["InternalError"];
-        };
-    };
-    getStudent: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description ID học viên (UUID). Sai định dạng → 400. */
-                studentId: components["schemas"]["Uuid"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Học viên. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Student"];
-                };
-            };
-            400: components["responses"]["ValidationFailed"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            404: components["responses"]["NotFound"];
-            500: components["responses"]["InternalError"];
-        };
-    };
-    updateStudent: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description ID học viên (UUID). Sai định dạng → 400. */
-                studentId: components["schemas"]["Uuid"];
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["StudentUpdateRequest"];
-            };
-        };
-        responses: {
-            /** @description Đã cập nhật. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Student"];
-                };
-            };
-            400: components["responses"]["ValidationFailed"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            404: components["responses"]["NotFound"];
-            409: components["responses"]["Conflict"];
-            500: components["responses"]["InternalError"];
         };
     };
 }
