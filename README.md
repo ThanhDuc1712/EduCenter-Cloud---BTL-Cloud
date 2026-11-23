@@ -4,7 +4,8 @@ Multi-tenant B2B SaaS for education centers (Admin / Teacher / Student).
 Modular monolith: NestJS API + React SPA on PostgreSQL, contract-first (OpenAPI) and schema-first (Prisma).
 
 Coordination, decisions and task scope live in `ROADMAP.md` (§2.3 Decision Log, §5 tasks, §7 working rules).
-`ROADMAP.md` is maintained by TV1 and is not yet stored in this repository.
+`ROADMAP.md` (repo root) is maintained by TV1; each member's task handoff is `docs/handoff/<NAME>.md` (D-34).
+Changes reach `main` only through pull requests using `.github/pull_request_template.md` (§7.4, §7.7).
 
 Toolchain: Node.js 24 LTS (`.nvmrc`) and pnpm 10.34.9 (`packageManager`) — see the runbook.
 
@@ -21,9 +22,14 @@ apps/
 packages/
   api-contract/        OpenAPI 3.1 (openapi.yaml + paths/<module>.yaml) → generated/schema.d.ts
   shared/              framework-agnostic constants (error codes, header names)
+functions/             material-processor (Aliyun FC, Python) — added by P0-15
 infra/local/           PostgreSQL init (DB roles, D-25) · dev Dockerfile
+infra/azure/ · aliyun/ IaC / policies — added by P0-11, P0-13, P0-14
+docs/handoff/          personal handoff files (one per member, D-34)
 docs/runbooks/         local-dev.md
-tests/                 cross-cutting suites (security, load) — added by later tasks
+tests/                 cross-cutting suites (security, load, e2e) — added by later tasks
+.github/               CI workflow, PR template, CODEOWNERS
+ROADMAP.md             coordination: decisions, tasks, working rules, gates
 docker-compose.yml     local PostgreSQL 16 (+ optional api/web profile)
 ```
 
