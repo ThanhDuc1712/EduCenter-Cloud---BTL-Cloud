@@ -3,6 +3,8 @@ import { EnvValidationError, validateEnv } from './env.validation';
 const base = {
   APP_ORIGIN: 'http://localhost:5173',
   DATABASE_URL: 'postgresql://edu_runtime:s3cr3t-value@localhost:5432/educenter',
+  DEMO_CONTEXT_SECRET: 'unit-test-demo-context-secret-0123456789',
+  CALLBACK_HMAC_KEYS: 'k1:unit-test-callback-hmac-secret-0123456789',
 };
 
 describe('validateEnv', () => {
@@ -19,11 +21,17 @@ describe('validateEnv', () => {
     expect(env.DB_CONNECTION_LIMIT).toBe(5);
   });
 
-  it.each(['DATABASE_URL', 'APP_ORIGIN'])('throws when required %s is missing', (key) => {
+  it.each(['DATABASE_URL', 'APP_ORIGIN', 'DEMO_CONTEXT_SECRET', 'CALLBACK_HMAC_KEYS'])('throws when required %s is missing', (key) => {
     const raw: Record<string, unknown> = { ...base };
     delete raw[key];
     expect(() => validateEnv(raw)).toThrow(EnvValidationError);
     expect(() => validateEnv(raw)).toThrow(key);
+  });
+  it('parses boolean flags and rejects short HMAC secrets', () => {
+    expect(validateEnv({ ...base, DEMO_MODE: 'true' }).DEMO_MODE).toBe(true);
+    expect(validateEnv({ ...base }).DEMO_MODE).toBe(false);
+    expect(() => validateEnv({ ...base, CALLBACK_HMAC_KEYS: 'k1:short' })).toThrow('CALLBACK_HMAC_KEYS');
+    expect(() => validateEnv({ ...base, STORAGE_PROVIDER: 's3' })).toThrow('STORAGE_PROVIDER');
   });
 
   it('rejects out-of-range values', () => {
