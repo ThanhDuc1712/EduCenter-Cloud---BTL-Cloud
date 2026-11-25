@@ -1,36 +1,28 @@
 <#
 .SYNOPSIS
-  Manual deployment of EduCenter Cloud to Azure (no CI/CD): infrastructure (Bicep), Key Vault secrets,
-  database roles + migrations, and the app package (API + SPA, same origin) to App Service.
+  Deploys EduCenter Cloud to the Azure resources of infra/azure/main.bicep (names end in -<suffix>).
 
 .DESCRIPTION
-  CREATES BILLABLE RESOURCES (App Service B1, PostgreSQL Flexible B1ms, Key Vault, Log Analytics,
-  Application Insights). The script asks you to type the resource group name before creating anything
-  unless -Force is given. Secrets are generated locally and written to Key Vault; they are never printed.
-  Alibaba Cloud keys (OSS API user, read-only ops user) are read from the current environment variables
-  OSS_ACCESS_KEY_ID / OSS_ACCESS_KEY_SECRET / ALIYUN_READONLY_ACCESS_KEY_ID / ALIYUN_READONLY_ACCESS_KEY_SECRET
-  (deploy-aliyun.ps1 sets them) and stored in Key Vault.
-
-  Requires: Azure CLI (az login), Docker Desktop (psql in a container), Node 24 + pnpm.
+  Default: build the app package (API + SPA, same origin) and deploy it to app-educenter-<suffix>.
+  -Infra   : first run what-if, ask for confirmation, then deploy main.bicep with demo.bicepparam
+             (needs the EDU_* variables, see infra/azure/README.md). The template REPLACES all app settings.
+  -Migrate : open a temporary firewall rule for this machine, run prisma migrate deploy as edu_migrator,
+             remove the rule.
+  The two app secrets (demo-context-secret, callback-hmac-keys) are created in the runtime Key Vault
+  when missing; values are generated locally and never printed. Database roles and db-runtime-url come
+  from infra/azure/scripts/bootstrap_db.py.
 
 .EXAMPLE
-  powershell -ExecutionPolicy Bypass -File scripts\windows\deploy-azure.ps1 -ResourceGroup rg-educenter-demo -AlertEmail ops@example.com
-  powershell -ExecutionPolicy Bypass -File scripts\windows\deploy-azure.ps1 -PackageOnly      # build the zip only, no Azure calls
-  powershell -ExecutionPolicy Bypass -File scripts\windows\deploy-azure.ps1 -ResourceGroup rg-educenter-demo -SkipInfra   # redeploy code only
+  powershell -ExecutionPolicy Bypass -File scripts\windows\deploy-azure.ps1 -PackageOnly      # no Azure calls
+  powershell -ExecutionPolicy Bypass -File scripts\windows\deploy-azure.ps1 -Suffix gdemo -Migrate
 #>
 param(
   [string]$ResourceGroup = 'rg-educenter-demo',
-  [string]$Location = 'southeastasia',
-  [string]$Prefix = 'educenter',
-  [string]$AlertEmail = '',
-  [string]$OpsAllowedCidrs = '',
-  [string]$OssQuarantineBucket = $env:OSS_QUARANTINE_BUCKET,
-  [string]$OssPublishedBucket = $env:OSS_PUBLISHED_BUCKET,
-  [string]$SlsProject = $env:ALIYUN_SLS_PROJECT,
-  [switch]$SkipInfra,
-  [switch]$Seed,
-  [switch]$PackageOnly,
-  [switch]$Force
+  [string]$Suffix = $env:EDU_SUFFIX,
+  [string]$CallbackKeyId = 'k1',
+  [switch]$Infra,
+  [switch]$Migrate,
+  [switch]$PackageOnly
 )
 . (Join-Path $PSScriptRoot 'common.ps1')
 
@@ -60,81 +52,64 @@ function New-DeployPackage {
 if ($PackageOnly) { New-DeployPackage | Out-Null; exit 0 }
 
 if (-not (Test-CommandExists az)) { throw 'Azure CLI not found: winget install Microsoft.AzureCLI, then az login' }
+if (-not $Suffix) { throw 'Pass -Suffix or set $env:EDU_SUFFIX' }
 & az account show --query name -o tsv *> $null
 if ($LASTEXITCODE -ne 0) { throw 'Not logged in: run az login' }
-$subscription = (& az account show --query name -o tsv)
-Write-Ok "Azure subscription: $subscription"
 
-if (-not $SkipInfra) {
-  if (-not $Force) {
-    Write-Warn2 "This creates BILLABLE resources in '$ResourceGroup' ($Location): App Service B1, PostgreSQL B1ms, Key Vault, Log Analytics, App Insights."
-    $answer = Read-Host "Type the resource group name ($ResourceGroup) to continue"
-    if ($answer -ne $ResourceGroup) { throw 'Aborted - nothing was created' }
-  }
+$appName = "app-educenter-$Suffix"
+$kvRuntime = "kv-edu-rt-$Suffix"
+$kvOps = "kv-edu-ops-$Suffix"
+$pgName = "pg-educenter-$Suffix"
 
-  Write-Step 'Resource group'
-  Invoke-Native az @('group', 'create', '-n', $ResourceGroup, '-l', $Location, '-o', 'none')
+if ($Infra) {
+  $paramFile = Join-Path $RepoRoot 'infra\azure\demo.bicepparam'
+  Write-Step 'what-if (nothing is changed yet)'
+  Invoke-Native az @('deployment', 'group', 'what-if', '-g', $ResourceGroup, '--name', 'educenter-infra', '--parameters', $paramFile)
+  $answer = Read-Host "Type the resource group name ($ResourceGroup) to apply these changes (billable)"
+  if ($answer -ne $ResourceGroup) { throw 'Aborted - nothing was changed' }
+  Invoke-Native az @('deployment', 'group', 'create', '-g', $ResourceGroup, '--name', 'educenter-infra', '--parameters', $paramFile, '-o', 'none')
+}
 
-  $pgAdminPassword = New-RandomSecret 32
-  Write-Step 'Deploying infra/azure/main.bicep (several minutes)'
-  $deployment = & az deployment group create -g $ResourceGroup -f (Join-Path $RepoRoot 'infra\azure\main.bicep') `
-    -p prefix=$Prefix pgAdminPassword=$pgAdminPassword alertEmail=$AlertEmail opsAllowedCidrs=$OpsAllowedCidrs `
-       ossQuarantineBucket=$OssQuarantineBucket ossPublishedBucket=$OssPublishedBucket slsProject=$SlsProject `
-    --query properties.outputs -o json
-  if ($LASTEXITCODE -ne 0) { throw 'Bicep deployment failed' }
-  $out = $deployment | ConvertFrom-Json
-  $appName = $out.appName.value; $kvName = $out.keyVaultName.value; $pgHost = $out.postgresServer.value; $pgName = $out.postgresName.value
-
-  Write-Step 'Granting the deploying user Key Vault Secrets Officer (to write secrets)'
-  $me = & az ad signed-in-user show --query id -o tsv
-  $kvId = & az keyvault show -n $kvName --query id -o tsv
-  & az role assignment create --assignee-object-id $me --assignee-principal-type User --role 'Key Vault Secrets Officer' --scope $kvId -o none 2>$null
-  Start-Sleep -Seconds 20  # RBAC propagation
-
-  Write-Step 'Writing secrets to Key Vault (values are generated locally and never printed)'
-  $migratorPw = New-RandomSecret 32; $runtimePw = New-RandomSecret 32
-  $secrets = @{
-    'pg-admin-password'   = $pgAdminPassword
-    'pg-migrator-password' = $migratorPw
-    'database-url'        = "postgresql://edu_runtime:$runtimePw@${pgHost}:5432/educenter?sslmode=require"
-    'migration-database-url' = "postgresql://edu_migrator:$migratorPw@${pgHost}:5432/educenter?sslmode=require"
-    'demo-context-secret' = (New-RandomSecret 48)
-    'callback-hmac-keys'  = "k1:$(New-RandomSecret 48)"
-  }
-  if ($env:OSS_ACCESS_KEY_ID) { $secrets['oss-access-key-id'] = $env:OSS_ACCESS_KEY_ID; $secrets['oss-access-key-secret'] = $env:OSS_ACCESS_KEY_SECRET }
-  else { $secrets['oss-access-key-id'] = 'not-configured'; $secrets['oss-access-key-secret'] = 'not-configured' }
-  if ($env:ALIYUN_READONLY_ACCESS_KEY_ID) { $secrets['aliyun-readonly-access-key-id'] = $env:ALIYUN_READONLY_ACCESS_KEY_ID; $secrets['aliyun-readonly-access-key-secret'] = $env:ALIYUN_READONLY_ACCESS_KEY_SECRET }
-  else { $secrets['aliyun-readonly-access-key-id'] = ''; $secrets['aliyun-readonly-access-key-secret'] = '' }
-  $expires = (Get-Date).ToUniversalTime().AddDays(180).ToString('yyyy-MM-ddTHH:mm:ssZ')
-  foreach ($name in $secrets.Keys) {
-    $tmp = New-TemporaryFile
-    try {
-      [System.IO.File]::WriteAllText($tmp.FullName, [string]$secrets[$name], (New-Object System.Text.UTF8Encoding($false)))
-      Invoke-Native az @('keyvault', 'secret', 'set', '--vault-name', $kvName, '-n', $name, '--file', $tmp.FullName, '--encoding', 'utf-8', '--expires', $expires, '-o', 'none')
-    } finally { Remove-Item -Force $tmp.FullName }
-  }
-  Write-Ok "$($secrets.Count) secrets stored (expire in 180 days - see docs/cloud-security.md for rotation)"
-
-  Write-Step 'Database roles + migrations (temporary firewall rule for this machine)'
-  $myIp = (Invoke-RestMethod -Uri 'https://api.ipify.org' -TimeoutSec 10)
-  Invoke-Native az @('postgres', 'flexible-server', 'firewall-rule', 'create', '-g', $ResourceGroup, '-n', $pgName, '-r', 'deploy-temp', '--start-ip-address', $myIp, '--end-ip-address', $myIp, '-o', 'none')
+Write-Step 'App secrets in the runtime Key Vault'
+function Set-SecretIfMissing([string]$Name, [string]$Value) {
+  $found = & az keyvault secret list --vault-name $kvRuntime --query "[?name=='$Name'].name | [0]" -o tsv
+  if ($LASTEXITCODE -ne 0) { throw "Cannot list secrets of $kvRuntime" }
+  if ($found) { Write-Ok "$Name already exists"; return }
+  $tmp = New-TemporaryFile
   try {
-    $sql = Join-Path $RepoRoot 'infra\azure'
-    $env:PGPASSWORD = $pgAdminPassword
-    Invoke-Native docker @('run', '--rm', '-e', 'PGPASSWORD', '-v', "${sql}:/sql:ro", 'postgres:16-alpine', 'psql', "host=$pgHost dbname=educenter user=eduadmin sslmode=require", '-v', "migrator_pw=$migratorPw", '-v', "runtime_pw=$runtimePw", '-f', '/sql/postgres-roles.sql')
-    Remove-Item Env:\PGPASSWORD
-    $env:MIGRATION_DATABASE_URL = $secrets['migration-database-url']
+    [System.IO.File]::WriteAllText($tmp.FullName, $Value, (New-Object System.Text.UTF8Encoding($false)))
+    Invoke-Native az @('keyvault', 'secret', 'set', '--vault-name', $kvRuntime, '-n', $Name, '--file', $tmp.FullName, '--encoding', 'utf-8', '-o', 'none')
+    Write-Ok "$Name created"
+  } finally { Remove-Item -Force $tmp.FullName }
+}
+# Keys exported by deploy-aliyun.ps1 in the same session (setting again = new secret version).
+function Set-SecretValue([string]$Name, [string]$Value) {
+  $tmp = New-TemporaryFile
+  try {
+    [System.IO.File]::WriteAllText($tmp.FullName, $Value, (New-Object System.Text.UTF8Encoding($false)))
+    Invoke-Native az @('keyvault', 'secret', 'set', '--vault-name', $kvRuntime, '-n', $Name, '--file', $tmp.FullName, '--encoding', 'utf-8', '-o', 'none')
+  } finally { Remove-Item -Force $tmp.FullName }
+}
+if ($env:OSS_ACCESS_KEY_ID -and $env:OSS_ACCESS_KEY_SECRET) {
+  Set-SecretValue 'oss-api-access-key-id' $env:OSS_ACCESS_KEY_ID
+  Set-SecretValue 'oss-api-access-key-secret' $env:OSS_ACCESS_KEY_SECRET
+  Write-Ok 'api-storage access key stored'
+}
+Set-SecretIfMissing 'demo-context-secret' (New-RandomSecret 48)
+Set-SecretIfMissing 'callback-hmac-keys' ("{0}:{1}" -f $CallbackKeyId, (New-RandomSecret 64))
+
+if ($Migrate) {
+  Write-Step 'Database migrations (temporary firewall rule for this machine)'
+  $firewall = Join-Path $RepoRoot 'infra\azure\scripts\set-pg-firewall.ps1'
+  & $firewall -Mode AdminAdd -ResourceGroup $ResourceGroup -Suffix $Suffix
+  try {
+    $env:MIGRATION_DATABASE_URL = & az keyvault secret show --vault-name $kvOps -n 'db-migrator-url' --query value -o tsv
+    if (-not $env:MIGRATION_DATABASE_URL) { throw "db-migrator-url not found in $kvOps - run infra\azure\scripts\bootstrap_db.py first ($pgName)" }
     Invoke-Native pnpm @('--filter', 'api', 'prisma:deploy')
-    if ($Seed) { Invoke-Native pnpm @('--filter', 'api', 'db:seed') }
   } finally {
     Remove-Item Env:\MIGRATION_DATABASE_URL -ErrorAction SilentlyContinue
-    Remove-Item Env:\PGPASSWORD -ErrorAction SilentlyContinue
-    & az postgres flexible-server firewall-rule delete -g $ResourceGroup -n $pgName -r deploy-temp --yes -o none
-    Write-Ok 'Temporary firewall rule removed'
+    & $firewall -Mode AdminRemove -ResourceGroup $ResourceGroup -Suffix $Suffix
   }
-} else {
-  $appName = & az webapp list -g $ResourceGroup --query "[?starts_with(name, '$Prefix-app-')].name | [0]" -o tsv
-  if (-not $appName) { throw "No App Service named $Prefix-app-* in $ResourceGroup" }
 }
 
 $zip = New-DeployPackage
@@ -142,7 +117,8 @@ Write-Step "Deploying package to App Service $appName"
 Invoke-Native az @('webapp', 'deploy', '-g', $ResourceGroup, '-n', $appName, '--src-path', $zip, '--type', 'zip', '--restart', 'true', '-o', 'none')
 
 Write-Step 'Waiting for /api/v1/health'
-$url = "https://$appName.azurewebsites.net"
+$hostName = & az webapp show -g $ResourceGroup -n $appName --query defaultHostName -o tsv
+$url = "https://$hostName"
 $deadline = (Get-Date).AddMinutes(5)
 while ((Get-Date) -lt $deadline) {
   try {

@@ -18,3 +18,13 @@ param pgStorageGB = 32
 param pgAdminPassword = readEnvironmentVariable('EDU_PG_ADMIN_PASSWORD') // gitleaks:allow (đọc từ biến môi trường)
 
 param githubEnvironment = 'demo'
+
+// Cấu hình ứng dụng. Đặt EDU_APP_ORIGIN = đúng default domain đang chạy (xem output webAppDefaultHostName).
+param appOrigin = readEnvironmentVariable('EDU_APP_ORIGIN', '')
+param logLevel = 'log'
+param callbackHmacActiveKeyId = readEnvironmentVariable('EDU_CALLBACK_KEY_ID', 'k1')
+param opsAllowedCidrs = readEnvironmentVariable('EDU_OPS_ALLOWED_CIDRS', '')
+// Chỉ đặt khi bucket + secret oss-api-* đã có; trống = LOCAL.
+param ossQuarantineBucket = readEnvironmentVariable('EDU_OSS_QUARANTINE_BUCKET', '')
+param ossPublishedBucket = readEnvironmentVariable('EDU_OSS_PUBLISHED_BUCKET', '')
+param slsProject = readEnvironmentVariable('EDU_SLS_PROJECT', '')

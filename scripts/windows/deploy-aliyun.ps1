@@ -107,4 +107,4 @@ $env:CALLBACK_URL = $CallbackUrl; $env:CALLBACK_HMAC_KEY_ID = $CallbackHmacKeyId
 Write-Step "Deploying Function Compute $FunctionName with OSS trigger (Serverless Devs)"
 if (-not (Test-CommandExists s)) { throw 'Serverless Devs not found: npm install -g @serverless-devs/s ; s config add' }
 Invoke-Native s @('deploy', '-y') $fn
-Write-Ok "Function deployed. Buckets: $quarantine / $published. Next: deploy-azure.ps1 -OssQuarantineBucket $quarantine -OssPublishedBucket $published -SlsProject $SlsProject"
+Write-Ok "Function deployed. Buckets: $quarantine / $published. Next: put the api-storage keys into Key Vault (oss-api-access-key-id / -secret), set EDU_OSS_QUARANTINE_BUCKET=$quarantine EDU_OSS_PUBLISHED_BUCKET=$published EDU_SLS_PROJECT=$SlsProject, then deploy-azure.ps1 -Infra"

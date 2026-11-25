@@ -43,6 +43,23 @@ param githubRepo string = 'ThanhDuc1712/EduCenter-Cloud---BTL-Cloud'
 @description('Tên GitHub Environment mà job deploy dùng (Doanh xác nhận).')
 param githubEnvironment string = 'demo'
 
+// ---------- Cấu hình ứng dụng (không có secret; secret đọc từ Key Vault runtime) ----------
+@description('Origin công khai của app, ví dụ https://<default-domain>. Trống = https://app-educenter-<suffix>.azurewebsites.net.')
+param appOrigin string = ''
+@allowed(['fatal', 'error', 'warn', 'log', 'debug', 'verbose'])
+param logLevel string = 'log'
+@description('Key ID đang dùng trong secret callback-hmac-keys (docs/runbooks/hmac-rotation.md).')
+param callbackHmacActiveKeyId string = 'k1'
+@description('CIDR được gọi /api/v1/cloud/* ở production, phân tách bằng dấu phẩy. Trống = chặn.')
+param opsAllowedCidrs string = ''
+@description('Để trống cả hai bucket = app chạy storage/processing LOCAL (mô phỏng).')
+param ossQuarantineBucket string = ''
+param ossPublishedBucket string = ''
+param aliyunRegion string = 'ap-southeast-1'
+param fcFunctionName string = 'material-processor'
+param slsProject string = ''
+param slsLogstore string = 'fc-material-processor'
+
 param logRetentionDays int = 30
 param tags object = {
   project: 'educenter'
@@ -61,6 +78,43 @@ var names = {
   pg: 'pg-educenter-${short}'
   deployId: 'id-educenter-deploy-${short}'
 }
+
+// ---------- App settings ----------
+// Template này thay TOÀN BỘ app settings khi deploy: mọi biến app cần phải khai báo ở đây.
+var appPort = '8080'
+var origin = empty(appOrigin) ? 'https://${names.app}.azurewebsites.net' : appOrigin
+var useOss = !empty(ossQuarantineBucket) && !empty(ossPublishedBucket)
+var kvRef = '@Microsoft.KeyVault(VaultName=${names.kvRuntime};SecretName='
+var baseAppSettings = [
+  { name: 'NODE_ENV', value: 'production' }
+  { name: 'PORT', value: appPort }
+  { name: 'APP_ORIGIN', value: origin }
+  { name: 'LOG_LEVEL', value: logLevel }
+  { name: 'TRUST_PROXY_HOPS', value: '1' }
+  { name: 'DB_CONNECTION_LIMIT', value: '5' }
+  { name: 'DATABASE_URL', value: '${kvRef}db-runtime-url)' }
+  { name: 'DEMO_CONTEXT_SECRET', value: '${kvRef}demo-context-secret)' }
+  { name: 'AUTH_MODE', value: 'session' }
+  { name: 'CALLBACK_HMAC_KEYS', value: '${kvRef}callback-hmac-keys)' }
+  { name: 'CALLBACK_HMAC_ACTIVE_KEY_ID', value: callbackHmacActiveKeyId }
+  { name: 'INTERNAL_BASE_URL', value: 'http://127.0.0.1:${appPort}' }
+  { name: 'WEB_DIST_DIR', value: '../web/dist' }
+  { name: 'OPS_ALLOWED_CIDRS', value: opsAllowedCidrs }
+  { name: 'STORAGE_PROVIDER', value: useOss ? 'oss' : 'local' }
+  { name: 'PROCESSING_PROVIDER', value: useOss ? 'aliyun-fc' : 'local' }
+  { name: 'LOCAL_STORAGE_DIR', value: '/home/data/educenter' }
+  { name: 'SCM_DO_BUILD_DURING_DEPLOYMENT', value: 'false' }
+]
+var aliyunAppSettings = [
+  { name: 'ALIYUN_REGION', value: aliyunRegion }
+  { name: 'OSS_QUARANTINE_BUCKET', value: ossQuarantineBucket }
+  { name: 'OSS_PUBLISHED_BUCKET', value: ossPublishedBucket }
+  { name: 'OSS_ACCESS_KEY_ID', value: '${kvRef}oss-api-access-key-id)' }
+  { name: 'OSS_ACCESS_KEY_SECRET', value: '${kvRef}oss-api-access-key-secret)' }
+  { name: 'ALIYUN_FC_FUNCTION_NAME', value: fcFunctionName }
+  { name: 'ALIYUN_SLS_PROJECT', value: slsProject }
+  { name: 'ALIYUN_SLS_LOGSTORE', value: slsLogstore }
+]
 
 // Role definition ID built-in (Azure RBAC)
 var roleKvReader = '4633458b-17de-408a-b874-0445c86b69e6' // built-in role ID (public)
@@ -155,16 +209,18 @@ resource app 'Microsoft.Web/sites@2023-12-01' = {
     clientAffinityEnabled: false
     siteConfig: {
       linuxFxVersion: linuxFxVersion
+      appCommandLine: 'cd apps/api && node dist/main.js'
       alwaysOn: appServiceSku != 'F1'
       minTlsVersion: '1.2'
       ftpsState: 'Disabled'
       http20Enabled: true
       // F1 (miễn phí) dùng trong lúc chờ app; health check bật khi nâng lên B1
       healthCheckPath: appServiceSku == 'F1' ? null : '/api/v1/health'
-      appSettings: [
-        { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appi.properties.ConnectionString }
-        { name: 'NODE_ENV', value: 'production' }
-      ]
+      appSettings: concat(
+        baseAppSettings,
+        useOss ? aliyunAppSettings : [],
+        [ { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appi.properties.ConnectionString } ]
+      )
     }
   }
 }
