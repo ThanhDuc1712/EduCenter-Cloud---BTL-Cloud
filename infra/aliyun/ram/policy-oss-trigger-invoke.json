@@ -1,0 +1,10 @@
+{
+  "Version": "1",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["fc:InvokeFunction"],
+      "Resource": ["acs:fc:ap-southeast-1:<ACCOUNT_ID>:functions/material-processor"]
+    }
+  ]
+}

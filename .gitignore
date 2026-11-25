@@ -40,7 +40,13 @@ Thumbs.db
 # Local storage (LOCAL MODE MOCK of OSS)
 .data/
 
-# Function Compute build output (Linux wheels)
+# Function Compute build output (Linux wheels, zip packages)
 functions/material-processor/python/
+functions/material-processor/build/
+functions/material-processor/dist/
 __pycache__/
+*.pyc
 .pytest_cache/
+
+# Cloud PoC measurements
+tools/poc/measurements.csv

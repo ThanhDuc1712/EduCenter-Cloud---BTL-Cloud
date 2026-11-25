@@ -1,4 +1,5 @@
-oss2==2.19.1
-pypdf==5.4.0
-pypdfium2==4.30.0
-pillow==11.2.1
+# Bản đã kiểm có wheel cho CPython 3.10 / Linux x86_64 (ngày 22/11/2026).
+# oss2 có sẵn trong built-in runtime Python của Function Compute nên không đóng gói.
+pypdf==7.1.1
+pypdfium2==5.15.2
+pillow==12.3.0
