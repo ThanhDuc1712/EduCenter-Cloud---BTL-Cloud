@@ -36,3 +36,10 @@ pnpm-debug.log*
 .DS_Store
 Thumbs.db
 *.swp
+
+# Cloud PoC (Giang)
+functions/material-processor/build/
+functions/material-processor/dist/
+tools/poc/measurements.csv
+__pycache__/
+*.pyc
