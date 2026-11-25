@@ -23,7 +23,7 @@ export default tseslint.config(
   },
   {
     // Tooling and tests may set/read the environment directly.
-    files: ['prisma.config.ts', 'test/**/*.ts', 'src/**/*.spec.ts'],
+    files: ['prisma.config.ts', 'prisma/**/*.ts', 'src/common/observability/appinsights-bootstrap.ts', 'test/**/*.ts', 'src/**/*.spec.ts'],
     rules: { 'no-restricted-properties': 'off' },
   },
 );

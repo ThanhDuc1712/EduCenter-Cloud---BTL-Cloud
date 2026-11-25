@@ -1,74 +1,87 @@
-import { useCallback, useEffect, useState } from 'react'
+import { createBrowserRouter, Link, Navigate, RouterProvider } from 'react-router'
 import { Button } from '@/components/ui/button'
-import { api } from '@/lib/api-client'
+import { AppLayout } from '@/components/layout/AppLayout'
+import { usePrincipal, type Role } from '@/lib/context'
+import { DashboardPage } from '@/pages/DashboardPage'
+import { StudentsPage } from '@/pages/students/StudentsPage'
+import { StudentDetailPage } from '@/pages/students/StudentDetailPage'
+import { TeacherDetailPage, TeachersPage } from '@/pages/teachers/TeachersPage'
+import { CourseDetailPage, CoursesPage } from '@/pages/courses/CoursesPage'
+import { ClassDetailPage, ClassesPage } from '@/pages/classes/ClassesPages'
+import { SchedulePage } from '@/pages/schedule/SchedulePage'
+import { EnrollmentsPage } from '@/pages/enrollments/EnrollmentsPage'
+import { AttendancePage, AttendanceSessionPage } from '@/pages/attendance/AttendancePages'
+import { GradesPage } from '@/pages/grades/GradesPage'
+import { TuitionPage } from '@/pages/tuition/TuitionPage'
+import { NotificationsPage, ReportsPage } from '@/pages/NotificationsReportsPages'
+import { LibraryPage, MaterialDetailPage, MaterialsPage, ProcessingCenterPage, UploadPage } from '@/pages/materials/MaterialsPages'
+import { LoginPage, RegisterPage } from '@/pages/auth/AuthPages'
+import { CloudArchitecturePage, CloudOverviewPage, FunctionComputePage, JobsPage, LogsPage, MonitoringPage, ResourcesPage, StoragePage } from '@/pages/cloud/CloudPages'
 
-type HealthState =
-  | { kind: 'loading' }
-  | { kind: 'ok'; database: string | undefined }
-  | { kind: 'degraded'; database: string | undefined }
-  | { kind: 'unreachable' }
+/** UI-only guard: hides pages the role cannot use. The API enforces every rule independently. */
+function RoleGate({ roles, children }: { roles: Role[]; children: React.ReactNode }) {
+  const p = usePrincipal()
+  if (p && !roles.includes(p.role)) return <Navigate to="/" replace />
+  return <>{children}</>
+}
 
-/**
- * Foundation shell only: proves web → (Vite proxy) → api → database end to end.
- * Role-based layouts, router and TanStack Query arrive with P0-10 / P1-15 (TV2).
- */
-function App() {
-  const [health, setHealth] = useState<HealthState>({ kind: 'loading' })
-
-  const check = useCallback(async () => {
-    setHealth({ kind: 'loading' })
-    try {
-      const { data, error, response } = await api.GET('/health')
-      if (data) setHealth({ kind: 'ok', database: data.checks.database })
-      else if (response.status === 503 && error) setHealth({ kind: 'degraded', database: error.checks.database })
-      else setHealth({ kind: 'unreachable' })
-    } catch {
-      setHealth({ kind: 'unreachable' })
-    }
-  }, [])
-
-  useEffect(() => {
-    // Initial probe on mount; state updates happen after the awaited request.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void check()
-  }, [check])
-
-  const label: Record<HealthState['kind'], string> = {
-    loading: 'Checking…',
-    ok: 'API and database are up',
-    degraded: 'API is up, database is down',
-    unreachable: 'API unreachable',
-  }
-  const tone: Record<HealthState['kind'], string> = {
-    loading: 'bg-muted-foreground',
-    ok: 'bg-emerald-500',
-    degraded: 'bg-amber-500',
-    unreachable: 'bg-destructive',
-  }
-
+function NotFound() {
   return (
-    <main className="mx-auto flex min-h-svh max-w-xl flex-col justify-center gap-6 p-6">
-      <header className="space-y-1">
-        <h1 className="text-3xl font-semibold tracking-tight">EduCenter Cloud</h1>
-        <p className="text-muted-foreground">Local development foundation</p>
-      </header>
-
-      <section className="rounded-lg border bg-card p-5 text-card-foreground shadow-xs">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3" role="status" aria-live="polite">
-            <span className={`size-2.5 rounded-full ${tone[health.kind]}`} aria-hidden="true" />
-            <span className="font-medium">{label[health.kind]}</span>
-          </div>
-          <Button variant="outline" size="sm" onClick={() => void check()} disabled={health.kind === 'loading'}>
-            Re-check
-          </Button>
-        </div>
-        <p className="mt-3 text-sm text-muted-foreground">
-          <code>GET /api/v1/health</code>
-        </p>
-      </section>
-    </main>
+    <div className="py-20 text-center">
+      <p className="text-4xl font-semibold">404</p>
+      <p className="mt-2 text-muted-foreground">Không tìm thấy trang</p>
+      <Button asChild className="mt-4">
+        <Link to="/">Về trang tổng quan</Link>
+      </Button>
+    </div>
   )
 }
 
-export default App
+const STAFF: Role[] = ['ADMIN', 'TEACHER']
+const ADMIN: Role[] = ['ADMIN']
+const gate = (roles: Role[], el: React.ReactNode) => <RoleGate roles={roles}>{el}</RoleGate>
+
+const router = createBrowserRouter([
+  { path: '/login', element: <LoginPage /> },
+  { path: '/register', element: <RegisterPage /> },
+  {
+    element: <AppLayout />,
+    children: [
+      { path: '/', element: <DashboardPage /> },
+      { path: '/students', element: gate(STAFF, <StudentsPage />) },
+      { path: '/students/:id', element: <StudentDetailPage /> },
+      { path: '/teachers', element: <TeachersPage /> },
+      { path: '/teachers/:id', element: <TeacherDetailPage /> },
+      { path: '/courses', element: <CoursesPage /> },
+      { path: '/courses/:id', element: <CourseDetailPage /> },
+      { path: '/classes', element: <ClassesPage /> },
+      { path: '/classes/:id', element: <ClassDetailPage /> },
+      { path: '/schedule', element: <SchedulePage /> },
+      { path: '/enrollments', element: <EnrollmentsPage /> },
+      { path: '/attendance', element: <AttendancePage /> },
+      { path: '/attendance/:sessionId', element: <AttendanceSessionPage /> },
+      { path: '/grades', element: <GradesPage /> },
+      { path: '/tuition', element: gate(['ADMIN', 'STUDENT'], <TuitionPage />) },
+      { path: '/notifications', element: <NotificationsPage /> },
+      { path: '/reports', element: gate(ADMIN, <ReportsPage />) },
+      { path: '/materials', element: <MaterialsPage /> },
+      { path: '/materials/upload', element: gate(STAFF, <UploadPage />) },
+      { path: '/materials/:id', element: <MaterialDetailPage /> },
+      { path: '/library', element: <LibraryPage /> },
+      { path: '/processing', element: gate(STAFF, <ProcessingCenterPage />) },
+      { path: '/cloud', element: gate(ADMIN, <CloudOverviewPage />) },
+      { path: '/cloud/architecture', element: gate(ADMIN, <CloudArchitecturePage />) },
+      { path: '/cloud/storage', element: gate(ADMIN, <StoragePage />) },
+      { path: '/cloud/function', element: gate(ADMIN, <FunctionComputePage />) },
+      { path: '/cloud/jobs', element: gate(ADMIN, <JobsPage />) },
+      { path: '/cloud/monitoring', element: gate(ADMIN, <MonitoringPage />) },
+      { path: '/cloud/logs', element: gate(ADMIN, <LogsPage />) },
+      { path: '/cloud/resources', element: gate(ADMIN, <ResourcesPage />) },
+      { path: '*', element: <NotFound /> },
+    ],
+  },
+])
+
+export default function App() {
+  return <RouterProvider router={router} />
+}

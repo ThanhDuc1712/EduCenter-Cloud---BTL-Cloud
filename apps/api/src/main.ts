@@ -1,4 +1,6 @@
 import 'reflect-metadata';
+// Must be first: Application Insights patches http/pg before they are loaded (no-op without a connection string).
+import './common/observability/appinsights-bootstrap';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';

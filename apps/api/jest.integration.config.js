@@ -1,8 +1,9 @@
-/** Integration tests — require PostgreSQL (`pnpm db:up`) and a configured .env. */
+/** Integration tests â€” require PostgreSQL (`pnpm db:up`) and a configured .env. */
 module.exports = {
   rootDir: '.',
   testEnvironment: 'node',
-  moduleFileExtensions: ['ts', 'js', 'json'],
+  // js first: some dependencies (ali-oss) ship .ts sources next to their compiled .js.
+  moduleFileExtensions: ['js', 'ts', 'json'],
   testMatch: ['<rootDir>/test/integration/**/*.int-spec.ts'],
   transform: { '^.+\\.ts$': ['ts-jest', { tsconfig: 'tsconfig.json', diagnostics: { ignoreCodes: [151002] } }] },
   moduleNameMapper: { '^(\\.{1,2}/.*)\\.js$': '$1' },

@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';
 import { requestContext } from '../context/request-context';
 import { AppLogger } from '../logging/app-logger';
+import { MetricsService } from '../observability/metrics.service';
 import { requestPath } from './body-parser.middleware';
 
 const CLIENT_ID_FORMAT = /^[A-Za-z0-9._-]{1,64}$/;
@@ -15,7 +16,10 @@ const CLIENT_ID_FORMAT = /^[A-Za-z0-9._-]{1,64}$/;
  */
 @Injectable()
 export class RequestIdMiddleware implements NestMiddleware {
-  constructor(private readonly logger: AppLogger) {}
+  constructor(
+    private readonly logger: AppLogger,
+    private readonly metrics: MetricsService,
+  ) {}
 
   use(req: Request & { requestId?: string }, res: Response, next: NextFunction): void {
     const requestId = randomUUID();
@@ -29,6 +33,7 @@ export class RequestIdMiddleware implements NestMiddleware {
     requestContext.run({ requestId }, () => {
       res.on('finish', () => {
         const durationMs = Number(process.hrtime.bigint() - started) / 1e6;
+        if (requestPath(req).startsWith('/api/')) this.metrics.record('api.request', durationMs, res.statusCode < 500);
         this.logger.event(
           res.statusCode >= 500 ? 'warn' : 'log',
           'request.completed',

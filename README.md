@@ -22,9 +22,10 @@ apps/
 packages/
   api-contract/        OpenAPI 3.1 (openapi.yaml + paths/<module>.yaml) → generated/schema.d.ts
   shared/              framework-agnostic constants (error codes, header names)
-functions/             material-processor (Aliyun FC, Python) — added by P0-15
+functions/             material-processor (Aliyun Function Compute, Python 3.10)
 infra/local/           PostgreSQL init (DB roles, D-25) · dev Dockerfile
-infra/azure/ · aliyun/ IaC / policies — added by P0-11, P0-13, P0-14
+infra/azure/ · aliyun/ Bicep, DB roles, RAM policies, OSS lifecycle/CORS
+scripts/windows/       PowerShell: check, setup, start, stop, test, deploy-azure, deploy-aliyun
 docs/handoff/          personal handoff files (one per member, D-34)
 docs/runbooks/         local-dev.md
 tests/                 cross-cutting suites (security, load, e2e) — added by later tasks
@@ -33,15 +34,27 @@ ROADMAP.md             coordination: decisions, tasks, working rules, gates
 docker-compose.yml     local PostgreSQL 16 (+ optional api/web profile)
 ```
 
-## Quick start
+## Quick start (Windows, PowerShell)
 
-See [docs/runbooks/local-dev.md](docs/runbooks/local-dev.md).
-
-```bash
-pnpm install && cp .env.example .env   # fill in change-me-* values
-pnpm db:up && pnpm --filter @educenter/shared build && pnpm db:generate
-pnpm dev                               # http://localhost:5173
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\windows\setup-local.ps1   # .env, install, PostgreSQL (Docker), migrate, seed
+powershell -ExecutionPolicy Bypass -File scripts\windows\start-local.ps1   # http://localhost:5173
+powershell -ExecutionPolicy Bypass -File scripts\windows\test-local.ps1    # all quality gates
 ```
+
+Sign in at `/login` (seeded accounts, e.g. `admin@hanoi-center.edu.example` / `Demo@12345`, center `hanoi-center`) or create a student account at `/register` — see [docs/local-development.md](docs/local-development.md#đăng-nhập--đăng-ký). With `AUTH_MODE=demo` the old demo persona switcher is still available.
+LOCAL MODE needs no cloud credentials (storage and processing are local and labelled MOCK).
+
+## Documentation
+
+| Topic | File |
+|---|---|
+| Audit & plan | [docs/implementation-plan.md](docs/implementation-plan.md) |
+| Local / Windows | [docs/local-development.md](docs/local-development.md), [docs/windows-setup.md](docs/windows-setup.md) |
+| Education modules, DB, API | [docs/education-modules.md](docs/education-modules.md), [docs/database-architecture.md](docs/database-architecture.md), [docs/api-architecture.md](docs/api-architecture.md) |
+| Cloud | [docs/cloud-architecture.md](docs/cloud-architecture.md), [docs/azure-integration.md](docs/azure-integration.md), [docs/aliyun-integration.md](docs/aliyun-integration.md), [docs/cross-cloud-data-flow.md](docs/cross-cloud-data-flow.md) |
+| Operations | [docs/cloud-security.md](docs/cloud-security.md), [docs/cloud-monitoring.md](docs/cloud-monitoring.md), [docs/cloud-recovery.md](docs/cloud-recovery.md) |
+| Status | [docs/cloud-testing-report.md](docs/cloud-testing-report.md), [docs/completion-report.md](docs/completion-report.md) |
 
 ## Foundation guarantees (do not weaken)
 
