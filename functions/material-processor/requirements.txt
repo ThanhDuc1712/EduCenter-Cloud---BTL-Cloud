@@ -1,0 +1,4 @@
+oss2==2.19.1
+pypdf==5.4.0
+pypdfium2==4.30.0
+pillow==11.2.1

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Browser direct upload (PostObject) to quarantine and signed GET from published. Only the app origin.
+     __APP_ORIGIN__ is substituted by deploy-aliyun.ps1. -->
+<CORSConfiguration>
+  <CORSRule>
+    <AllowedOrigin>__APP_ORIGIN__</AllowedOrigin>
+    <AllowedMethod>POST</AllowedMethod>
+    <AllowedMethod>GET</AllowedMethod>
+    <AllowedMethod>HEAD</AllowedMethod>
+    <AllowedHeader>*</AllowedHeader>
+    <ExposeHeader>ETag</ExposeHeader>
+    <ExposeHeader>x-oss-version-id</ExposeHeader>
+    <MaxAgeSeconds>600</MaxAgeSeconds>
+  </CORSRule>
+  <ResponseVary>true</ResponseVary>
+</CORSConfiguration>

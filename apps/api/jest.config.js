@@ -1,8 +1,9 @@
-/** Unit + HTTP foundation tests — no database required. */
+/** Unit + HTTP foundation tests â€” no database required. */
 module.exports = {
   rootDir: '.',
   testEnvironment: 'node',
-  moduleFileExtensions: ['ts', 'js', 'json'],
+  // js first: some dependencies (ali-oss) ship .ts sources next to their compiled .js.
+  moduleFileExtensions: ['js', 'ts', 'json'],
   testMatch: ['<rootDir>/src/**/*.spec.ts', '<rootDir>/test/**/*.spec.ts'],
   testPathIgnorePatterns: ['/node_modules/', '<rootDir>/test/integration/'],
   // Type-checking is done by `tsc` (pnpm typecheck); ts-jest only transpiles here.

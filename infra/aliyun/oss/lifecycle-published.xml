@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Published documents live as long as the material; superseded/deleted versions are retained 30 days
+     (recovery window), processing results JSON 90 days. -->
+<LifecycleConfiguration>
+  <Rule>
+    <ID>retain-noncurrent-30d</ID>
+    <Prefix>tenants/</Prefix>
+    <Status>Enabled</Status>
+    <NoncurrentVersionExpiration><NoncurrentDays>30</NoncurrentDays></NoncurrentVersionExpiration>
+    <AbortMultipartUpload><Days>1</Days></AbortMultipartUpload>
+  </Rule>
+  <Rule>
+    <ID>expire-results-90d</ID>
+    <Prefix>results/</Prefix>
+    <Status>Enabled</Status>
+    <Expiration><Days>90</Days></Expiration>
+    <NoncurrentVersionExpiration><NoncurrentDays>7</NoncurrentDays></NoncurrentVersionExpiration>
+  </Rule>
+</LifecycleConfiguration>

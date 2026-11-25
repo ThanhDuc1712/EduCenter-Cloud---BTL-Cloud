@@ -10,6 +10,7 @@ export default defineConfig({
   schema: path.join('prisma', 'schema.prisma'),
   migrations: {
     path: path.join('prisma', 'migrations'),
+    seed: 'tsx prisma/seed.ts',
   },
   datasource: {
     // Migrations run as the schema owner (edu_migrator, D-25) — never as the runtime role.

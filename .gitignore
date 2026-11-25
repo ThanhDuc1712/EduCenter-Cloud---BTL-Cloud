@@ -36,3 +36,11 @@ pnpm-debug.log*
 .DS_Store
 Thumbs.db
 *.swp
+
+# Local storage (LOCAL MODE MOCK of OSS)
+.data/
+
+# Function Compute build output (Linux wheels)
+functions/material-processor/python/
+__pycache__/
+.pytest_cache/

@@ -1,0 +1,59 @@
+# Serverless Devs manifest — Function Compute 3.0 (deployed by scripts/windows/deploy-aliyun.ps1).
+# Secrets are NOT stored here: ${env(...)} values are read from the deploying shell's environment.
+edition: 3.0.0
+name: educenter-material-processor
+access: default
+
+vars:
+  region: ${env('ALIYUN_REGION')}
+  functionName: ${env('ALIYUN_FC_FUNCTION_NAME')}
+
+resources:
+  material-processor:
+    component: fc3
+    props:
+      region: ${vars.region}
+      functionName: ${vars.functionName}
+      description: EduCenter — validate PDF, render preview, HMAC callback to Azure
+      runtime: python3.12
+      handler: index.handler
+      code: ./
+      memorySize: 1024
+      cpu: 1
+      diskSize: 512
+      timeout: 120
+      instanceConcurrency: 1
+      # Least-privilege execution role (infra/aliyun/ram/fc-role-policy.json)
+      role: acs:ram::${env('ALIYUN_ACCOUNT_ID')}:role/educenter-fc-processor-role
+      environmentVariables:
+        OSS_ENDPOINT: https://oss-${vars.region}-internal.aliyuncs.com
+        QUARANTINE_BUCKET: ${env('OSS_QUARANTINE_BUCKET')}
+        PUBLISHED_BUCKET: ${env('OSS_PUBLISHED_BUCKET')}
+        CALLBACK_URL: ${env('CALLBACK_URL')}
+        CALLBACK_HMAC_KEY_ID: ${env('CALLBACK_HMAC_KEY_ID')}
+        CALLBACK_HMAC_SECRET: ${env('CALLBACK_HMAC_SECRET')}
+        MAX_BYTES: '10485760'
+        MAX_PAGES: '500'
+        PYTHONPATH: /code/python
+      logConfig:
+        project: ${env('ALIYUN_SLS_PROJECT')}
+        logstore: ${env('ALIYUN_SLS_LOGSTORE')}
+        enableRequestMetrics: true
+        enableInstanceMetrics: true
+      asyncInvokeConfig:
+        maxAsyncRetryAttempts: 2
+        maxAsyncEventAgeInSeconds: 3600
+      triggers:
+        - triggerName: oss-quarantine-created
+          triggerType: oss
+          invocationRole: acs:ram::${env('ALIYUN_ACCOUNT_ID')}:role/AliyunOSSEventNotificationRole
+          sourceArn: acs:oss:${vars.region}:${env('ALIYUN_ACCOUNT_ID')}:${env('OSS_QUARANTINE_BUCKET')}
+          triggerConfig:
+            events:
+              - oss:ObjectCreated:PostObject
+              - oss:ObjectCreated:PutObject
+              - oss:ObjectCreated:CopyObject
+            filter:
+              key:
+                prefix: tenants/
+                suffix: /source.pdf
