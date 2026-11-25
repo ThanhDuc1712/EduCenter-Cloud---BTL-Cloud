@@ -109,13 +109,21 @@ export class MaterialReconciler implements OnApplicationBootstrap, OnModuleDestr
     }
   }
 
+  /** Result JSON of one attempt. Without a known source version, the newest one under the attempt prefix. */
+  private async storedResult(tenantId: string, materialId: string, attempt: number, versionId: string | null): Promise<Buffer | null> {
+    if (versionId) return this.storage.get('published', storageKeys.result(tenantId, materialId, attempt, versionId));
+    const { objects } = await this.storage.list('published', `${storageKeys.materialPrefix('results', tenantId, materialId)}${attempt}/`, 100);
+    const newest = objects.sort((a, b) => (b.lastModified?.getTime() ?? 0) - (a.lastModified?.getTime() ?? 0))[0];
+    return newest ? this.storage.get('published', newest.key) : null;
+  }
+
   /** PROCESSING past the timeout: apply stored result JSON, else retry (bounded), else FAILED. */
   private async reconcileProcessing(s: ReconcileSummary): Promise<void> {
     const timeoutMs = this.config.get('PROCESSING_TIMEOUT_SECONDS') * 1000;
     const rows = await this.prisma.material.findMany({ where: { status: 'PROCESSING', updatedAt: { lt: new Date(Date.now() - timeoutMs) } }, include: { jobs: { orderBy: { attempt: 'desc' }, take: 1 } }, orderBy: { updatedAt: 'asc' }, take: BATCH });
     const maxAttempts = this.config.get('PROCESSING_MAX_ATTEMPTS');
     for (const m of rows) {
-      const raw = await this.storage.get('published', storageKeys.result(m.tenantId, m.id));
+      const raw = await this.storedResult(m.tenantId, m.id, m.jobs[0]?.attempt ?? 1, m.sourceVersionId);
       if (raw) {
         try {
           const parsed = parseProcessingResult(JSON.parse(raw.toString('utf8')));

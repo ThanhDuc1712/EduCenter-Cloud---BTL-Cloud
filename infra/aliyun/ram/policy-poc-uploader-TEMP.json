@@ -3,8 +3,12 @@
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": ["oss:PutObject"],
-      "Resource": ["acs:oss:*:*:<QUARANTINE_BUCKET>/quarantine/poc/*"]
+      "Action": [
+        "oss:PutObject"
+      ],
+      "Resource": [
+        "acs:oss:*:*:<QUARANTINE_BUCKET>/quarantine/00000000-0000-4000-8000-000000000000/*"
+      ]
     }
   ]
 }

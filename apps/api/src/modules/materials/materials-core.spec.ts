@@ -3,7 +3,7 @@ import { canTransition, MATERIAL_TRANSITIONS } from './material-state';
 import { inspectPdf } from './pdf-inspect';
 import { parseProcessingResult, RESULT_SCHEMA } from './processing-result';
 import { PDFDocument } from 'pdf-lib';
-import { parseQuarantineKey, storageKeys } from '../storage/storage.types';
+import { materialIdFromKey, parseQuarantineKey, storageKeys, versionTag } from '../storage/storage.types';
 import { signToken, verifyToken } from '../storage/signed-token';
 
 const KEYS = parseHmacKeys('k1:first-secret-value-0123456789abcdef,k2:second-secret-value-0123456789abcd');
@@ -43,7 +43,7 @@ describe('HMAC callback verification', () => {
   });
 
   it('matches the Python Function Compute signing (known vector)', () => {
-    // Same vector is asserted in functions/material-processor/tests/test_callback.py.
+    // Same vector is asserted in functions/material-processor/tests/test_material_processor.py.
     expect(computeSignature('test-secret-0123456789abcdef0123456789', '1700000000', Buffer.from('{"a":1}'))).toBe('773367e1dd7d86efbea93b835d6b00ebff0b7da38875d3672436868154633359');
   });
 });
@@ -73,7 +73,7 @@ describe('Processing result contract', () => {
     eventId: 'fc:req-123456',
     tenantId,
     materialId,
-    sourceKey: storageKeys.quarantine(tenantId, materialId),
+    sourceKey: storageKeys.quarantine(tenantId, materialId, 1, '44444444-4444-4444-8444-444444444444'),
     sourceVersionId: 'v1',
     correlationId: 'mat-22222222-a1-abcdef',
     status: 'READY',
@@ -81,7 +81,7 @@ describe('Processing result contract', () => {
     startedAt: '2026-11-24T10:00:00.000Z',
     finishedAt: '2026-11-24T10:00:01.000Z',
     durationMs: 1000,
-    result: { sizeBytes: 100, sha256: 'a'.repeat(64), pageCount: 2, title: 't', author: null, documentKey: storageKeys.document(tenantId, materialId), previewKey: storageKeys.preview(tenantId, materialId, 'png'), previewContentType: 'image/png' },
+    result: { sizeBytes: 100, sha256: 'a'.repeat(64), pageCount: 2, title: 't', author: null, documentKey: storageKeys.document(tenantId, materialId, 1, 'v1'), previewKey: storageKeys.preview(tenantId, materialId, 1, 'v1', 'png'), previewContentType: 'image/png' },
     error: null,
   };
 
@@ -97,9 +97,19 @@ describe('Processing result contract', () => {
     expect(parseProcessingResult([]).ok).toBe(false);
   });
 
-  it('parses quarantine keys and rejects foreign ones', () => {
-    expect(parseQuarantineKey(storageKeys.quarantine(tenantId, materialId))).toEqual({ tenantId, materialId });
-    expect(parseQuarantineKey('tenants/../etc/passwd')).toBeNull();
+  // Same layout and vector as functions/material-processor/tests/test_material_processor.py.
+  it('builds the ROADMAP key layout shared with Function Compute', () => {
+    const key = storageKeys.quarantine(tenantId, materialId, 2, '44444444-4444-4444-8444-444444444444');
+    expect(key).toBe(`quarantine/${tenantId}/${materialId}/2/44444444-4444-4444-8444-444444444444.pdf`);
+    expect(parseQuarantineKey(key)).toEqual({ tenantId, materialId, attempt: 2 });
+    expect(versionTag('CAEQ.a+b/c=_-9')).toBe('CAEQ_a_b_c__-9');
+    expect(versionTag(null)).toBe('noversion');
+    expect(storageKeys.preview(tenantId, materialId, 1, 'CAEQ.a+b', 'png')).toBe(`previews/${tenantId}/${materialId}/1/CAEQ_a_b.png`);
+    expect(materialIdFromKey(storageKeys.result(tenantId, materialId, 1, 'v1'))).toBe(materialId);
+  });
+
+  it('rejects foreign quarantine keys', () => {
+    for (const bad of [`tenants/${tenantId}/materials/${materialId}/source.pdf`, `quarantine/${tenantId}/${materialId}/0/44444444-4444-4444-8444-444444444444.pdf`, 'quarantine/../etc/passwd']) expect(parseQuarantineKey(bad)).toBeNull();
   });
 });
 

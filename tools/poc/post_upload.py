@@ -1,7 +1,7 @@
 """Giả lập trình duyệt upload PostObject lên OSS quarantine — CHỈ dùng để Giang kiểm OSS -> FC
 khi app chưa có signer (P0-17). Không deploy, không dùng trên demo.
 
-Khóa: dùng RAM user tạm `giang-poc-uploader` (chỉ PutObject vào quarantine/poc/*).
+Khóa: dùng RAM user tạm `giang-poc-uploader` (chỉ PutObject vào quarantine/<tenant PoC>/*).
 Đặt khóa vào biến môi trường của cửa sổ PowerShell hiện tại, không lưu vào file:
   $env:OSS_POC_AK_ID = Read-Host "AccessKey ID"
   $env:OSS_POC_AK_SECRET = Read-Host "AccessKey Secret"   (dán, Enter)
@@ -56,8 +56,8 @@ def main():
         raise SystemExit("Chua dat OSS_POC_AK_ID / OSS_POC_AK_SECRET trong cua so PowerShell nay")
 
     cid = f"poc-{a.run}-{uuid.uuid4().hex[:12]}"
-    # Mẫu key giống P2-05: quarantine/{tenant}/{material}/{attempt}/{uuid}.pdf, tenant 'poc'
-    key = a.key or f"quarantine/poc/m-{a.run.lower()}/1/{uuid.uuid4()}.pdf"
+    # Key đúng P2-05: quarantine/{tenant}/{material}/{attempt}/{uuid}.pdf; tenant PoC cố định, material ngẫu nhiên
+    key = a.key or f"quarantine/00000000-0000-4000-8000-000000000000/{uuid.uuid4()}/1/{uuid.uuid4()}.pdf"
     policy_b64 = build_policy(a.bucket, a.sign_key or key, cid, a.expire_seconds)
     signature = base64.b64encode(hmac.new(ak_secret.encode(), policy_b64.encode(), hashlib.sha1).digest()).decode()
 

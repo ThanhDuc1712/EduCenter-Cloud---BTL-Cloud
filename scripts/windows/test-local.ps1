@@ -34,8 +34,8 @@ Invoke-Gate 'Integration tests (PostgreSQL, edu_runtime)' { pnpm --filter api te
 
 if (-not $SkipPython) {
   $fc = Join-Path $RepoRoot 'functions\material-processor'
-  Invoke-Gate 'Function Compute tests (python:3.12 in Docker)' {
-    docker run --rm -v "${fc}:/src:ro" python:3.12-slim sh -c 'cp -r /src /tmp/fc && cd /tmp/fc && pip install -q --disable-pip-version-check --root-user-action=ignore -r requirements.txt pytest==8.3.5 && python -m pytest -q tests'
+  Invoke-Gate 'Function Compute tests (python:3.10 in Docker)' {
+    docker run --rm -v "${fc}:/src:ro" python:3.10-slim sh -c 'cp -r /src /tmp/fc && cd /tmp/fc && pip install -q --disable-pip-version-check --root-user-action=ignore -r requirements.txt pytest==8.3.5 && python -m pytest -q tests'
   }
 } else { $results.Add([pscustomobject]@{ Gate = 'Function Compute tests'; Result = 'SKIPPED'; Seconds = 0 }) }
 

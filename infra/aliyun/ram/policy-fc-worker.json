@@ -3,12 +3,19 @@
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": ["oss:GetObject", "oss:GetObjectVersion"],
-      "Resource": ["acs:oss:*:*:<QUARANTINE_BUCKET>/quarantine/*"]
+      "Action": [
+        "oss:GetObject",
+        "oss:GetObjectVersion"
+      ],
+      "Resource": [
+        "acs:oss:*:*:<QUARANTINE_BUCKET>/quarantine/*"
+      ]
     },
     {
       "Effect": "Allow",
-      "Action": ["oss:PutObject"],
+      "Action": [
+        "oss:PutObject"
+      ],
       "Resource": [
         "acs:oss:*:*:<PUBLISHED_BUCKET>/published/*",
         "acs:oss:*:*:<PUBLISHED_BUCKET>/previews/*",
@@ -17,8 +24,21 @@
     },
     {
       "Effect": "Allow",
-      "Action": ["log:PostLogStoreLogs"],
-      "Resource": ["acs:log:*:*:project/<SLS_PROJECT>/logstore/<SLS_LOGSTORE>"]
+      "Action": [
+        "oss:GetObject"
+      ],
+      "Resource": [
+        "acs:oss:*:*:<PUBLISHED_BUCKET>/results/*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "log:PostLogStoreLogs"
+      ],
+      "Resource": [
+        "acs:log:*:*:project/<SLS_PROJECT>/logstore/<SLS_LOGSTORE>"
+      ]
     }
   ]
 }

@@ -11,7 +11,7 @@ import { OpsLogService } from '../../common/observability/ops-log.service';
 import { TelemetryService } from '../../common/observability/telemetry.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { TenantTx, type Db } from '../../common/prisma/tenant-tx';
-import { STORAGE_PROVIDER, storageKeys, type StorageProvider, type UploadTarget } from '../storage/storage.types';
+import { parseQuarantineKey, STORAGE_PROVIDER, storageKeys, type BucketRole, type StorageProvider, type UploadTarget } from '../storage/storage.types';
 import { canTransition } from './material-state';
 import type { ProcessingResult } from './processing-result';
 
@@ -225,7 +225,7 @@ export class MaterialsService {
     if (dto.size > max) throw new AppException('PAYLOAD_TOO_LARGE', HttpStatus.PAYLOAD_TOO_LARGE, `Tệp vượt quá ${Math.round(max / 1024 / 1024)} MB`);
 
     const id = randomUUID();
-    const quarantineKey = storageKeys.quarantine(p.tenantId, id);
+    const quarantineKey = storageKeys.quarantine(p.tenantId, id, 1, randomUUID());
     const correlationId = newCorrelationId(id, 1);
     const processor: ProcessorKind = this.dispatcher.kind;
     const created = await this.tx.run(p, async (db) => {
@@ -345,10 +345,11 @@ export class MaterialsService {
   async applyResult(r: ProcessingResult, source: 'CALLBACK' | 'RECONCILER'): Promise<{ applied: boolean; duplicate?: boolean; reason?: string; status?: MaterialStatus }> {
     const receivedAt = Date.now();
     if (await this.prisma.materialProcessingEvent.findUnique({ where: { eventId: r.eventId }, select: { id: true } })) return { applied: false, duplicate: true };
-    const expectedDoc = storageKeys.document(r.tenantId, r.materialId);
-    const allowedPreviews = [storageKeys.preview(r.tenantId, r.materialId, 'png'), storageKeys.preview(r.tenantId, r.materialId, 'pdf')];
-    if (r.sourceKey !== storageKeys.quarantine(r.tenantId, r.materialId)) return { applied: false, reason: 'SOURCE_KEY_MISMATCH' };
-    if (r.result && (r.result.documentKey !== expectedDoc || (r.result.previewKey && !allowedPreviews.includes(r.result.previewKey)))) return { applied: false, reason: 'OUTPUT_KEY_MISMATCH' };
+    const uploaded = parseQuarantineKey(r.sourceKey);
+    if (!uploaded || uploaded.tenantId !== r.tenantId || uploaded.materialId !== r.materialId) return { applied: false, reason: 'SOURCE_KEY_MISMATCH' };
+    const out = [r.tenantId, r.materialId, uploaded.attempt, r.sourceVersionId] as const;
+    const allowedPreviews = [storageKeys.preview(...out, 'png'), storageKeys.preview(...out, 'pdf')];
+    if (r.result && (r.result.documentKey !== storageKeys.document(...out) || (r.result.previewKey && !allowedPreviews.includes(r.result.previewKey)))) return { applied: false, reason: 'OUTPUT_KEY_MISMATCH' };
 
     const outcome = await this.prisma.$transaction(async (db) => {
       const m = await db.material.findFirst({ where: { tenantId: r.tenantId, id: r.materialId }, include: { jobs: { orderBy: { attempt: 'desc' }, take: 1 } } });
@@ -358,6 +359,8 @@ export class MaterialsService {
         return { applied: false, reason, status: m.status } as const;
       };
       if (m.status === 'DELETED') return record('callback.ignored', 'MATERIAL_DELETED');
+      // Only the key of the current attempt counts: a late result of an older attempt changes nothing.
+      if (r.sourceKey !== m.quarantineKey) return record('callback.stale', 'STALE_ATTEMPT');
       if (m.status === 'READY' || m.status === 'REJECTED') return record('callback.ignored', 'ALREADY_FINAL');
       if (m.sourceVersionId && r.sourceVersionId && m.sourceVersionId !== r.sourceVersionId) return record('callback.stale', 'STALE_SOURCE_VERSION');
 
@@ -391,12 +394,12 @@ export class MaterialsService {
               publishedKey: r.result!.documentKey,
               previewKey: r.result!.previewKey ?? null,
               previewType: r.result!.previewContentType ?? null,
-              resultKey: storageKeys.result(m.tenantId, m.id),
+              resultKey: storageKeys.result(...out),
               sourceVersionId: r.sourceVersionId ?? m.sourceVersionId,
               readyAt: new Date(),
               rejectReason: null,
             }
-          : { rejectReason: r.error!.message.slice(0, 300), resultKey: storageKeys.result(m.tenantId, m.id) };
+          : { rejectReason: r.error!.message.slice(0, 300), resultKey: storageKeys.result(...out) };
       await this.transition(db, m, r.status, data, { type: `processing.${r.status.toLowerCase()}`, source, eventId: r.eventId, jobId: job.id, detail: { processor: r.processor, durationMs: r.durationMs, error: r.error?.code ?? null, pageCount: r.result?.pageCount ?? null } });
 
       const targets = await this.audience(db, m);
@@ -478,7 +481,14 @@ export class MaterialsService {
       await this.transition(db, m, 'DELETED', { deletedAt: new Date() }, { type: 'material.deleted', source: 'API' });
       await this.activity.record(db, p, { action: 'material.deleted', entityType: 'material', entityId: id, summary: `Xóa tài liệu "${m.title}"` });
     });
-    const keys: [('quarantine' | 'published'), string | null][] = [['quarantine', m.quarantineKey], ['published', m.publishedKey], ['published', m.previewKey], ['published', storageKeys.result(m.tenantId, m.id)]];
+    const keys: [BucketRole, string | null][] = [['published', m.publishedKey], ['published', m.previewKey]];
+    // On OSS the API may delete only published/ and previews/ (P0-14); lifecycle rules clean quarantine/ and results/.
+    if (this.storage.kind === 'LOCAL') {
+      for (const [role, prefix] of [['quarantine', 'quarantine'], ['published', 'results']] as const) {
+        const { objects } = await this.storage.list(role, storageKeys.materialPrefix(prefix, m.tenantId, m.id), 1000);
+        keys.push(...objects.map((o): [BucketRole, string] => [role, o.key]));
+      }
+    }
     for (const [role, key] of keys) {
       if (!key) continue;
       try {
@@ -502,14 +512,15 @@ export class MaterialsService {
       if (source === 'RECONCILER' && last && last.attempt >= max) return null;
       if (last && (last.status === 'RUNNING' || last.status === 'QUEUED')) await db.materialProcessingJob.update({ where: { id: last.id }, data: { status: 'TIMED_OUT', finishedAt: new Date(), errorCode: 'SUPERSEDED', errorMessage: 'Được thay bằng lần xử lý mới' } });
       const attempt = (last?.attempt ?? 0) + 1;
+      const quarantineKey = storageKeys.quarantine(current.tenantId, id, attempt, randomUUID());
       const j = await db.materialProcessingJob.create({ data: { tenantId: current.tenantId, materialId: id, attempt, processor: this.dispatcher.kind, status: 'RUNNING', startedAt: new Date(), correlationId: newCorrelationId(id, attempt), sourceVersionId: current.sourceVersionId } });
-      await this.transition(db, current, 'PROCESSING', { processingAt: new Date(), rejectReason: null, sourceVersionId: null }, { type: 'processing.retry', source, jobId: j.id, detail: { attempt } });
+      await this.transition(db, current, 'PROCESSING', { processingAt: new Date(), rejectReason: null, sourceVersionId: null, quarantineKey }, { type: 'processing.retry', source, jobId: j.id, detail: { attempt } });
       if (source === 'API') await this.activity.record(db, p, { action: 'material.retry', entityType: 'material', entityId: id, summary: `Thử xử lý lại tài liệu "${current.title}" (lần ${attempt})` });
-      return j;
+      return { ...j, quarantineKey };
     });
     if (!job) return null;
     await this.ops.write({ provider: this.dispatcher.kind === 'ALIYUN_FC' ? 'ALIYUN' : 'LOCAL', service: source === 'API' ? (this.dispatcher.kind === 'ALIYUN_FC' ? 'FUNCTION_COMPUTE' : 'LOCAL_PROCESSOR') : 'RECONCILER', level: 'WARN', event: 'processing.retry', message: `Xử lý lại lần ${job.attempt}`, tenantId: m.tenantId, materialId: id, correlationId: job.correlationId });
-    await this.dispatch({ tenantId: m.tenantId, materialId: id, jobId: job.id, attempt: job.attempt, correlationId: job.correlationId, sourceKey: m.quarantineKey, isRetry: true });
+    await this.dispatch({ tenantId: m.tenantId, materialId: id, jobId: job.id, attempt: job.attempt, correlationId: job.correlationId, sourceKey: job.quarantineKey, isRetry: true });
     return source === 'API' ? this.get(p, id) : job;
   }
 }

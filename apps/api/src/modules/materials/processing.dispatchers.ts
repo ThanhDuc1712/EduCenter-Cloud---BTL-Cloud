@@ -6,6 +6,7 @@ import { OpsLogService } from '../../common/observability/ops-log.service';
 import { TelemetryService } from '../../common/observability/telemetry.service';
 import { STORAGE_PROVIDER, storageKeys, type StorageProvider } from '../storage/storage.types';
 import { parseHmacKeys, signCallback } from './hmac';
+import { retriggerFromLatest } from './retrigger';
 import type { DispatchJob, ProcessingDispatcher } from './materials.service';
 import { inspectPdf } from './pdf-inspect';
 import { RESULT_SCHEMA, type ProcessingResult } from './processing-result';
@@ -40,14 +41,17 @@ export class LocalProcessingDispatcher implements ProcessingDispatcher {
   }
 
   async dispatch(job: DispatchJob): Promise<{ sourceVersionId?: string | null }> {
-    if (this.inFlight.has(job.materialId)) return {}; // duplicate dispatch protection
+    // A retry has a new key: the object must exist there before anything can process it.
+    const copied = job.isRetry ? await retriggerFromLatest(this.storage, job) : null;
+    const response = copied ? { sourceVersionId: copied.versionId } : {};
+    if (this.inFlight.has(job.materialId)) return response; // duplicate dispatch protection
     this.inFlight.add(job.materialId);
     // Serial queue: one document at a time, like a single FC instance.
     this.queue = this.queue
       .then(() => this.run(job))
       .catch((err) => this.logger.event('error', 'local.processor.crashed', { errorName: (err as Error)?.name, materialId: job.materialId }, 'LocalProcessor'))
       .finally(() => this.inFlight.delete(job.materialId));
-    return {};
+    return response;
   }
 
   /** Waits for queued work (tests). */
@@ -71,8 +75,8 @@ export class LocalProcessingDispatcher implements ProcessingDispatcher {
       if (!inspected.ok) {
         result = { ...base, status: 'REJECTED', finishedAt: new Date().toISOString(), durationMs: Math.round(performance.now() - started), result: null, error: { code: inspected.code, message: inspected.message } };
       } else {
-        const documentKey = storageKeys.document(job.tenantId, job.materialId);
-        const previewKey = storageKeys.preview(job.tenantId, job.materialId, 'pdf');
+        const documentKey = storageKeys.document(job.tenantId, job.materialId, job.attempt, base.sourceVersionId);
+        const previewKey = storageKeys.preview(job.tenantId, job.materialId, job.attempt, base.sourceVersionId, 'pdf');
         await this.storage.put('published', documentKey, bytes, 'application/pdf', { 'material-id': job.materialId, sha256: inspected.sha256 });
         await this.storage.put('published', previewKey, inspected.preview, 'application/pdf', { 'material-id': job.materialId });
         result = {
@@ -88,7 +92,7 @@ export class LocalProcessingDispatcher implements ProcessingDispatcher {
 
     const raw = Buffer.from(JSON.stringify(result));
     // Result JSON first: if the callback is lost the reconciler can still apply it.
-    await this.storage.put('published', storageKeys.result(job.tenantId, job.materialId), raw, 'application/json');
+    await this.storage.put('published', storageKeys.result(job.tenantId, job.materialId, job.attempt, base.sourceVersionId), raw, 'application/json');
     this.telemetry.dependency({ name: 'local.processor', type: 'LocalProcessor', target: 'in-process', durationMs: result.durationMs, success: result.status !== 'FAILED' });
     await this.ops.write({ provider: 'LOCAL', service: 'LOCAL_PROCESSOR', level: result.status === 'READY' ? 'INFO' : 'WARN', event: `processor.${result.status.toLowerCase()}`, message: `[MOCK FC] ${result.status}${result.error ? ` – ${result.error.code}` : ` – ${result.result?.pageCount} trang`}`, tenantId: job.tenantId, materialId: job.materialId, correlationId: job.correlationId, durationMs: result.durationMs });
     await this.sendCallback(raw, job);
@@ -122,8 +126,8 @@ export class LocalProcessingDispatcher implements ProcessingDispatcher {
 
 /**
  * CLOUD MODE: Function Compute is triggered by the OSS ObjectCreated event of the upload itself, so
- * the first attempt needs no action. Retries re-emit the event by copying the quarantine object onto
- * itself (new version → new trigger).
+ * the first attempt needs no action. A retry copies the quarantine object to the new attempt's key,
+ * which raises ObjectCreated:CopyObject and triggers the function again.
  */
 @Injectable()
 export class AliyunFcDispatcher implements ProcessingDispatcher {
@@ -139,8 +143,8 @@ export class AliyunFcDispatcher implements ProcessingDispatcher {
       await this.ops.write({ provider: 'ALIYUN', service: 'FUNCTION_COMPUTE', level: 'INFO', event: 'fc.awaiting_trigger', message: 'Chờ OSS trigger kích hoạt Function Compute', tenantId: job.tenantId, materialId: job.materialId, correlationId: job.correlationId });
       return {};
     }
-    const { versionId } = await this.storage.retrigger(job.sourceKey, { 'correlation-id': job.correlationId, attempt: String(job.attempt) });
-    await this.ops.write({ provider: 'ALIYUN', service: 'OSS', level: 'INFO', event: 'fc.retriggered', message: `Sao chép object tại chỗ để kích hoạt lại FC (version ${versionId ?? '-'})`, tenantId: job.tenantId, materialId: job.materialId, correlationId: job.correlationId });
+    const { versionId } = await retriggerFromLatest(this.storage, job);
+    await this.ops.write({ provider: 'ALIYUN', service: 'OSS', level: 'INFO', event: 'fc.retriggered', message: `Sao chép object sang key của lần ${job.attempt} để kích hoạt lại FC (version ${versionId ?? '-'})`, tenantId: job.tenantId, materialId: job.materialId, correlationId: job.correlationId });
     return { sourceVersionId: versionId };
   }
 }

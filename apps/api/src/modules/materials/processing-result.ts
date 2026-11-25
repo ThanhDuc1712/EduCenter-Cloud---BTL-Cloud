@@ -3,7 +3,7 @@ import { Equals, IsIn, IsInt, IsISO8601, IsObject, IsOptional, IsString, IsUUID,
 
 /**
  * Contract shared by the API, the LOCAL worker and Function Compute (functions/material-processor):
- * the worker writes this JSON to `results/<tenant>/<material>.json` in the published bucket and POSTs
+ * the worker writes this JSON to `results/<tenant>/<material>/<attempt>/<versionTag>.json` in the published bucket and POSTs
  * the identical bytes to /api/v1/internal/material-callback (HMAC-signed). The reconciler replays the
  * stored JSON when a callback was lost.
  */

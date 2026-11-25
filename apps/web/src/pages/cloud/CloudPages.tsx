@@ -590,7 +590,7 @@ export function JobsPage({ functionView = false }: { functionView?: boolean }) {
             </div>
             <StatusBadge kind="service" value={fc.status} />
           </div>
-          <KeyValue className="mt-3 sm:grid-cols-4" items={[['Runtime', 'Python 3.12 (FC 3.0)'], ['Trigger', 'OSS ObjectCreated (quarantine)'], ['Timeout / bộ nhớ', '120 s / 1024 MB'], ['Retry bất đồng bộ', '2 lần + reconciler']]} />
+          <KeyValue className="mt-3 sm:grid-cols-4" items={[['Runtime', 'Python 3.10 (FC 3.0)'], ['Trigger', 'OSS ObjectCreated (quarantine)'], ['Timeout / bộ nhớ', '120 s / 1024 MB'], ['Retry bất đồng bộ', '2 lần + reconciler']]} />
         </Card>
       ) : null}
       <QueryView query={q} rows={8}>

@@ -145,9 +145,11 @@ export class LocalStorageProvider implements StorageProvider {
     return `/api/v1/storage/local/object?token=${encodeURIComponent(token)}`;
   }
 
-  async retrigger(key: string): Promise<{ versionId: string | null }> {
-    const info = await this.head('quarantine', key);
-    return { versionId: info?.versionId ?? null };
+  async retrigger(fromKey: string, toKey: string, metadata: Record<string, string> = {}): Promise<{ versionId: string | null }> {
+    const info = await this.head('quarantine', fromKey);
+    const body = info ? await this.get('quarantine', fromKey) : null;
+    if (!info || !body) throw new Error('quarantine object not found');
+    return this.put('quarantine', toKey, body, info.contentType ?? 'application/pdf', { ...info.metadata, ...metadata });
   }
 
   async health(): Promise<BucketHealth[]> {

@@ -42,7 +42,7 @@ function rfc5987(filename: string): string {
  * CLOUD MODE storage on Alibaba Cloud OSS. Both buckets are private; the browser uploads straight to
  * the quarantine bucket with a 5-minute V4 PostObject policy (size range + exact key, D-21) and
  * downloads with short-lived V4 signed URLs. The API's RAM user only needs the actions documented
- * in infra/aliyun/ram/api-policy.json — never the root account.
+ * in infra/aliyun/ram/policy-api-storage.json — never the root account.
  */
 export class OssStorageProvider implements StorageProvider {
   readonly kind = 'OSS' as const;
@@ -172,12 +172,12 @@ export class OssStorageProvider implements StorageProvider {
     return this.clients[role].signatureUrlV4('GET', opts.expiresInSeconds, { queries }, key);
   }
 
-  /** Copy-in-place with REPLACE metadata → new version + ObjectCreated event → Function Compute runs again. */
-  async retrigger(key: string, metadata: Record<string, string> = {}): Promise<{ versionId: string | null }> {
-    const head = await this.head('quarantine', key);
+  /** Server-side copy to the new attempt key with REPLACE metadata → ObjectCreated event → Function Compute runs again. */
+  async retrigger(fromKey: string, toKey: string, metadata: Record<string, string> = {}): Promise<{ versionId: string | null }> {
+    const head = await this.head('quarantine', fromKey);
     if (!head) throw new Error('quarantine object not found');
     const r = await this.measure('copy', 'quarantine', () =>
-      this.clients.quarantine.copy(key, key, { meta: { ...head.metadata, ...metadata, retrigger: String(Date.now()) } as unknown as OSS.UserMeta, headers: { 'x-oss-metadata-directive': 'REPLACE', 'Content-Type': head.contentType ?? 'application/pdf' } }),
+      this.clients.quarantine.copy(toKey, fromKey, { meta: { ...head.metadata, ...metadata, retrigger: String(Date.now()) } as unknown as OSS.UserMeta, headers: { 'x-oss-metadata-directive': 'REPLACE', 'Content-Type': head.contentType ?? 'application/pdf' } }),
     );
     return { versionId: ((r.res.headers as Record<string, string | undefined>)['x-oss-version-id']) ?? null };
   }

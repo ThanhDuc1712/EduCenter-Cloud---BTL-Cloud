@@ -3,12 +3,21 @@
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": ["oss:PutObject"],
-      "Resource": ["acs:oss:*:*:<QUARANTINE_BUCKET>/quarantine/*"]
+      "Action": [
+        "oss:PutObject",
+        "oss:GetObject"
+      ],
+      "Resource": [
+        "acs:oss:*:*:<QUARANTINE_BUCKET>/quarantine/*"
+      ]
     },
     {
       "Effect": "Allow",
-      "Action": ["oss:GetObject", "oss:GetObjectVersion", "oss:DeleteObject"],
+      "Action": [
+        "oss:GetObject",
+        "oss:GetObjectVersion",
+        "oss:DeleteObject"
+      ],
       "Resource": [
         "acs:oss:*:*:<PUBLISHED_BUCKET>/published/*",
         "acs:oss:*:*:<PUBLISHED_BUCKET>/previews/*"
@@ -16,8 +25,26 @@
     },
     {
       "Effect": "Allow",
-      "Action": ["oss:GetObject", "oss:GetObjectVersion"],
-      "Resource": ["acs:oss:*:*:<PUBLISHED_BUCKET>/results/*"]
+      "Action": [
+        "oss:GetObject",
+        "oss:GetObjectVersion"
+      ],
+      "Resource": [
+        "acs:oss:*:*:<PUBLISHED_BUCKET>/results/*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "oss:ListObjects",
+        "oss:GetBucketInfo",
+        "oss:GetBucketVersioning",
+        "oss:GetBucketLifecycle"
+      ],
+      "Resource": [
+        "acs:oss:*:*:<QUARANTINE_BUCKET>",
+        "acs:oss:*:*:<PUBLISHED_BUCKET>"
+      ]
     }
   ]
 }

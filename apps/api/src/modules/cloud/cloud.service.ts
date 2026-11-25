@@ -7,7 +7,7 @@ import { pageArgs, toPage } from '../../common/http/pagination';
 import { appInsightsClient } from '../../common/observability/appinsights-bootstrap';
 import { MetricsService } from '../../common/observability/metrics.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { STORAGE_PROVIDER, type BucketRole, type StorageProvider } from '../storage/storage.types';
+import { materialIdFromKey, STORAGE_PROVIDER, type BucketRole, type StorageProvider } from '../storage/storage.types';
 import { MaterialReconciler } from '../materials/reconciler.service';
 import { PROCESSING_DISPATCHER, type ProcessingDispatcher } from '../materials/materials.service';
 import { AliyunApiError, AliyunClient } from './aliyun.client';
@@ -240,7 +240,7 @@ export class CloudService {
 
   async storageView(p: Principal, role: BucketRole, prefix: string, limit: number) {
     if (prefix && !/^[A-Za-z0-9/_.-]{0,200}$/.test(prefix)) throw badRequest('prefix không hợp lệ', 'prefix');
-    const scopedPrefix = prefix || (role === 'quarantine' ? `tenants/${p.tenantId}/` : '');
+    const scopedPrefix = prefix || (role === 'quarantine' ? `quarantine/${p.tenantId}/` : '');
     const [listing, health, byStatus, readyBytes, recent] = await Promise.all([
       timed(() => this.storage.list(role, scopedPrefix, limit)),
       timed(() => this.storage.health()),
@@ -250,7 +250,7 @@ export class CloudService {
     ]);
     const objects = listing.value?.objects ?? [];
     // Attach the owning material (keys embed tenant + material id).
-    const ids = [...new Set(objects.map((o) => /materials\/([0-9a-f-]{36})\//.exec(o.key)?.[1] ?? /results\/[0-9a-f-]{36}\/([0-9a-f-]{36})\.json$/.exec(o.key)?.[1]).filter((x): x is string => !!x))];
+    const ids = [...new Set(objects.map((o) => materialIdFromKey(o.key)).filter((x): x is string => !!x))];
     const mats = ids.length ? await this.prisma.material.findMany({ where: { tenantId: p.tenantId, id: { in: ids } }, select: { id: true, title: true, status: true, sourceVersionId: true } }) : [];
     const byId = new Map(mats.map((m) => [m.id, m]));
     return {
@@ -261,7 +261,7 @@ export class CloudService {
       truncated: listing.value?.truncated ?? false,
       usage: { objects: objects.length, bytes: objects.reduce((s, o) => s + o.size, 0) },
       objects: objects.map((o) => {
-        const id = /materials\/([0-9a-f-]{36})\//.exec(o.key)?.[1] ?? /results\/[0-9a-f-]{36}\/([0-9a-f-]{36})\.json$/.exec(o.key)?.[1];
+        const id = materialIdFromKey(o.key);
         return { ...o, material: id ? byId.get(id) ?? null : null };
       }),
       database: {
@@ -411,11 +411,11 @@ export class CloudService {
       ],
       aliyun: [
         item('ALIYUN', 'Region', region, 'ap-southeast-1 (Singapore, D-09)'),
-        item('ALIYUN', 'OSS bucket (quarantine, private, versioning)', this.config.get('OSS_QUARANTINE_BUCKET'), 'Nhận upload trực tiếp, lifecycle xóa sau 7 ngày, phiên bản cũ 3 ngày'),
+        item('ALIYUN', 'OSS bucket (quarantine, private, versioning)', this.config.get('OSS_QUARANTINE_BUCKET'), 'Nhận upload trực tiếp, lifecycle xóa sau 1 ngày (cả phiên bản cũ)'),
         item('ALIYUN', 'OSS bucket (published, private, versioning)', this.config.get('OSS_PUBLISHED_BUCKET'), 'Tài liệu đã xử lý + preview + results JSON, tải bằng signed URL'),
-        item('ALIYUN', 'Function Compute 3.0 (Python 3.12)', this.config.get('ALIYUN_FC_FUNCTION_NAME'), 'material-processor, OSS trigger ObjectCreated trên quarantine'),
-        item('ALIYUN', 'RAM role (FC execution)', this.config.get('ALIYUN_FC_FUNCTION_NAME') ? 'educenter-fc-processor-role' : null, 'Đọc quarantine, ghi published, ghi SLS — không quyền khác'),
-        item('ALIYUN', 'RAM user (API)', this.config.get('OSS_ACCESS_KEY_ID') ? 'educenter-api' : null, 'Ký upload policy / signed URL, head/list/delete — không phải root'),
+        item('ALIYUN', 'Function Compute 3.0 (Python 3.10)', this.config.get('ALIYUN_FC_FUNCTION_NAME'), 'material-processor, OSS trigger ObjectCreated trên quarantine'),
+        item('ALIYUN', 'RAM role (FC execution)', this.config.get('ALIYUN_FC_FUNCTION_NAME') ? 'educenter-fc-worker' : null, 'Đọc quarantine, ghi published, ghi SLS — không quyền khác'),
+        item('ALIYUN', 'RAM user (API)', this.config.get('OSS_ACCESS_KEY_ID') ? 'api-storage' : null, 'Ký upload policy / signed URL, head/list/delete — không phải root'),
         item('ALIYUN', 'RAM user (read-only ops)', this.config.get('ALIYUN_READONLY_ACCESS_KEY_ID') ? 'educenter-ops-readonly' : null, 'SLS + CloudMonitor (+ BSS) chỉ đọc'),
         item('ALIYUN', 'SLS project / logstore', this.config.get('ALIYUN_SLS_PROJECT') ? `${this.config.get('ALIYUN_SLS_PROJECT')} / ${this.config.get('ALIYUN_SLS_LOGSTORE')}` : null, 'Log của Function Compute (JSON, có correlationId)'),
       ],

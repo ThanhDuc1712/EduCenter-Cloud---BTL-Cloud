@@ -14,7 +14,7 @@ python -m pip install --quiet --target $build --only-binary=:all: --implementati
   --platform manylinux_2_17_x86_64 -r (Join-Path $here "requirements.txt")
 if ($LASTEXITCODE -ne 0) { throw "pip install that bai" }
 
-Copy-Item (Join-Path $here "index.py"), (Join-Path $here "validator.py") $build
+Copy-Item (Join-Path $here "index.py"), (Join-Path $here "processor.py"), (Join-Path $here "callback.py"), (Join-Path $here "keys.py") $build
 $zip = Join-Path $dist "material-processor.zip"
 # Không dùng Compress-Archive (PowerShell 5.1 ghi dấu '\' trong zip -> FC không import được)
 python (Join-Path $here "zip_package.py") $build $zip

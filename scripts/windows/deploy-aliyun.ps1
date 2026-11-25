@@ -24,7 +24,7 @@ param(
   [Parameter(Mandatory)][string]$CallbackUrl,
   [string]$Region = 'ap-southeast-1',
   [string]$Prefix = 'educenter',
-  [string]$FunctionName = 'educenter-material-processor',
+  [string]$FunctionName = 'material-processor',
   [string]$SlsProject = 'educenter-logs',
   [string]$SlsLogstore = 'fc-material-processor',
   [string]$Profile = 'educenter-admin',
@@ -63,25 +63,25 @@ if (-not $SkipInfra) {
   Remove-Item -Force $corsFile.FullName
 
   function Get-Policy([string]$file) {
-    (Get-Content -Raw (Join-Path $RepoRoot "infra\aliyun\ram\$file")).Replace('${OSS_QUARANTINE_BUCKET}', $quarantine).Replace('${OSS_PUBLISHED_BUCKET}', $published).Replace('${ALIYUN_SLS_PROJECT}', $SlsProject).Replace('${ALIYUN_SLS_LOGSTORE}', $SlsLogstore) -replace '\s+', ' '
+    (Get-Content -Raw (Join-Path $RepoRoot "infra\aliyun\ram\$file")).Replace('<QUARANTINE_BUCKET>', $quarantine).Replace('<PUBLISHED_BUCKET>', $published).Replace('<SLS_PROJECT>', $SlsProject).Replace('<SLS_LOGSTORE>', $SlsLogstore) -replace '\s+', ' '
   }
 
   Write-Step 'RAM: Function Compute execution role (least privilege)'
   $trust = '{"Statement":[{"Action":"sts:AssumeRole","Effect":"Allow","Principal":{"Service":["fc.aliyuncs.com"]}}],"Version":"1"}'
-  & aliyun --profile $Profile ram CreateRole --RoleName educenter-fc-processor-role --AssumeRolePolicyDocument $trust 2>$null | Out-Null
-  & aliyun --profile $Profile ram CreatePolicy --PolicyName educenter-fc-processor --PolicyDocument (Get-Policy 'fc-role-policy.json') 2>$null | Out-Null
-  & aliyun --profile $Profile ram AttachPolicyToRole --PolicyType Custom --PolicyName educenter-fc-processor --RoleName educenter-fc-processor-role 2>$null | Out-Null
-  Write-Ok 'Role educenter-fc-processor-role'
+  & aliyun --profile $Profile ram CreateRole --RoleName educenter-fc-worker --AssumeRolePolicyDocument $trust 2>$null | Out-Null
+  & aliyun --profile $Profile ram CreatePolicy --PolicyName educenter-fc-worker --PolicyDocument (Get-Policy 'policy-fc-worker.json') 2>$null | Out-Null
+  & aliyun --profile $Profile ram AttachPolicyToRole --PolicyType Custom --PolicyName educenter-fc-worker --RoleName educenter-fc-worker 2>$null | Out-Null
+  Write-Ok 'Role educenter-fc-worker'
 
   Write-Step 'RAM: API user (signs upload policies / signed URLs) and read-only ops user'
-  & aliyun --profile $Profile ram CreateUser --UserName educenter-api 2>$null | Out-Null
-  & aliyun --profile $Profile ram CreatePolicy --PolicyName educenter-api-oss --PolicyDocument (Get-Policy 'api-user-policy.json') 2>$null | Out-Null
-  & aliyun --profile $Profile ram AttachPolicyToUser --PolicyType Custom --PolicyName educenter-api-oss --UserName educenter-api 2>$null | Out-Null
+  & aliyun --profile $Profile ram CreateUser --UserName api-storage 2>$null | Out-Null
+  & aliyun --profile $Profile ram CreatePolicy --PolicyName api-storage-oss --PolicyDocument (Get-Policy 'policy-api-storage.json') 2>$null | Out-Null
+  & aliyun --profile $Profile ram AttachPolicyToUser --PolicyType Custom --PolicyName api-storage-oss --UserName api-storage 2>$null | Out-Null
   & aliyun --profile $Profile ram CreateUser --UserName educenter-ops-readonly 2>$null | Out-Null
   foreach ($p in 'AliyunLogReadOnlyAccess', 'AliyunCloudMonitorReadOnlyAccess', 'AliyunBSSReadOnlyAccess') {
     & aliyun --profile $Profile ram AttachPolicyToUser --PolicyType System --PolicyName $p --UserName educenter-ops-readonly 2>$null | Out-Null
   }
-  foreach ($u in @(@{ User = 'educenter-api'; Id = 'OSS_ACCESS_KEY_ID'; Secret = 'OSS_ACCESS_KEY_SECRET' }, @{ User = 'educenter-ops-readonly'; Id = 'ALIYUN_READONLY_ACCESS_KEY_ID'; Secret = 'ALIYUN_READONLY_ACCESS_KEY_SECRET' })) {
+  foreach ($u in @(@{ User = 'api-storage'; Id = 'OSS_ACCESS_KEY_ID'; Secret = 'OSS_ACCESS_KEY_SECRET' }, @{ User = 'educenter-ops-readonly'; Id = 'ALIYUN_READONLY_ACCESS_KEY_ID'; Secret = 'ALIYUN_READONLY_ACCESS_KEY_SECRET' })) {
     $key = (& aliyun --profile $Profile ram CreateAccessKey --UserName $u.User) | ConvertFrom-Json
     if ($LASTEXITCODE -ne 0 -or -not $key.AccessKey) { throw "Could not create an access key for $($u.User) (max 2 keys per user - delete an old one)" }
     Set-Item -Path "Env:\$($u.Id)" -Value $key.AccessKey.AccessKeyId
@@ -90,10 +90,11 @@ if (-not $SkipInfra) {
   }
 }
 
-Write-Step 'Building Linux wheels for the function (python:3.12 in Docker)'
+Write-Step 'Building Linux wheels for the function (Python 3.10, manylinux 2.28 = FC runtime)'
 $fn = Join-Path $RepoRoot 'functions\material-processor'
 Remove-Item -Recurse -Force (Join-Path $fn 'python') -ErrorAction SilentlyContinue
-Invoke-Native docker @('run', '--rm', '-v', "${fn}:/code", '-w', '/code', 'python:3.12-slim', 'pip', 'install', '-q', '--root-user-action=ignore', '-t', '/code/python', '-r', 'requirements.txt')
+# The FC python3.10 runtime is Debian 10 (glibc 2.28): newer wheels would not import there.
+Invoke-Native docker @('run', '--rm', '-v', "${fn}:/code", '-w', '/code', 'python:3.10-slim', 'pip', 'install', '-q', '--root-user-action=ignore', '--only-binary=:all:', '--implementation', 'cp', '--python-version', '3.10', '--platform', 'manylinux_2_28_x86_64', '--platform', 'manylinux_2_17_x86_64', '--platform', 'manylinux2014_x86_64', '-t', '/code/python', '-r', 'requirements.txt')
 
 if (-not $env:CALLBACK_HMAC_SECRET) {
   throw 'Set $env:CALLBACK_HMAC_SECRET to the k1 secret stored in Azure Key Vault (az keyvault secret show ... callback-hmac-keys) before deploying the function'

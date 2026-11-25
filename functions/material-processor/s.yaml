@@ -15,7 +15,7 @@ resources:
       region: ${vars.region}
       functionName: ${vars.functionName}
       description: EduCenter — validate PDF, render preview, HMAC callback to Azure
-      runtime: python3.12
+      runtime: python3.10
       handler: index.handler
       code: ./
       memorySize: 1024
@@ -24,7 +24,7 @@ resources:
       timeout: 120
       instanceConcurrency: 1
       # Least-privilege execution role (infra/aliyun/ram/fc-role-policy.json)
-      role: acs:ram::${env('ALIYUN_ACCOUNT_ID')}:role/educenter-fc-processor-role
+      role: acs:ram::${env('ALIYUN_ACCOUNT_ID')}:role/educenter-fc-worker
       environmentVariables:
         OSS_ENDPOINT: https://oss-${vars.region}-internal.aliyuncs.com
         QUARANTINE_BUCKET: ${env('OSS_QUARANTINE_BUCKET')}
@@ -51,9 +51,8 @@ resources:
           triggerConfig:
             events:
               - oss:ObjectCreated:PostObject
-              - oss:ObjectCreated:PutObject
               - oss:ObjectCreated:CopyObject
             filter:
               key:
-                prefix: tenants/
-                suffix: /source.pdf
+                prefix: quarantine/
+                suffix: .pdf

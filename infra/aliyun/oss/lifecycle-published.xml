@@ -3,8 +3,15 @@
      (recovery window), processing results JSON 90 days. -->
 <LifecycleConfiguration>
   <Rule>
-    <ID>retain-noncurrent-30d</ID>
-    <Prefix>tenants/</Prefix>
+    <ID>retain-published-noncurrent-30d</ID>
+    <Prefix>published/</Prefix>
+    <Status>Enabled</Status>
+    <NoncurrentVersionExpiration><NoncurrentDays>30</NoncurrentDays></NoncurrentVersionExpiration>
+    <AbortMultipartUpload><Days>1</Days></AbortMultipartUpload>
+  </Rule>
+  <Rule>
+    <ID>retain-previews-noncurrent-30d</ID>
+    <Prefix>previews/</Prefix>
     <Status>Enabled</Status>
     <NoncurrentVersionExpiration><NoncurrentDays>30</NoncurrentDays></NoncurrentVersionExpiration>
     <AbortMultipartUpload><Days>1</Days></AbortMultipartUpload>

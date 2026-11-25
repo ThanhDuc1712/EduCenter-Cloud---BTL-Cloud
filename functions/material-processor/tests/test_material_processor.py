@@ -10,11 +10,14 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import callback as cb  # noqa: E402
 import index  # noqa: E402
+import keys  # noqa: E402
 import processor  # noqa: E402
 
 TENANT = "11111111-1111-4111-8111-111111111111"
 MATERIAL = "22222222-2222-4222-8222-222222222222"
-KEY = f"tenants/{TENANT}/materials/{MATERIAL}/source.pdf"
+OBJECT = "44444444-4444-4444-8444-444444444444"
+KEY = f"quarantine/{TENANT}/{MATERIAL}/1/{OBJECT}.pdf"
+RESULT_KEY = f"results/{TENANT}/{MATERIAL}/1/v1.json"
 MB = 1024 * 1024
 
 
@@ -75,6 +78,7 @@ def test_accepts_valid_pdf_and_renders_png_preview():
         (b"not a pdf at all", "NOT_PDF"),
         (make_pdf(1)[:-200], "CORRUPT"),
         (make_pdf(1, encrypt=True), "ENCRYPTED"),
+        (b"%PDF-1.7\n" + os.urandom(2048) + b"\n%%EOF\n", "CORRUPT"),  # right magic bytes, garbage inside
     ],
 )
 def test_rejects_bad_input(data, code):
@@ -95,7 +99,8 @@ class FakeStorage:
         self.meta = meta if meta is not None else {"material-id": MATERIAL, "correlation-id": "mat-22222222-a1-abc123", "attempt": "1"}
         self.published = {}
 
-    def head_source(self, key):
+    def head_source(self, key, version_id):
+        assert version_id in (None, self.version)
         return {"size": len(self.source), "version_id": self.version, "meta": self.meta} if key == KEY else None
 
     def get_source(self, key, version_id):
@@ -109,7 +114,23 @@ class FakeStorage:
         self.published[key] = (data, content_type)
 
 
-SETTINGS = {"callback_url": "https://api.example.test/api/v1/internal/material-callback", "key_id": "k1", "secret": "s" * 40, "max_bytes": 10 * MB, "max_pages": 500}
+SETTINGS = {"callback_url": "https://api.example.test/api/v1/internal/material-callback", "key_id": "k1", "secret": "s" * 40, "max_bytes": 10 * MB, "max_pages": 500, "require_version_id": True}
+
+
+def run(storage, request_id="req-1", key=KEY, version="v1", **kwargs):
+    return index.process_object(key, version, storage, SETTINGS, request_id, index.Logger(request_id), **kwargs)
+
+
+# ───── key layout (shared with apps/api/src/modules/materials/materials-core.spec.ts) ─────
+
+def test_key_layout_matches_the_api():
+    source = keys.parse_quarantine_key(KEY)
+    assert source == (TENANT, MATERIAL, 1)
+    assert keys.version_tag("CAEQ.a+b/c=_-9") == "CAEQ_a_b_c__-9"
+    assert keys.version_tag(None) == "noversion"
+    assert keys.output_key("previews", source, "CAEQ.a+b", "png") == f"previews/{TENANT}/{MATERIAL}/1/CAEQ_a_b.png"
+    for bad in (f"tenants/{TENANT}/materials/{MATERIAL}/source.pdf", f"quarantine/{TENANT}/{MATERIAL}/0/{OBJECT}.pdf", KEY + "\n", "quarantine/../x.pdf"):
+        assert keys.parse_quarantine_key(bad) is None
 
 
 def collect():
@@ -125,50 +146,59 @@ def collect():
 def test_handler_ready_writes_outputs_and_calls_back():
     storage = FakeStorage(make_pdf(2))
     sent, send = collect()
-    out = index.process_object(KEY, storage, SETTINGS, "req-1", index.Logger("req-1"), send=send)
+    out = run(storage, send=send)
     assert out["status"] == "READY"
-    doc = f"tenants/{TENANT}/materials/{MATERIAL}/document.pdf"
+    doc = f"published/{TENANT}/{MATERIAL}/1/v1.pdf"
     assert storage.published[doc][1] == "application/pdf"
-    assert storage.published[f"tenants/{TENANT}/materials/{MATERIAL}/preview.png"][1] == "image/png"
-    result = json.loads(storage.published[f"results/{TENANT}/{MATERIAL}.json"][0])
+    assert storage.published[f"previews/{TENANT}/{MATERIAL}/1/v1.png"][1] == "image/png"
+    result = json.loads(storage.published[RESULT_KEY][0])
     assert result == sent[0]
     assert result["schema"] == "educenter.material-result/v1" and result["processor"] == "ALIYUN_FC"
     assert result["result"]["pageCount"] == 2 and result["result"]["documentKey"] == doc
     assert result["sourceVersionId"] == "v1" and result["correlationId"] == "mat-22222222-a1-abc123"
+    assert result["sourceKey"] == KEY and result["attempt"] == 1
 
 
 def test_handler_rejects_non_pdf():
     storage = FakeStorage(b"hello world")
     sent, send = collect()
-    assert index.process_object(KEY, storage, SETTINGS, "req-2", index.Logger("req-2"), send=send)["status"] == "REJECTED"
+    assert run(storage, "req-2", send=send)["status"] == "REJECTED"
     assert sent[0]["error"]["code"] == "NOT_PDF" and sent[0]["result"] is None
 
 
 def test_handler_is_idempotent_for_same_version():
     storage = FakeStorage(make_pdf(1))
     sent, send = collect()
-    index.process_object(KEY, storage, SETTINGS, "req-3", index.Logger("req-3"), send=send)
-    again = index.process_object(KEY, storage, SETTINGS, "req-4", index.Logger("req-4"), send=send)
+    run(storage, "req-3", send=send)
+    again = run(storage, "req-4", send=send)
     assert again.get("reused") is True
     assert sent[0]["eventId"] == sent[1]["eventId"]  # API deduplicates by eventId
 
 
 def test_handler_ignores_unexpected_keys_and_metadata_mismatch():
     sent, send = collect()
-    assert index.process_object("other/file.pdf", FakeStorage(b""), SETTINGS, "r", index.Logger("r"), send=send)["status"] == "IGNORED"
+    assert run(FakeStorage(b""), key="other/file.pdf", send=send)["status"] == "IGNORED"
     bad = FakeStorage(make_pdf(1), meta={"material-id": "33333333-3333-4333-8333-333333333333"})
-    assert index.process_object(KEY, bad, SETTINGS, "r", index.Logger("r"), send=send)["status"] == "IGNORED"
+    assert run(bad, send=send)["status"] == "IGNORED"
     assert sent == []
+
+
+def test_handler_does_not_process_without_a_version_id():
+    storage = FakeStorage(make_pdf(1))
+    sent, send = collect()
+    assert run(storage, version=None, send=send)["status"] == "BLOCKED"
+    assert sent == [] and storage.published == {}
 
 
 def test_handler_raises_when_callback_fails_so_fc_retries():
     storage = FakeStorage(make_pdf(1))
     with pytest.raises(RuntimeError):
-        index.process_object(KEY, storage, SETTINGS, "req-5", index.Logger("req-5"), send=lambda *a: False)
+        run(storage, "req-5", send=lambda *a: False)
     # Result JSON is stored anyway for the Azure reconciler.
-    assert f"results/{TENANT}/{MATERIAL}.json" in storage.published
+    assert RESULT_KEY in storage.published
 
 
 def test_parse_oss_trigger_event():
-    event = json.dumps({"events": [{"eventName": "ObjectCreated:PostObject", "oss": {"bucket": {"name": "q"}, "object": {"key": KEY, "size": 10}}}]}).encode()
-    assert index.parse_events(event)[0]["oss"]["object"]["key"] == KEY
+    event = json.dumps({"events": [{"eventName": "ObjectCreated:PostObject", "oss": {"bucket": {"name": "q"}, "object": {"key": KEY, "size": 10, "versionId": "v1"}}}]}).encode()
+    assert index.event_object(index.parse_events(event)[0]) == (KEY, "v1")
+    assert index.event_object({"oss": {"object": {"key": KEY}}}) == (KEY, None)

@@ -1,12 +1,14 @@
-"""EduCenter material-processor — Alibaba Cloud Function Compute 3.0 (Python 3.12), OSS trigger.
+"""EduCenter material-processor — Alibaba Cloud Function Compute 3.0 (Python 3.10), OSS trigger.
 
 Flow per ObjectCreated event on the quarantine bucket:
-  1. accept only keys  tenants/<uuid>/materials/<uuid>/source.pdf
-  2. idempotency: if results/<tenant>/<material>.json already exists for this source version,
-     re-send that result (same eventId) instead of processing again
-  3. download, validate PDF (size, structure, encryption, pages), read metadata, render preview
-  4. write document.pdf + preview.png + result JSON to the published bucket
-  5. HMAC-signed callback to the Azure API; on failure raise so FC's async retry runs again
+  1. accept only keys  quarantine/<tenant>/<material>/<attempt>/<uuid>.pdf  (keys.py)
+  2. read exactly the object version named by the event; without a versionId nothing is processed
+     (REQUIRE_VERSION_ID=false allows the current version instead — diagnosis only)
+  3. idempotency: if the result JSON of this attempt + version already exists, re-send it
+     (same eventId) instead of processing again
+  4. download, validate PDF (size, structure, encryption, pages), read metadata, render preview
+  5. write published/ + previews/ + results/ objects to the published bucket
+  6. HMAC-signed callback to the Azure API; on failure raise so FC's async retry runs again
      (the reconciler on Azure also replays the stored result JSON)
 
 Credentials come from the function's RAM role (context.credentials, STS) — no keys in code.
@@ -14,17 +16,18 @@ Logs are JSON lines on stdout → SLS logstore, each with a correlationId.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
-import re
 import time
+import urllib.parse
 from datetime import datetime, timezone
 
 import callback as cb
+import keys
 import processor
 
 RESULT_SCHEMA = "educenter.material-result/v1"
-KEY_RE = re.compile(r"^tenants/([0-9a-f-]{36})/materials/([0-9a-f-]{36})/source\.pdf$")
 
 
 def _env(name: str, default: str | None = None) -> str:
@@ -61,10 +64,11 @@ class OssStorage:
         self.p = oss2.Bucket(auth, endpoint, published_bucket)
         self._oss2 = oss2
 
-    def head_source(self, key: str):
+    def head_source(self, key: str, version_id: str | None):
+        params = {"versionId": version_id} if version_id else None
         try:
-            h = self.q.head_object(key)
-        except self._oss2.exceptions.NoSuchKey:
+            h = self.q.head_object(key, params=params)
+        except self._oss2.exceptions.NotFound:
             return None
         meta = {k[len("x-oss-meta-"):]: v for k, v in h.headers.items() if k.lower().startswith("x-oss-meta-")}
         return {"size": h.content_length, "version_id": h.headers.get("x-oss-version-id"), "meta": {k.lower(): v for k, v in meta.items()}}
@@ -89,19 +93,31 @@ def parse_events(event) -> list:
     return data.get("events", [])
 
 
-def process_object(key: str, storage, settings: dict, request_id: str, log: Logger, send=cb.send_callback) -> dict:
+def event_object(ev: dict) -> tuple:
+    """(key, versionId) of one OSS event record. The field name's casing is not relied on."""
+    obj = ev.get("oss", {}).get("object", {})
+    key = urllib.parse.unquote(obj.get("key", ""))
+    version_id = next((v for k, v in obj.items() if k.lower().replace("-", "") == "versionid"), None)
+    return key, version_id or None
+
+
+def process_object(key: str, version_id: str | None, storage, settings: dict, request_id: str, log: Logger, send=cb.send_callback) -> dict:
     """Processes one quarantine object. Returns a small summary; raises if the callback could not be delivered."""
-    m = KEY_RE.match(key)
-    if not m:
+    source = keys.parse_quarantine_key(key)
+    if not source:
         log("WARN", "object.ignored", key=key, reason="UNEXPECTED_KEY")
         return {"status": "IGNORED"}
-    tenant_id, material_id = m.group(1), m.group(2)
-    result_key = f"results/{tenant_id}/{material_id}.json"
+    tenant_id, material_id, attempt = source
+    if not version_id and settings["require_version_id"]:
+        log("ERROR", "object.version_missing", key=key)
+        return {"status": "BLOCKED", "reason": "MISSING_VERSION_ID"}
 
-    head = storage.head_source(key)
+    head = storage.head_source(key, version_id)
     if head is None:
         log("WARN", "object.missing", key=key)
         return {"status": "IGNORED"}
+    version_id = version_id or head["version_id"]
+    result_key = keys.output_key("results", source, version_id, "json")
     meta = head["meta"]
     correlation_id = meta.get("correlation-id") or f"fc-{material_id[:8]}-{request_id[:8]}"
     log.bind(correlationId=correlation_id, materialId=material_id, tenantId=tenant_id)
@@ -116,7 +132,7 @@ def process_object(key: str, storage, settings: dict, request_id: str, log: Logg
             prev = json.loads(existing)
         except ValueError:
             prev = None
-        if prev and prev.get("sourceVersionId") == head["version_id"] and prev.get("sourceKey") == key:
+        if prev and prev.get("sourceVersionId") == version_id and prev.get("sourceKey") == key:
             log("INFO", "result.reused", eventId=prev.get("eventId"))
             ok = send(settings["callback_url"], settings["key_id"], settings["secret"], existing, log)
             if not ok:
@@ -125,33 +141,33 @@ def process_object(key: str, storage, settings: dict, request_id: str, log: Logg
 
     started_at = _now_iso()
     t0 = time.monotonic()
-    log("INFO", "processing.started", size=head["size"], versionId=head["version_id"])
+    log("INFO", "processing.started", size=head["size"], versionId=version_id, attempt=attempt)
 
     base = {
         "schema": RESULT_SCHEMA,
-        "eventId": f"fc:{request_id}"[:100],
+        "eventId": f"fc:{request_id[:60]}:{hashlib.sha256(result_key.encode()).hexdigest()[:16]}",
         "tenantId": tenant_id,
         "materialId": material_id,
         "sourceKey": key,
-        "sourceVersionId": head["version_id"],
+        "sourceVersionId": version_id,
         "correlationId": correlation_id,
         "processor": "ALIYUN_FC",
-        "attempt": int(meta.get("attempt", "1") or 1),
+        "attempt": attempt,
         "startedAt": started_at,
     }
 
     if head["size"] > settings["max_bytes"]:
         outcome = processor.Rejected("TOO_LARGE", f"Tệp vượt quá {settings['max_bytes'] // (1024 * 1024)} MB")
     else:
-        data = storage.get_source(key, head["version_id"])
+        data = storage.get_source(key, version_id)
         outcome = processor.process_pdf(data, settings["max_bytes"], settings["max_pages"])
 
     if isinstance(outcome, processor.Accepted):
-        doc_key = f"tenants/{tenant_id}/materials/{material_id}/document.pdf"
+        doc_key = keys.output_key("published", source, version_id, "pdf")
         storage.put_published(doc_key, data, "application/pdf")
         preview_key = None
         if outcome.preview_png:
-            preview_key = f"tenants/{tenant_id}/materials/{material_id}/preview.png"
+            preview_key = keys.output_key("previews", source, version_id, "png")
             storage.put_published(preview_key, outcome.preview_png, "image/png")
         elif outcome.preview_error:
             log("WARN", "preview.failed", error=outcome.preview_error)
@@ -195,13 +211,17 @@ def handler(event, context):
         "secret": _env("CALLBACK_HMAC_SECRET"),
         "max_bytes": int(_env("MAX_BYTES", str(10 * 1024 * 1024))),
         "max_pages": int(_env("MAX_PAGES", "500")),
+        "require_version_id": os.environ.get("REQUIRE_VERSION_ID", "true").lower() != "false",
     }
+    # The signed callback must travel over TLS. ALLOW_INSECURE_CALLBACK exists for local simulation only.
+    if not settings["callback_url"].startswith("https://") and os.environ.get("ALLOW_INSECURE_CALLBACK") != "true":
+        raise RuntimeError("CALLBACK_URL must be https")
     if len(settings["secret"]) < 32:
         raise RuntimeError("CALLBACK_HMAC_SECRET must be at least 32 characters")
     storage = OssStorage(context, _env("OSS_ENDPOINT"), _env("QUARANTINE_BUCKET"), _env("PUBLISHED_BUCKET"))
     summaries = []
     for ev in parse_events(event):
-        key = ev.get("oss", {}).get("object", {}).get("key", "")
-        log("INFO", "event.received", eventName=ev.get("eventName"), key=key)
-        summaries.append(process_object(key, storage, settings, request_id, log))
+        key, version_id = event_object(ev)
+        log("INFO", "event.received", eventName=ev.get("eventName"), key=key, versionId=version_id)
+        summaries.append(process_object(key, version_id, storage, settings, request_id, Logger(request_id)))
     return json.dumps({"processed": summaries})
