@@ -123,6 +123,10 @@ def main():
     for prefix, ext in (("published", "pdf"), ("previews", "png"), ("results", "json")):
         key = f"{prefix}/{tenant}/{material_id}/1/{version}.{ext}"
         check(f"output object {prefix}/", os.path.isfile(os.path.join(oss2.ROOT, "educenter-published-local", *key.split("/"))), key)
+    for role in ("quarantine", "published"):
+        view = http("GET", f"/cloud/storage?bucket={role}&limit=1000")[1]
+        owned = [o for o in view["objects"] if f"/{material_id}/" in o["key"]]
+        check(f"cloud storage page lists {role} objects and links them to the material", owned and all((o["material"] or {}).get("id") == material_id for o in owned), f"{len(owned)} object(s), prefix '{view['prefix']}'")
     access = http("GET", f"/materials/{material_id}/access?kind=download")[1]
     with urllib.request.urlopen(f"{BASE}{access['url']}", timeout=30) as res:
         check("download returns the uploaded bytes", res.read() == pdf)

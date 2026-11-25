@@ -14,7 +14,7 @@ Mọi bước dùng **PowerShell** (không cần WSL hay terminal Linux).
 | (Cloud) Azure CLI | `winget install Microsoft.AzureCLI` | `az version` |
 | (Cloud) Aliyun CLI, Serverless Devs | xem [aliyun-integration.md](aliyun-integration.md) | `aliyun version`, `s -v` |
 
-Python **không** bắt buộc: test Function Compute chạy trong container `python:3.12-slim`.
+Python **không** bắt buộc: test Function Compute chạy trong container `python:3.10-slim`.
 
 Nếu PowerShell chặn script: dùng `powershell -ExecutionPolicy Bypass -File <script>` (không đổi chính sách hệ thống).
 
@@ -48,7 +48,7 @@ powershell -ExecutionPolicy Bypass -File scripts\windows\stop-local.ps1
 ## 5. Kết nối Cloud
 
 1. `deploy-aliyun.ps1` — bucket OSS, RAM, (sau bước 2) Function Compute.
-2. `deploy-azure.ps1` — App Service, PostgreSQL, Key Vault, App Insights, migration, deploy mã.
+2. `deploy-azure.ps1` — secret app, migration, deploy mã (`-Infra` để áp Bicep) lên hạ tầng của `infra/azure/`.
 
 Thứ tự và lý do: [cloud-architecture.md § Triển khai](cloud-architecture.md#triển-khai-thủ-công).
 

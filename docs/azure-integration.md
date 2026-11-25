@@ -1,29 +1,26 @@
 # Tích hợp Azure
 
-Trạng thái: mã và IaC đã viết; **chưa triển khai lên subscription thật** (không có credential trong phiên phát triển).
+Trạng thái: hạ tầng theo `infra/azure/main.bicep` đã được deploy ngày 24–25/11 (theo mô tả PR #4: App Service F1,
+PostgreSQL B1ms, hai Key Vault, App Insights, identity OIDC; chưa có bản build app). **Phần app settings bổ sung khi
+tích hợp mới chỉ được validate (`az bicep build`), chưa deploy.** Chi tiết và lệnh: [infra/azure/README.md](../infra/azure/README.md).
 
 ## App Service
-- Bicep: Linux, `NODE|24-lts`, B1, Always On, HTTPS only, TLS 1.2, FTPS tắt, `healthCheckPath=/api/v1/health`,
+- Linux, `NODE|24-lts`, SKU `F1` mặc định (đổi `B1` để có Always On + health check), HTTPS only, TLS 1.2, FTPS tắt,
   lệnh khởi động `cd apps/api && node dist/main.js`, system-assigned identity.
-- Readiness `GET /api/v1/health` (DB ping có timeout, 503 khi DB lỗi); liveness `/api/v1/health/live`.
-- Graceful shutdown: SIGTERM → Nest đóng kết nối, hạn chót `SHUTDOWN_TIMEOUT_MS` (đã có test).
-- Log JSON lines ra stdout → App Service console logs → Log Analytics (diagnostic setting).
-- Gói deploy: `deploy-azure.ps1 -PackageOnly` → `.data/deploy/educenter-app.zip` (**đã build và chạy thử local ở chế độ production**:
-  SPA + API cùng origin, deep link, 404 API, Cloud Ops API trả 403 khi không có `OPS_ALLOWED_CIDRS`).
+- Readiness `GET /api/v1/health`; liveness `/api/v1/health/live`. Graceful shutdown theo `SHUTDOWN_TIMEOUT_MS`.
+- Gói deploy: `deploy-azure.ps1 -PackageOnly` → `.data/deploy/educenter-app.zip`.
+- Storage/processing: `local` (mô phỏng, file ở `/home/data/educenter`) cho tới khi đặt hai bucket OSS.
 
 ## PostgreSQL Flexible Server
-- v16, Burstable B1ms, `require_secure_transport=on`, backup 7 ngày (PITR), firewall chỉ "Azure services" + rule tạm khi migration.
-- Vai trò `edu_migrator` / `edu_runtime` qua `infra/azure/postgres-roles.sql`; `DATABASE_URL` có `sslmode=require`.
-- Pool: `DB_CONNECTION_LIMIT=10`/instance, `CONNECTION LIMIT 40` cho runtime. Diagnostics: PostgreSQLLogs + AllMetrics.
+- v16, Burstable B1ms, TLS bắt buộc, backup 7 ngày; **không** có rule `0.0.0.0`, chỉ IP outbound của Web App
+  (`set-pg-firewall.ps1`) và rule tạm khi migration.
+- Vai trò `edu_migrator` / `edu_runtime` do `infra/azure/scripts/bootstrap_db.py` tạo.
+- Pool: `DB_CONNECTION_LIMIT=5`/instance, `CONNECTION LIMIT 20` cho runtime.
 - Ứng dụng từ chối khởi động ở production nếu kết nối bằng role superuser/BYPASSRLS.
 
 ## Key Vault + Managed Identity
-- `enableRbacAuthorization`, soft delete 7 ngày, purge protection, audit log (`AuditEvent`) → Log Analytics.
-- App Service đọc secret bằng **Key Vault references** (`@Microsoft.KeyVault(VaultName=…;SecretName=…)`) với identity
-  có vai trò *Key Vault Secrets User* — không có secret trong mã hay app settings.
-- Secret: `database-url`, `migration-database-url`, `demo-context-secret`, `callback-hmac-keys`, `oss-access-key-*`,
-  `aliyun-readonly-access-key-*`, `pg-*-password`; tạo với hạn 180 ngày. Xoay vòng: [cloud-security.md](cloud-security.md).
-- Trang Cloud Resources đọc **metadata** secret (tên, số version, ngày hết hạn) bằng `DefaultAzureCredential` — không bao giờ trả giá trị.
+- Hai vault RBAC: `kv-edu-rt-<suffix>` (secret app đọc lúc chạy) và `kv-edu-ops-<suffix>` (migrator, admin); soft delete 7 ngày.
+- App Service đọc secret runtime bằng **Key Vault references** với identity có vai trò *Key Vault Secrets User*.
 
 ## Application Insights
 - SDK `applicationinsights` v3 khởi động trước mọi module (chỉ nạp khi có connection string): requests, exceptions,
@@ -31,10 +28,8 @@ Trạng thái: mã và IaC đã viết; **chưa triển khai lên subscription t
 - Custom: dependency `oss.*`, `keyvault.list`, `callback.http`; metric `callback.latency`, `fc.duration`, `local.processor.duration`; event `material.processed`.
 
 ## Azure Monitor
-- Alert: Http5xx > 5/5 phút, HealthCheckStatus < 100, PostgreSQL CPU > 80%; availability test `/api/v1/health` từ SG/HK; action group email.
-- Identity có *Monitoring Reader* + *Log Analytics Reader*: trang Cloud Monitoring/Logs đọc metric App Service/PostgreSQL,
-  Resource Health và truy vấn KQL `AppTraces`.
-- Chi phí: Cost Management Query (MonthToDate theo dịch vụ) — cần quyền *Cost Management Reader*; nếu thiếu → `NOT CONFIGURED`.
+Chưa có trong template: alert, availability test, diagnostic settings, role *Monitoring Reader* / *Log Analytics Reader*
+và các biến `AZURE_*`. Trang Cloud Monitoring/Logs báo `NOT CONFIGURED` cho tới khi bổ sung.
 
 ## Backup & khôi phục
 Xem [cloud-recovery.md](cloud-recovery.md).

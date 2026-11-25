@@ -1,10 +1,22 @@
 # material-processor (Function Compute 3.0, Python 3.10)
 
-Bản PoC/hardening phía cloud do Giang chuẩn bị (P0-15, P2-08). Người sở hữu logic xử lý PDF cuối cùng: **chờ Đức chốt**.
+Worker duy nhất của luồng học liệu. Hợp đồng chung với API: key OSS (`keys.py` ↔ `storage.types.ts`),
+kết quả `educenter.material-result/v1` và chữ ký `X-Edu-*` (`callback.py` ↔ `hmac.ts`).
 
-- `validator.py` — kiểm magic bytes, ≤10 MB, mã hóa, số trang (`pypdf`), render trang 1 (`pypdfium2`). Không phải quét mã độc.
-- `index.py` — handler `index.handler`: đọc đúng `versionId` trong event (thiếu → FAILED, không đọc bản mới nhất), ghi `published/`, `previews/`, `results/` (results trước callback), callback HTTPS + HMAC, retry ≤5 chỉ với lỗi mạng/5xx, log JSON theo `correlationId`.
-- `tests/` — `python -m pytest -q` (9 ca).
-- `build.ps1` — đóng gói zip cho Linux x86_64 từ Windows.
+| File | Vai trò |
+|---|---|
+| `index.py` | handler `index.handler`: đọc đúng `versionId` trong event (thiếu → không xử lý), ghi `published/`, `previews/`, `results/` (results trước callback), callback HTTPS + HMAC, log JSON |
+| `processor.py` | kiểm tra PDF (`pypdf`), render trang 1 (`pypdfium2`). Không phải quét mã độc |
+| `keys.py`, `callback.py` | bố cục key, ký và gửi callback |
+| `s.yaml` | deploy bằng Serverless Devs (`scripts/windows/deploy-aliyun.ps1`) |
+| `build.ps1` | đóng gói zip để tải lên console |
 
-Định dạng chữ ký callback là đề xuất; phải khớp contract `POST /api/v1/internal/material-events` (P0-16) của Anh/Hà trước khi bật `CALLBACK_URL`.
+Runtime **python3.10** (Debian 10, glibc 2.28). Không chọn 3.12 vì tài liệu FC (cập nhật 26/10/2026) ghi 3.12 đang
+*public preview* và danh sách region hỗ trợ không có Singapore. `oss2` có sẵn trong runtime (2.16.0) nên không đóng gói.
+
+Biến môi trường: `OSS_ENDPOINT`, `QUARANTINE_BUCKET`, `PUBLISHED_BUCKET`, `CALLBACK_URL` (https),
+`CALLBACK_HMAC_KEY_ID`, `CALLBACK_HMAC_SECRET`, `MAX_BYTES`, `MAX_PAGES`, `PYTHONPATH=/code/python` (chỉ khi deploy bằng `s.yaml`).
+`REQUIRE_VERSION_ID=false` và `ALLOW_INSECURE_CALLBACK=true` chỉ để chẩn đoán/mô phỏng, không đặt trên cloud.
+
+Test: `python -m pytest -q tests` (gate trong `test-local.ps1`). Mô phỏng cả luồng với API đang chạy:
+`powershell -ExecutionPolicy Bypass -File tests\e2e\fc-sim\run.ps1`. **Chưa chạy trên Alibaba Cloud thật.**

@@ -21,7 +21,7 @@
 | App Service → Key Vault | Managed Identity (system-assigned), RBAC *Key Vault Secrets User*, Key Vault references |
 | App Service → Azure Monitor/Log Analytics | Managed Identity, *Monitoring Reader*, *Log Analytics Reader* |
 | App Service → PostgreSQL | TLS bắt buộc, `edu_runtime` (DML), firewall Azure services |
-| App Service → OSS | RAM user `educenter-api` least privilege, key trong Key Vault |
+| App Service → OSS | RAM user `api-storage` least privilege, key trong Key Vault |
 | Browser → OSS | policy/URL ký, hết hạn ngắn, bucket private, CORS chỉ app origin |
 | FC → OSS/SLS | RAM role + STS tạm thời (không có key cố định) |
 | FC → App Service | HMAC-SHA256 + timestamp + eventId + key ID |
@@ -33,13 +33,13 @@ qua tệp tạm, không in ra màn hình; secret có hạn 180 ngày.
 
 ### Xoay vòng khóa HMAC (D-29)
 1. Thêm `k2:<mới>` vào secret `callback-hmac-keys` → `k1:<cũ>,k2:<mới>`; restart App Service (Key Vault reference được nạp lại).
-2. Cập nhật FC: `CALLBACK_HMAC_KEY_ID=k2`, `CALLBACK_HMAC_SECRET=<mới>` (`s deploy`).
+2. Cập nhật FC: `CALLBACK_HMAC_KEY_ID=k2`, `CALLBACK_HMAC_SECRET=<mới>` (`s deploy`). Chi tiết: [runbooks/hmac-rotation.md](runbooks/hmac-rotation.md).
 3. Sau khi không còn callback `k1` (xem ops log `keyId`), xóa `k1` khỏi secret, restart.
 Đã có unit test chấp nhận chữ ký bằng cả hai key và từ chối chéo key.
 
 ### Xoay vòng khóa RAM / DB
 RAM: tạo access key thứ 2 → cập nhật Key Vault → restart → xóa key cũ. DB: `ALTER ROLE edu_runtime PASSWORD …` →
-cập nhật `database-url` → restart. Key Vault giữ lịch sử version để quay lại.
+cập nhật `db-runtime-url` → restart. Key Vault giữ lịch sử version để quay lại.
 
 ## HTTP
 Helmet: CSP `default-src 'none'` cho API; CSP riêng cho SPA (self + host OSS); HSTS; `frame-ancestors 'none'` (preview local

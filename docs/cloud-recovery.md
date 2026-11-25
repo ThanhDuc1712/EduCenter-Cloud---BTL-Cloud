@@ -17,8 +17,8 @@ az postgres flexible-server restore -g rg-educenter-demo --name educenter-pg-res
   --source-server <pgName> --restore-time "2026-11-24T08:00:00Z"
 ```
 1. Khôi phục sang **server mới** (không ghi đè server đang chạy).
-2. Kiểm tra: `SELECT count(*) FROM students; SELECT max(created_at) FROM activity_logs;` và chạy `postgres-roles.sql` nếu cần.
-3. Cập nhật secret `database-url` trỏ server mới → restart App Service → kiểm tra `/api/v1/health`.
+2. Kiểm tra: `SELECT count(*) FROM students; SELECT max(created_at) FROM activity_logs;` và chạy `infra/azure/scripts/bootstrap_db.py` nếu cần.
+3. Cập nhật secret `db-runtime-url` trỏ server mới → restart App Service → kiểm tra `/api/v1/health`.
 4. Chạy "Chạy đối soát ngay": tài liệu PROCESSING sau thời điểm khôi phục sẽ được đồng bộ lại từ `results/*.json`.
 RTO mục tiêu ~30 phút, RPO ≤ 5 phút (PITR) — **chưa đo**.
 
@@ -32,13 +32,13 @@ docker exec educenter-postgres-1 pg_restore -U postgres -d educenter_restore --n
 ```
 
 ## Khôi phục tệp OSS
-Object bị xóa nhầm: liệt kê version (`aliyun oss ls oss://<bucket>/tenants/… --all-versions`) và copy version cũ thành
-bản hiện hành. Nếu bản published mất nhưng nguồn còn trong quarantine: nút "Xử lý lại" (retry) tạo lại document + preview.
+Object bị xóa nhầm: liệt kê version (`aliyun oss ls oss://<bucket>/published/… --all-versions`) và copy version cũ thành
+bản hiện hành. Nếu bản published mất nhưng nguồn còn trong quarantine: nút "Xử lý lại" (retry) tạo lại document + preview (trong 1 ngày, trước khi lifecycle xóa quarantine).
 
 ## Sự cố thường gặp
 | Sự cố | Khôi phục |
 |---|---|
 | FC lỗi / callback không tới | Tài liệu tự FAILED hoặc được reconciler áp dụng kết quả; sửa lỗi rồi retry |
 | Lộ HMAC secret | xoay vòng theo [cloud-security.md](cloud-security.md#xoay-vòng-khóa-hmac-d-29) |
-| Deploy lỗi | `deploy-azure.ps1 -SkipInfra` với commit trước (gói build lại từ mã) |
+| Deploy lỗi | `deploy-azure.ps1` với commit trước (gói build lại từ mã) |
 | Mất cả region | ngoài phạm vi BTL (không geo-redundant backup) |

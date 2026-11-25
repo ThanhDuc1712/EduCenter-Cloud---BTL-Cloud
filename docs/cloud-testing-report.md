@@ -63,3 +63,29 @@ OSS upload/download thật, trigger Function Compute thật, SLS, CloudMonitor, 
 Azure Monitor, PostgreSQL Flexible (TLS/PITR), biên dịch Bicep (`az bicep build`), `deploy-azure.ps1`/`deploy-aliyun.ps1` trên tài khoản thật,
 tải/hiệu năng. Lý do: không có credential cloud và không cài Azure CLI/Aliyun CLI trong môi trường phát triển.
 Ghi chú: cảnh báo `pg` "client.query() when the client is already executing" xuất phát từ bên trong Prisma 7.10 (adapter-pg), kết quả vẫn đúng.
+
+---
+
+## Bổ sung 2026-11-25 — kiểm thử bản tích hợp FE/BE + cloud
+
+Các số liệu ở trên là của nhánh FE/BE trước khi tích hợp. Phần này chạy trên bản đã gộp (Windows 11, Node 24, Docker).
+
+### Đã chạy local
+
+| Kiểm thử | Kết quả |
+|---|---|
+| `test-local.ps1` (build, lint, typecheck, unit, build, integration PostgreSQL, worker Python 3.10, E2E) | PASS cả 8 gate |
+| `tests/e2e/integration-flow.mjs` (LOCAL MODE) | PASS — 27/27 |
+| `tests/e2e/fc-sim/run.ps1`: material → key OSS → handler thật của worker → callback HMAC qua HTTP → đúng material; sai secret; mất callback + đối soát; retry sang lần 2 | PASS — 33/33, **OSS và Function Compute được mô phỏng** |
+| Gói worker từ `build.ps1`: import + render trên Debian 10 / glibc 2.28 / Python 3.10 | PASS |
+| `az bicep build`, `lint`, `build-params` (chỉ validate) | PASS |
+| `bootstrap_db.py` (Key Vault giả lập) + migration bằng `edu_migrator` trên PostgreSQL 16 với admin không phải superuser | PASS — 26 bảng, `edu_runtime` đọc được tất cả |
+| Gói `deploy-azure.ps1 -PackageOnly` chạy trong container Linux Node 24 chỉ với app settings trong `main.bicep` (chế độ local và chế độ OSS) | PASS |
+
+### Chưa chạy trên cloud thật
+
+- Azure: template đã bổ sung app settings **chưa deploy** (chỉ validate); `deploy-azure.ps1` chưa chạy với subscription;
+  Key Vault reference, TLS tới PostgreSQL và App Service startup của bản mới chưa kiểm.
+- Alibaba Cloud: chưa có gì chạy thật — OSS, PostObject, trigger (kể cả việc event có `versionId`, giả định A-04),
+  RAM policy, lifecycle, Function Compute, SLS. `deploy-aliyun.ps1` chưa chạy.
+- Chưa đo hiệu năng.

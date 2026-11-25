@@ -22,7 +22,7 @@ apps/
 packages/
   api-contract/        OpenAPI 3.1 (openapi.yaml + paths/<module>.yaml) → generated/schema.d.ts
   shared/              framework-agnostic constants (error codes, header names)
-functions/             material-processor (Aliyun Function Compute, Python 3.12)
+functions/             material-processor (Aliyun Function Compute, Python 3.10)
 infra/local/           PostgreSQL init (DB roles, D-25) · dev Dockerfile
 infra/azure/ · aliyun/ Bicep, DB roles, RAM policies, OSS lifecycle/CORS
 scripts/windows/       PowerShell: check, setup, start, stop, test, deploy-azure, deploy-aliyun

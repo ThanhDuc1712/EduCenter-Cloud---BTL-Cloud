@@ -37,6 +37,6 @@ PostgreSQL 16 · Prisma 7 (`apps/api/prisma/schema.prisma`) · migration `prisma
 
 ## Vận hành
 
-- Migration local: `pnpm db:migrate`; cloud: `deploy-azure.ps1` (mở firewall tạm cho IP vận hành rồi xóa).
-- Vai trò trên Azure: `infra/azure/postgres-roles.sql`.
+- Migration local: `pnpm db:migrate`; cloud: `deploy-azure.ps1 -Migrate` (mở firewall tạm cho IP vận hành rồi xóa).
+- Vai trò trên Azure: `infra/azure/scripts/bootstrap_db.py`.
 - Sao lưu/khôi phục: [cloud-recovery.md](cloud-recovery.md).

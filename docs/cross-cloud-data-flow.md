@@ -19,7 +19,7 @@ sequenceDiagram
   A->>D: UPLOADING→PROCESSING, job RUNNING
   Q-->>F: ObjectCreated
   F->>Q: GET ?versionId
-  F->>P: document.pdf, preview.png, results/…json
+  F->>P: published/…, previews/…, results/…
   F->>A: POST /internal/material-callback (HMAC)
   A->>D: event (eventId unique) + PROCESSING→READY + job SUCCEEDED + notifications
   B->>A: GET /materials/:id (poll) → READY
@@ -29,11 +29,12 @@ sequenceDiagram
 ```
 
 ## Hợp đồng kết quả (`educenter.material-result/v1`)
-Cùng một JSON được lưu ở `results/<tenant>/<material>.json` và gửi trong callback:
+Cùng một JSON được lưu ở `results/{tenant}/{material}/{attempt}/{versionTag}.json` và gửi trong callback:
 `schema, eventId, tenantId, materialId, sourceKey, sourceVersionId, correlationId, status (READY|REJECTED|FAILED),
 processor (ALIYUN_FC|LOCAL_MOCK), attempt, startedAt, finishedAt, durationMs, result{sizeBytes, sha256, pageCount, title,
 author, documentKey, previewKey, previewContentType} | error{code, message}`.
-API kiểm tra `sourceKey` và các key đầu ra phải đúng vị trí mong đợi (worker không thể trỏ tới object khác).
+API kiểm tra `sourceKey` phải là key của lần xử lý hiện tại (`quarantine/{tenant}/{material}/{attempt}/{uuid}.pdf`) và các key
+đầu ra đúng (attempt, version) — worker không thể trỏ tới object khác, kết quả của lần cũ bị bỏ qua.
 
 ## HMAC-SHA256
 `X-Edu-Key-Id`, `X-Edu-Timestamp` (giây), `X-Edu-Signature: v1=hex(HMAC(secret, "<ts>.<raw body>"))`.
@@ -57,7 +58,7 @@ Chạy mỗi `RECONCILE_INTERVAL_SECONDS` (và nút "Chạy đối soát ngay");
 `pg_try_advisory_lock` trên kết nối riêng; lịch sử trong `background_job_runs`.
 1. UPLOADING > 60 s: object có trong quarantine → tiếp tục luồng; quá `UPLOAD_EXPIRY_SECONDS` và không có → FAILED.
 2. PROCESSING quá `PROCESSING_TIMEOUT_SECONDS`: có result JSON hợp lệ cùng version → áp dụng (eventId `reconcile:…`);
-   chưa có và số lần < `PROCESSING_MAX_ATTEMPTS` → job TIMED_OUT + thử lại (OSS: copy object tại chỗ → trigger mới);
+   chưa có và số lần < `PROCESSING_MAX_ATTEMPTS` → job TIMED_OUT + thử lại (OSS: copy object sang key của lần mới → trigger mới);
    hết lượt → FAILED.
 3. Xóa ops log > 30 ngày.
 Chống xử lý trùng: `(material, attempt)` unique, `eventId` unique, khóa version, hàng đợi local chống dispatch trùng, idempotency FC theo `versionId`.

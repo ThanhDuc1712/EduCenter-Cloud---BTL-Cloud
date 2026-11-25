@@ -30,7 +30,7 @@ Trạng thái:
 | Hạng mục | Trạng thái | Ghi chú |
 |---|---|---|
 | Azure App Service | IMPLEMENTED | Bicep + script; **gói deploy chạy thử local ở production: VERIFIED** |
-| Azure PostgreSQL | IMPLEMENTED | Bicep (TLS, backup), `postgres-roles.sql` |
+| Azure PostgreSQL | IMPLEMENTED | Bicep (TLS, backup), `scripts/bootstrap_db.py` |
 | Key Vault | IMPLEMENTED | Bicep RBAC + references; đọc metadata secret |
 | Managed Identity | IMPLEMENTED | system-assigned, 3 role assignment |
 | Application Insights | IMPLEMENTED | SDK nạp có điều kiện, custom telemetry |
