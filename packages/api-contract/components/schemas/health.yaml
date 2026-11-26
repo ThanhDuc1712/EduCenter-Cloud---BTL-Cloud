@@ -1,0 +1,19 @@
+HealthResponse:
+  type: object
+  additionalProperties: false
+  required: [status, checks]
+  properties:
+    status:
+      type: string
+      enum: [ok, error]
+    checks:
+      type: object
+      additionalProperties: false
+      required: [app]
+      properties:
+        app:
+          type: string
+          enum: [up]
+        database:
+          type: string
+          enum: [up, down]

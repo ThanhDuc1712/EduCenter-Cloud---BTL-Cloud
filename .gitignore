@@ -1,53 +1,52 @@
-# --- Node / pnpm ---
+# Dependencies
 node_modules/
 .pnpm-store/
-npm-debug.log*
-pnpm-debug.log*
 
-# --- Build output ---
+# Build output
 dist/
+dist-ssr/
 build/
-*.tsbuildinfo
-.vite/
-
-# --- Test & coverage reports ---
 coverage/
-playwright-report/
-test-results/
-blob-report/
-tests/load/results/
-*.k6.json
+*.tsbuildinfo
+.tmp/
 
-# --- Secrets & env (chỉ commit .env.example) ---
+# Generated Prisma client (regenerate with `pnpm db:generate`)
+apps/api/src/generated/
+
+# Environment & secrets — never commit
 .env
 .env.*
 !.env.example
 *.pem
 *.key
 *.pfx
-*.publishsettings
-*.PublishSettings
+secrets/
+bench-tokens*.json
 
-# --- Token session benchmark (D-16) — không bao giờ commit ---
-.secrets/
-tests/load/.secrets/
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
 
-# --- Python (functions/material-processor) ---
-__pycache__/
-*.py[cod]
-.venv/
-venv/
-.pytest_cache/
-.ruff_cache/
-*.egg-info/
-
-# --- Infra state / local ---
-.terraform/
-*.tfstate
-*.tfstate.*
-
-# --- OS / editor ---
+# Editors / OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
 .DS_Store
 Thumbs.db
-.idea/
 *.swp
+
+# Local storage (LOCAL MODE MOCK of OSS)
+.data/
+
+# Function Compute build output (Linux wheels, zip packages)
+functions/material-processor/python/
+functions/material-processor/build/
+functions/material-processor/dist/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Cloud PoC measurements
+tools/poc/measurements.csv

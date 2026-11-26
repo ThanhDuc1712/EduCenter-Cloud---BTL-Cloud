@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Quarantine holds only raw uploads awaiting processing (ROADMAP P0-13): delete current and old
+     versions after 1 day and abort incomplete multipart uploads after 1 day. -->
+<LifecycleConfiguration>
+  <Rule>
+    <ID>expire-quarantine-uploads</ID>
+    <Prefix>quarantine/</Prefix>
+    <Status>Enabled</Status>
+    <Expiration><Days>1</Days></Expiration>
+    <NoncurrentVersionExpiration><NoncurrentDays>1</NoncurrentDays></NoncurrentVersionExpiration>
+    <AbortMultipartUpload><Days>1</Days></AbortMultipartUpload>
+  </Rule>
+</LifecycleConfiguration>

@@ -1,0 +1,817 @@
+// EduCenter Cloud — Prisma schema v1.
+// Conventions: snake_case plural tables, tenant_id on every business table,
+// UNIQUE(tenant_id, id) + composite FKs (a row can never reference another tenant's row),
+// class_sessions (D-04), money = BIGINT VND (D-12), timestamps UTC.
+// The datasource URL lives in prisma.config.ts (migrator role); the app connects
+// at runtime as edu_runtime through the pg driver adapter.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────────── Enums ─────────────────────────────
+
+enum StudentStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum TeacherStatus {
+  ACTIVE
+  ON_LEAVE
+  INACTIVE
+}
+
+enum CourseStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum ClassroomStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum SessionStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  DROPPED
+  CANCELLED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum AssessmentType {
+  QUIZ
+  ASSIGNMENT
+  MIDTERM
+  FINAL
+  OTHER
+}
+
+enum InvoiceStatus {
+  UNPAID
+  PARTIAL
+  PAID
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CARD
+  OTHER
+}
+
+enum NotificationType {
+  SCHEDULE
+  CLASS
+  TUITION
+  MATERIAL
+  GRADE
+  SYSTEM
+}
+
+enum RecipientRole {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+enum MaterialCategory {
+  LECTURE
+  SYLLABUS
+  EXERCISE
+  EXAM
+  REFERENCE
+  OTHER
+}
+
+enum MaterialVisibility {
+  COURSE
+  CLASS
+  PERSONAL
+}
+
+enum MaterialStatus {
+  UPLOADING
+  PROCESSING
+  READY
+  REJECTED
+  FAILED
+  DELETED
+}
+
+enum StorageProviderKind {
+  LOCAL
+  OSS
+}
+
+enum ProcessorKind {
+  LOCAL_MOCK
+  ALIYUN_FC
+}
+
+enum ProcessingJobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  REJECTED
+  FAILED
+  TIMED_OUT
+}
+
+enum CloudProvider {
+  AZURE
+  ALIYUN
+  LOCAL
+}
+
+enum UserRole {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum LogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+}
+
+// ───────────────────────────── Tenancy ─────────────────────────────
+
+model Tenant {
+  id        String   @id @default(uuid()) @db.Uuid
+  slug      String   @unique @db.VarChar(64)
+  name      String   @db.VarChar(200)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  students           Student[]
+  teachers           Teacher[]
+  courses            Course[]
+  rooms              Room[]
+  classrooms         Classroom[]
+  scheduleSlots      ClassScheduleSlot[]
+  classSessions      ClassSession[]
+  enrollments        Enrollment[]
+  attendances        Attendance[]
+  assessments        Assessment[]
+  grades             Grade[]
+  gradeBands         GradeBand[]
+  invoices           Invoice[]
+  payments           Payment[]
+  notifications      Notification[]
+  activityLogs       ActivityLog[]
+  materials          Material[]
+  processingJobs     MaterialProcessingJob[]
+  processingEvents   MaterialProcessingEvent[]
+  users              User[]
+  authSessions       AuthSession[]
+
+  @@map("tenants")
+}
+
+// ───────────────────────────── Accounts & sessions ─────────────────────────────
+
+/// Login account, scoped to one tenant (D-24: email unique per tenant). A TEACHER / STUDENT
+/// account is linked to exactly one teacher / student profile (a DB CHECK enforces role ↔ link).
+model User {
+  id           String     @id @default(uuid()) @db.Uuid
+  tenantId     String     @map("tenant_id") @db.Uuid
+  /// Stored trimmed + lower-cased.
+  email        String     @db.VarChar(254)
+  /// Argon2id PHC string — never the raw password.
+  passwordHash String     @map("password_hash") @db.VarChar(255)
+  role         UserRole
+  displayName  String     @map("display_name") @db.VarChar(120)
+  teacherId    String?    @map("teacher_id") @db.Uuid
+  studentId    String?    @map("student_id") @db.Uuid
+  status       UserStatus @default(ACTIVE)
+  lastLoginAt  DateTime?  @map("last_login_at") @db.Timestamptz(3)
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant   Tenant        @relation(fields: [tenantId], references: [id])
+  teacher  Teacher?      @relation(fields: [tenantId, teacherId], references: [tenantId, id])
+  student  Student?      @relation(fields: [tenantId, studentId], references: [tenantId, id])
+  sessions AuthSession[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, email])
+  @@unique([tenantId, teacherId])
+  @@unique([tenantId, studentId])
+  @@map("users")
+}
+
+/// Opaque server-side session (cookie holds a random 256-bit token; only its SHA-256 is stored).
+model AuthSession {
+  id         String    @id @default(uuid()) @db.Uuid
+  tenantId   String    @map("tenant_id") @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  tokenHash  String    @unique @map("token_hash") @db.Char(64)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Idle timeout is measured from here.
+  lastSeenAt DateTime  @default(now()) @map("last_seen_at") @db.Timestamptz(3)
+  /// Absolute expiry.
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(3)
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz(3)
+  ip         String?   @db.VarChar(64)
+  userAgent  String?   @map("user_agent") @db.VarChar(300)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [tenantId, userId], references: [tenantId, id], onDelete: Cascade)
+
+  @@index([tenantId, userId])
+  @@index([expiresAt])
+  @@map("auth_sessions")
+}
+
+/// Attempts for the PostgreSQL-backed login / sign-up rate limiter (D-06). `key` is
+/// `login:<tenantSlug>:<email>` or `register`; it never contains a password.
+model LoginAttempt {
+  id        String   @id @default(uuid()) @db.Uuid
+  key       String   @db.VarChar(340)
+  ip        String?  @db.VarChar(64)
+  success   Boolean
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([key, createdAt])
+  @@index([ip, createdAt])
+  @@map("login_attempts")
+}
+
+// ───────────────────────────── People ─────────────────────────────
+
+model Student {
+  id            String        @id @default(uuid()) @db.Uuid
+  tenantId      String        @map("tenant_id") @db.Uuid
+  code          String        @db.VarChar(32)
+  fullName      String        @map("full_name") @db.VarChar(120)
+  email         String?       @db.VarChar(254)
+  phone         String?       @db.VarChar(20)
+  dateOfBirth   DateTime?     @map("date_of_birth") @db.Date
+  gender        String?       @db.VarChar(10)
+  address       String?       @db.VarChar(300)
+  guardianName  String?       @map("guardian_name") @db.VarChar(120)
+  guardianPhone String?       @map("guardian_phone") @db.VarChar(20)
+  status        StudentStatus @default(ACTIVE)
+  note          String?       @db.VarChar(1000)
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [id])
+  enrollments   Enrollment[]
+  attendances   Attendance[]
+  grades        Grade[]
+  invoices      Invoice[]
+  notifications Notification[]
+  materials     Material[]
+  user          User?
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, code])
+  @@index([tenantId, status, fullName])
+  @@map("students")
+}
+
+model Teacher {
+  id             String        @id @default(uuid()) @db.Uuid
+  tenantId       String        @map("tenant_id") @db.Uuid
+  code           String        @db.VarChar(32)
+  fullName       String        @map("full_name") @db.VarChar(120)
+  email          String?       @db.VarChar(254)
+  phone          String?       @db.VarChar(20)
+  specialization String        @db.VarChar(200)
+  qualification  String?       @db.VarChar(200)
+  bio            String?       @db.VarChar(2000)
+  hiredAt        DateTime?     @map("hired_at") @db.Date
+  status         TeacherStatus @default(ACTIVE)
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [id])
+  classrooms    Classroom[]
+  sessions      ClassSession[]
+  notifications Notification[]
+  materials     Material[]
+  user          User?
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, code])
+  @@index([tenantId, status, fullName])
+  @@map("teachers")
+}
+
+// ───────────────────────────── Catalogue ─────────────────────────────
+
+model Course {
+  id            String       @id @default(uuid()) @db.Uuid
+  tenantId      String       @map("tenant_id") @db.Uuid
+  code          String       @db.VarChar(32)
+  name          String       @db.VarChar(200)
+  description   String?      @db.VarChar(2000)
+  content       String?      @db.Text
+  level         String?      @db.VarChar(50)
+  tuitionVnd    BigInt       @map("tuition_vnd")
+  durationHours Int          @map("duration_hours")
+  totalSessions Int          @map("total_sessions")
+  status        CourseStatus @default(ACTIVE)
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant     Tenant      @relation(fields: [tenantId], references: [id])
+  classrooms Classroom[]
+  invoices   Invoice[]
+  materials  Material[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, code])
+  @@index([tenantId, status])
+  @@map("courses")
+}
+
+model Room {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  name      String   @db.VarChar(80)
+  capacity  Int
+  location  String?  @db.VarChar(200)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  tenant     Tenant              @relation(fields: [tenantId], references: [id])
+  classrooms Classroom[]
+  slots      ClassScheduleSlot[]
+  sessions   ClassSession[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, name])
+  @@map("rooms")
+}
+
+// ───────────────────────────── Classes & schedule ─────────────────────────────
+
+model Classroom {
+  id         String          @id @default(uuid()) @db.Uuid
+  tenantId   String          @map("tenant_id") @db.Uuid
+  code       String          @db.VarChar(32)
+  name       String          @db.VarChar(200)
+  courseId   String          @map("course_id") @db.Uuid
+  teacherId  String?         @map("teacher_id") @db.Uuid
+  roomId     String?         @map("room_id") @db.Uuid
+  capacity   Int
+  startDate  DateTime        @map("start_date") @db.Date
+  endDate    DateTime        @map("end_date") @db.Date
+  status     ClassroomStatus @default(PLANNED)
+  tuitionVnd BigInt?         @map("tuition_vnd")
+  note       String?         @db.VarChar(1000)
+  createdAt  DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant      Tenant              @relation(fields: [tenantId], references: [id])
+  course      Course              @relation(fields: [tenantId, courseId], references: [tenantId, id])
+  teacher     Teacher?            @relation(fields: [tenantId, teacherId], references: [tenantId, id])
+  room        Room?               @relation(fields: [tenantId, roomId], references: [tenantId, id])
+  slots       ClassScheduleSlot[]
+  sessions    ClassSession[]
+  enrollments Enrollment[]
+  assessments Assessment[]
+  invoices    Invoice[]
+  materials   Material[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, code])
+  @@index([tenantId, status])
+  @@index([tenantId, teacherId])
+  @@index([tenantId, courseId])
+  @@map("classrooms")
+}
+
+/// Weekly timetable pattern of a class; sessions are generated from it.
+model ClassScheduleSlot {
+  id              String   @id @default(uuid()) @db.Uuid
+  tenantId        String   @map("tenant_id") @db.Uuid
+  classroomId     String   @map("classroom_id") @db.Uuid
+  /// ISO weekday: 1 = Monday … 7 = Sunday
+  dayOfWeek       Int      @map("day_of_week") @db.SmallInt
+  /// Minutes after local midnight (Asia/Ho_Chi_Minh)
+  startMinute     Int      @map("start_minute") @db.SmallInt
+  durationMinutes Int      @map("duration_minutes") @db.SmallInt
+  roomId          String?  @map("room_id") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  classroom Classroom @relation(fields: [tenantId, classroomId], references: [tenantId, id], onDelete: Cascade)
+  room      Room?     @relation(fields: [tenantId, roomId], references: [tenantId, id])
+
+  @@unique([tenantId, id])
+  @@index([tenantId, classroomId])
+  @@map("class_schedule_slots")
+}
+
+model ClassSession {
+  id          String        @id @default(uuid()) @db.Uuid
+  tenantId    String        @map("tenant_id") @db.Uuid
+  classroomId String        @map("classroom_id") @db.Uuid
+  /// Copied from the classroom when created (D-18) so overlap checks are per teacher.
+  teacherId   String?       @map("teacher_id") @db.Uuid
+  roomId      String?       @map("room_id") @db.Uuid
+  startsAt    DateTime      @map("starts_at") @db.Timestamptz(3)
+  endsAt      DateTime      @map("ends_at") @db.Timestamptz(3)
+  topic       String?       @db.VarChar(300)
+  status      SessionStatus @default(SCHEDULED)
+  note        String?       @db.VarChar(1000)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant      Tenant       @relation(fields: [tenantId], references: [id])
+  classroom   Classroom    @relation(fields: [tenantId, classroomId], references: [tenantId, id], onDelete: Cascade)
+  teacher     Teacher?     @relation(fields: [tenantId, teacherId], references: [tenantId, id])
+  room        Room?        @relation(fields: [tenantId, roomId], references: [tenantId, id])
+  attendances Attendance[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId, startsAt])
+  @@index([tenantId, teacherId, startsAt])
+  @@index([tenantId, roomId, startsAt])
+  @@index([tenantId, classroomId, startsAt])
+  @@map("class_sessions")
+}
+
+model Enrollment {
+  id          String           @id @default(uuid()) @db.Uuid
+  tenantId    String           @map("tenant_id") @db.Uuid
+  classroomId String           @map("classroom_id") @db.Uuid
+  studentId   String           @map("student_id") @db.Uuid
+  status      EnrollmentStatus @default(ACTIVE)
+  enrolledAt  DateTime         @default(now()) @map("enrolled_at") @db.Timestamptz(3)
+  endedAt     DateTime?        @map("ended_at") @db.Timestamptz(3)
+  note        String?          @db.VarChar(500)
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  classroom Classroom @relation(fields: [tenantId, classroomId], references: [tenantId, id])
+  student   Student   @relation(fields: [tenantId, studentId], references: [tenantId, id])
+
+  @@unique([tenantId, id])
+  /// Prevents duplicate enrollment of the same student in the same class.
+  @@unique([tenantId, classroomId, studentId])
+  @@index([tenantId, studentId])
+  @@index([tenantId, status])
+  @@map("enrollments")
+}
+
+model Attendance {
+  id         String           @id @default(uuid()) @db.Uuid
+  tenantId   String           @map("tenant_id") @db.Uuid
+  sessionId  String           @map("session_id") @db.Uuid
+  studentId  String           @map("student_id") @db.Uuid
+  status     AttendanceStatus
+  note       String?          @db.VarChar(300)
+  recordedAt DateTime         @default(now()) @map("recorded_at") @db.Timestamptz(3)
+  updatedAt  DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant  Tenant       @relation(fields: [tenantId], references: [id])
+  session ClassSession @relation(fields: [tenantId, sessionId], references: [tenantId, id], onDelete: Cascade)
+  student Student      @relation(fields: [tenantId, studentId], references: [tenantId, id])
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, sessionId, studentId])
+  @@index([tenantId, studentId])
+  @@map("attendances")
+}
+
+// ───────────────────────────── Grades ─────────────────────────────
+
+model Assessment {
+  id          String         @id @default(uuid()) @db.Uuid
+  tenantId    String         @map("tenant_id") @db.Uuid
+  classroomId String         @map("classroom_id") @db.Uuid
+  name        String         @db.VarChar(200)
+  type        AssessmentType
+  /// Weight in percent used for the weighted average.
+  weight      Int
+  maxScore    Decimal        @default(10) @map("max_score") @db.Decimal(5, 2)
+  heldOn      DateTime?      @map("held_on") @db.Date
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  classroom Classroom @relation(fields: [tenantId, classroomId], references: [tenantId, id], onDelete: Cascade)
+  grades    Grade[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId, classroomId])
+  @@map("assessments")
+}
+
+model Grade {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  assessmentId String   @map("assessment_id") @db.Uuid
+  studentId    String   @map("student_id") @db.Uuid
+  score        Decimal  @db.Decimal(5, 2)
+  comment      String?  @db.VarChar(500)
+  /// Optimistic locking: a stale version → 409.
+  version      Int      @default(1)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant     Tenant     @relation(fields: [tenantId], references: [id])
+  assessment Assessment @relation(fields: [tenantId, assessmentId], references: [tenantId, id], onDelete: Cascade)
+  student    Student    @relation(fields: [tenantId, studentId], references: [tenantId, id])
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, assessmentId, studentId])
+  @@index([tenantId, studentId])
+  @@map("grades")
+}
+
+/// Classification bands ("xếp loại") configured per tenant on the 10-point scale.
+model GradeBand {
+  id       String  @id @default(uuid()) @db.Uuid
+  tenantId String  @map("tenant_id") @db.Uuid
+  label    String  @db.VarChar(50)
+  minScore Decimal @map("min_score") @db.Decimal(4, 2)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, label])
+  @@map("grade_bands")
+}
+
+// ───────────────────────────── Tuition ─────────────────────────────
+
+model Invoice {
+  id          String        @id @default(uuid()) @db.Uuid
+  tenantId    String        @map("tenant_id") @db.Uuid
+  code        String        @db.VarChar(32)
+  studentId   String        @map("student_id") @db.Uuid
+  classroomId String?       @map("classroom_id") @db.Uuid
+  courseId    String?       @map("course_id") @db.Uuid
+  description String        @db.VarChar(300)
+  amountVnd   BigInt        @map("amount_vnd")
+  discountVnd BigInt        @default(0) @map("discount_vnd")
+  paidVnd     BigInt        @default(0) @map("paid_vnd")
+  dueDate     DateTime      @map("due_date") @db.Date
+  status      InvoiceStatus @default(UNPAID)
+  issuedAt    DateTime      @default(now()) @map("issued_at") @db.Timestamptz(3)
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id])
+  student   Student    @relation(fields: [tenantId, studentId], references: [tenantId, id])
+  classroom Classroom? @relation(fields: [tenantId, classroomId], references: [tenantId, id])
+  course    Course?    @relation(fields: [tenantId, courseId], references: [tenantId, id])
+  payments  Payment[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, code])
+  @@index([tenantId, status, dueDate])
+  @@index([tenantId, studentId])
+  @@map("invoices")
+}
+
+model Payment {
+  id             String        @id @default(uuid()) @db.Uuid
+  tenantId       String        @map("tenant_id") @db.Uuid
+  invoiceId      String        @map("invoice_id") @db.Uuid
+  amountVnd      BigInt        @map("amount_vnd")
+  method         PaymentMethod
+  paidAt         DateTime      @default(now()) @map("paid_at") @db.Timestamptz(3)
+  note           String?       @db.VarChar(300)
+  receivedBy     String?       @map("received_by") @db.VarChar(120)
+  /// D-13: the Idempotency-Key header; unique per tenant is the last line of defence.
+  idempotencyKey String        @map("idempotency_key") @db.VarChar(64)
+  requestHash    String        @map("request_hash") @db.Char(64)
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  invoice Invoice @relation(fields: [tenantId, invoiceId], references: [tenantId, id])
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, idempotencyKey])
+  @@index([tenantId, paidAt])
+  @@index([tenantId, invoiceId])
+  @@map("payments")
+}
+
+// ───────────────────────────── Notifications & activity ─────────────────────────────
+
+model Notification {
+  id                 String           @id @default(uuid()) @db.Uuid
+  tenantId           String           @map("tenant_id") @db.Uuid
+  type               NotificationType
+  title              String           @db.VarChar(200)
+  body               String           @db.VarChar(2000)
+  link               String?          @db.VarChar(300)
+  recipientRole      RecipientRole    @map("recipient_role")
+  /// null with recipientRole=ADMIN means "every administrator".
+  recipientTeacherId String?          @map("recipient_teacher_id") @db.Uuid
+  recipientStudentId String?          @map("recipient_student_id") @db.Uuid
+  readAt             DateTime?        @map("read_at") @db.Timestamptz(3)
+  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id])
+  teacher Teacher? @relation(fields: [tenantId, recipientTeacherId], references: [tenantId, id])
+  student Student? @relation(fields: [tenantId, recipientStudentId], references: [tenantId, id])
+
+  @@index([tenantId, recipientRole, recipientTeacherId, recipientStudentId, createdAt])
+  @@index([tenantId, createdAt])
+  @@map("notifications")
+}
+
+/// Append-only business activity / audit trail ("Hoạt động gần đây").
+model ActivityLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  actorRole  String   @map("actor_role") @db.VarChar(20)
+  actorName  String   @map("actor_name") @db.VarChar(120)
+  action     String   @db.VarChar(60)
+  entityType String   @map("entity_type") @db.VarChar(40)
+  entityId   String?  @map("entity_id") @db.Uuid
+  summary    String   @db.VarChar(500)
+  requestId  String?  @map("request_id") @db.VarChar(64)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, entityType, entityId])
+  @@map("activity_logs")
+}
+
+// ───────────────────────────── Materials (cross-cloud pipeline) ─────────────────────────────
+
+model Material {
+  id               String              @id @default(uuid()) @db.Uuid
+  tenantId         String              @map("tenant_id") @db.Uuid
+  title            String              @db.VarChar(200)
+  description      String?             @db.VarChar(2000)
+  category         MaterialCategory
+  visibility       MaterialVisibility
+  courseId         String?             @map("course_id") @db.Uuid
+  classroomId      String?             @map("classroom_id") @db.Uuid
+  teacherId        String?             @map("teacher_id") @db.Uuid
+  /// Personal material granted to one student (visibility = PERSONAL).
+  studentId        String?             @map("student_id") @db.Uuid
+  status           MaterialStatus      @default(UPLOADING)
+  storageProvider  StorageProviderKind @map("storage_provider")
+  originalFilename String              @map("original_filename") @db.VarChar(255)
+  contentType      String              @map("content_type") @db.VarChar(100)
+  declaredSize     Int                 @map("declared_size")
+  sizeBytes        Int?                @map("size_bytes")
+  checksumSha256   String?             @map("checksum_sha256") @db.Char(64)
+  quarantineKey    String              @map("quarantine_key") @db.VarChar(400)
+  sourceVersionId  String?             @map("source_version_id") @db.VarChar(200)
+  publishedKey     String?             @map("published_key") @db.VarChar(400)
+  previewKey       String?             @map("preview_key") @db.VarChar(400)
+  previewType      String?             @map("preview_type") @db.VarChar(60)
+  resultKey        String?             @map("result_key") @db.VarChar(400)
+  pageCount        Int?                @map("page_count")
+  pdfTitle         String?             @map("pdf_title") @db.VarChar(300)
+  pdfAuthor        String?             @map("pdf_author") @db.VarChar(300)
+  rejectReason     String?             @map("reject_reason") @db.VarChar(300)
+  /// Incremented on every state change (optimistic guard for transitions).
+  version          Int                 @default(1)
+  uploadedBy       String              @map("uploaded_by") @db.VarChar(120)
+  downloadCount    Int                 @default(0) @map("download_count")
+  createdAt        DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+  processingAt     DateTime?           @map("processing_at") @db.Timestamptz(3)
+  readyAt          DateTime?           @map("ready_at") @db.Timestamptz(3)
+  deletedAt        DateTime?           @map("deleted_at") @db.Timestamptz(3)
+
+  tenant    Tenant                    @relation(fields: [tenantId], references: [id])
+  course    Course?                   @relation(fields: [tenantId, courseId], references: [tenantId, id])
+  classroom Classroom?                @relation(fields: [tenantId, classroomId], references: [tenantId, id])
+  teacher   Teacher?                  @relation(fields: [tenantId, teacherId], references: [tenantId, id])
+  student   Student?                  @relation(fields: [tenantId, studentId], references: [tenantId, id])
+  jobs      MaterialProcessingJob[]
+  events    MaterialProcessingEvent[]
+
+  @@unique([tenantId, id])
+  @@unique([quarantineKey])
+  @@index([tenantId, status, createdAt])
+  @@index([tenantId, courseId])
+  @@index([tenantId, classroomId])
+  @@index([status, updatedAt])
+  @@map("materials")
+}
+
+model MaterialProcessingJob {
+  id               String              @id @default(uuid()) @db.Uuid
+  tenantId         String              @map("tenant_id") @db.Uuid
+  materialId       String              @map("material_id") @db.Uuid
+  attempt          Int
+  processor        ProcessorKind
+  status           ProcessingJobStatus @default(QUEUED)
+  correlationId    String              @map("correlation_id") @db.VarChar(64)
+  sourceVersionId  String?             @map("source_version_id") @db.VarChar(200)
+  queuedAt         DateTime            @default(now()) @map("queued_at") @db.Timestamptz(3)
+  startedAt        DateTime?           @map("started_at") @db.Timestamptz(3)
+  finishedAt       DateTime?           @map("finished_at") @db.Timestamptz(3)
+  /// Worker-reported processing time.
+  durationMs       Int?                @map("duration_ms")
+  /// Time between worker finishing and the API accepting the callback.
+  callbackLatencyMs Int?               @map("callback_latency_ms")
+  errorCode        String?             @map("error_code") @db.VarChar(60)
+  errorMessage     String?             @map("error_message") @db.VarChar(500)
+
+  tenant   Tenant                    @relation(fields: [tenantId], references: [id])
+  material Material                  @relation(fields: [tenantId, materialId], references: [tenantId, id], onDelete: Cascade)
+  events   MaterialProcessingEvent[]
+
+  @@unique([tenantId, id])
+  @@unique([materialId, attempt])
+  @@index([tenantId, status, queuedAt])
+  @@index([correlationId])
+  @@map("material_processing_jobs")
+}
+
+model MaterialProcessingEvent {
+  id         String          @id @default(uuid()) @db.Uuid
+  tenantId   String          @map("tenant_id") @db.Uuid
+  materialId String          @map("material_id") @db.Uuid
+  jobId      String?         @map("job_id") @db.Uuid
+  /// Callback event ID — unique: replayed callbacks are detected and ignored.
+  eventId    String          @unique @map("event_id") @db.VarChar(100)
+  type       String          @db.VarChar(40)
+  source     String          @db.VarChar(20)
+  fromStatus MaterialStatus? @map("from_status")
+  toStatus   MaterialStatus? @map("to_status")
+  detail     Json?
+  createdAt  DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  tenant   Tenant                 @relation(fields: [tenantId], references: [id])
+  material Material               @relation(fields: [tenantId, materialId], references: [tenantId, id], onDelete: Cascade)
+  job      MaterialProcessingJob? @relation(fields: [tenantId, jobId], references: [tenantId, id])
+
+  @@index([tenantId, materialId, createdAt])
+  @@map("material_processing_events")
+}
+
+// ───────────────────────────── Operations ─────────────────────────────
+
+/// Operational log of cloud/integration events (storage, processing, callbacks, reconciliation).
+model OpsLogEntry {
+  id            String        @id @default(uuid()) @db.Uuid
+  tenantId      String?       @map("tenant_id") @db.Uuid
+  provider      CloudProvider
+  service       String        @db.VarChar(40)
+  level         LogLevel
+  event         String        @db.VarChar(80)
+  message       String        @db.VarChar(1000)
+  correlationId String?       @map("correlation_id") @db.VarChar(64)
+  materialId    String?       @map("material_id") @db.Uuid
+  durationMs    Int?          @map("duration_ms")
+  detail        Json?
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([createdAt])
+  @@index([provider, service, createdAt])
+  @@index([correlationId])
+  @@index([level, createdAt])
+  @@map("ops_log_entries")
+}
+
+/// D-32: history of background job runs (lock is pg_try_advisory_lock).
+model BackgroundJobRun {
+  id         String    @id @default(uuid()) @db.Uuid
+  name       String    @db.VarChar(60)
+  startedAt  DateTime  @default(now()) @map("started_at") @db.Timestamptz(3)
+  finishedAt DateTime? @map("finished_at") @db.Timestamptz(3)
+  status     String    @db.VarChar(20)
+  summary    Json?
+
+  @@index([name, startedAt])
+  @@map("background_job_runs")
+}

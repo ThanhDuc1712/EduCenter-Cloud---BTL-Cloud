@@ -1,0 +1,23 @@
+# Local development image (used by `docker compose --profile app`). Not a production image.
+FROM node:24-alpine
+
+# Shared Corepack cache: pnpm is prepared as root but the container runs as `node`. Without this,
+# Corepack would re-download pnpm from the registry on every container start (needs network).
+ENV COREPACK_HOME=/opt/corepack
+RUN corepack enable && corepack prepare pnpm@10.34.9 --activate
+WORKDIR /repo
+
+# Install dependencies first for better layer caching.
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY apps/api/package.json apps/api/
+COPY apps/web/package.json apps/web/
+COPY packages/api-contract/package.json packages/api-contract/
+COPY packages/shared/package.json packages/shared/
+RUN pnpm install --frozen-lockfile
+
+COPY . .
+RUN pnpm --filter api prisma:generate \
+  && pnpm --filter @educenter/shared build \
+  && pnpm --filter api build
+
+USER node

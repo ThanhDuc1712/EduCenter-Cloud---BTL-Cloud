@@ -1,0 +1,65 @@
+ErrorCode:
+  description: Machine-readable error code. Feature modules extend this list through the contract. Mirrors packages/shared/src/error-codes.ts.
+  type: string
+  enum:
+    - VALIDATION_FAILED
+    - UNAUTHENTICATED
+    - FORBIDDEN
+    - NOT_FOUND
+    - CONFLICT
+    - PAYLOAD_TOO_LARGE
+    - TOO_MANY_REQUESTS
+    - INTERNAL_ERROR
+    - SERVICE_UNAVAILABLE
+
+FieldError:
+  type: object
+  additionalProperties: false
+  required: [field, message]
+  properties:
+    field:
+      type: string
+      description: Dotted path of the offending input field.
+      examples: [email]
+    message:
+      type: string
+
+ErrorResponse:
+  type: object
+  additionalProperties: false
+  required: [code, message, requestId]
+  properties:
+    code:
+      $ref: '#/ErrorCode'
+    message:
+      type: string
+      description: Human-readable, safe to display. Never contains stack traces, SQL or constraint names.
+    requestId:
+      type: string
+      format: uuid
+    fieldErrors:
+      type: array
+      items:
+        $ref: '#/FieldError'
+
+MoneyVnd:
+  description: Amount in VND as a non-negative integer encoded as a string (BIGINT in DB, D-12).
+  type: string
+  pattern: '^(0|[1-9][0-9]{0,18})$'
+  examples: ['1500000']
+
+PageMeta:
+  type: object
+  additionalProperties: false
+  required: [page, pageSize, total]
+  properties:
+    page:
+      type: integer
+      minimum: 1
+    pageSize:
+      type: integer
+      minimum: 1
+      maximum: 100
+    total:
+      type: integer
+      minimum: 0
