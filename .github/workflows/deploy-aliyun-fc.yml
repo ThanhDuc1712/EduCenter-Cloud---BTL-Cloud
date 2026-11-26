@@ -1,0 +1,127 @@
+# CD Alibaba Cloud: test -> approval (environment "demo") -> build Linux wheels -> deploy Function Compute
+name: Deploy Aliyun Function Compute (demo)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'functions/material-processor/**'
+      - '.github/workflows/deploy-aliyun-fc.yml'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Commit SHA, tag or branch to deploy (empty = main). Use an older SHA to roll back.'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-aliyun-fc-demo
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Function tests (Python 3.10)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    container: python:3.10-slim
+    defaults:
+      run:
+        working-directory: functions/material-processor
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+          persist-credentials: false
+
+      - name: Install
+        run: pip install -q --disable-pip-version-check --root-user-action=ignore -r requirements.txt pytest==8.3.5
+
+      - name: Pytest
+        run: python -m pytest -q tests
+
+  deploy:
+    name: Deploy material-processor
+    needs: test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: demo
+    defaults:
+      run:
+        working-directory: functions/material-processor
+    # Names used by s.yaml (${env('...')}). Non-secret values are environment variables of "demo".
+    env:
+      ALIYUN_REGION: ${{ vars.ALIYUN_REGION || 'ap-southeast-1' }}
+      ALIYUN_FC_FUNCTION_NAME: ${{ vars.ALIYUN_FC_FUNCTION_NAME || 'material-processor' }}
+      OSS_QUARANTINE_BUCKET: ${{ vars.OSS_QUARANTINE_BUCKET }}
+      OSS_PUBLISHED_BUCKET: ${{ vars.OSS_PUBLISHED_BUCKET }}
+      ALIYUN_SLS_PROJECT: ${{ vars.ALIYUN_SLS_PROJECT }}
+      ALIYUN_SLS_LOGSTORE: ${{ vars.ALIYUN_SLS_LOGSTORE || 'fc-material-processor' }}
+      CALLBACK_URL: ${{ vars.CALLBACK_URL }}
+      CALLBACK_HMAC_KEY_ID: ${{ vars.CALLBACK_HMAC_KEY_ID || 'k1' }}
+      ALIYUN_ACCOUNT_ID: ${{ secrets.ALIYUN_ACCOUNT_ID }}
+      CALLBACK_HMAC_SECRET: ${{ secrets.CALLBACK_HMAC_SECRET }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+          persist-credentials: false
+
+      - name: Check configuration
+        env:
+          AK_ID: ${{ secrets.ALIYUN_DEPLOY_ACCESS_KEY_ID }}
+          AK_SECRET: ${{ secrets.ALIYUN_DEPLOY_ACCESS_KEY_SECRET }}
+        run: |
+          missing=0
+          for v in OSS_QUARANTINE_BUCKET OSS_PUBLISHED_BUCKET ALIYUN_SLS_PROJECT CALLBACK_URL ALIYUN_ACCOUNT_ID CALLBACK_HMAC_SECRET AK_ID AK_SECRET; do
+            if [ -z "${!v}" ]; then echo "::error::$v is empty - see docs/ci-cd.md (environment demo)"; missing=1; fi
+          done
+          case "$CALLBACK_URL" in https://*) ;; *) echo "::error::CALLBACK_URL must be https"; missing=1 ;; esac
+          exit $missing
+
+      # FC python3.10 runtime = Debian 10 (glibc 2.28): download manylinux wheels for exactly that ABI.
+      - name: Build Linux wheels (python/)
+        run: |
+          rm -rf python
+          docker run --rm -v "$PWD:/code" -w /code python:3.10-slim \
+            pip install -q --root-user-action=ignore --only-binary=:all: --implementation cp --python-version 3.10 \
+              --platform manylinux_2_28_x86_64 --platform manylinux_2_17_x86_64 --platform manylinux2014_x86_64 \
+              -t /code/python -r requirements.txt
+          sudo chown -R "$(id -u):$(id -g)" python
+          ls python
+
+      - name: Install Serverless Devs
+        run: npm install -g @serverless-devs/s@3.1.10
+
+      - name: Configure credentials (RAM user github-deployer)
+        env:
+          AK_ID: ${{ secrets.ALIYUN_DEPLOY_ACCESS_KEY_ID }}
+          AK_SECRET: ${{ secrets.ALIYUN_DEPLOY_ACCESS_KEY_SECRET }}
+        run: s config add --AccessKeyID "$AK_ID" --AccessKeySecret "$AK_SECRET" --AccountID "$ALIYUN_ACCOUNT_ID" -a default -f
+
+      - name: Deploy (s deploy)
+        run: s deploy -y
+
+      - name: Show deployed function
+        run: s info
+
+      - name: Remove credentials from the runner
+        if: always()
+        run: s config delete -a default || true
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Deploy Aliyun Function Compute (demo)"
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Commit | \`$(git rev-parse HEAD)\` |"
+            echo "| Function | $ALIYUN_FC_FUNCTION_NAME ($ALIYUN_REGION) |"
+            echo "| Trigger bucket | $OSS_QUARANTINE_BUCKET |"
+            echo "| Result | ${{ job.status }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
