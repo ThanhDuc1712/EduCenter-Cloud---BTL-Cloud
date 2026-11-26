@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Deploys EduCenter Cloud to the Azure resources of infra/azure/main.bicep (names end in -<suffix>).
 
@@ -112,19 +112,19 @@ if ($Migrate) {
   }
 }
 
-$zip = New-DeployPackage
+$zip = New-DeployPackage | Select-Object -Last 1
 Write-Step "Deploying package to App Service $appName"
-Invoke-Native az @('webapp', 'deploy', '-g', $ResourceGroup, '-n', $appName, '--src-path', $zip, '--type', 'zip', '--restart', 'true', '-o', 'none')
+Invoke-Native az @('webapp', 'deploy', '-g', $ResourceGroup, '-n', $appName, '--src-path', $zip, '--type', 'zip', '--restart', 'true', '--async', 'true', '-o', 'none')
 
 Write-Step 'Waiting for /api/v1/health'
 $hostName = & az webapp show -g $ResourceGroup -n $appName --query defaultHostName -o tsv
 $url = "https://$hostName"
-$deadline = (Get-Date).AddMinutes(5)
+$deadline = (Get-Date).AddMinutes(10)
 while ((Get-Date) -lt $deadline) {
   try {
     $r = Invoke-WebRequest -UseBasicParsing -TimeoutSec 10 "$url/api/v1/health"
     if ($r.StatusCode -eq 200) { Write-Ok "Healthy: $url"; exit 0 }
   } catch { Start-Sleep -Seconds 10 }
 }
-Write-Warn2 "Not healthy after 5 minutes. Logs: az webapp log tail -g $ResourceGroup -n $appName"
+Write-Warn2 "Not healthy after 10 minutes. Logs: az webapp log tail -g $ResourceGroup -n $appName"
 exit 1
