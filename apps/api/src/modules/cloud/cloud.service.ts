@@ -240,9 +240,23 @@ export class CloudService {
 
   async storageView(p: Principal, role: BucketRole, prefix: string, limit: number) {
     if (prefix && !/^[A-Za-z0-9/_.-]{0,200}$/.test(prefix)) throw badRequest('prefix không hợp lệ', 'prefix');
-    const scopedPrefix = prefix || (role === 'quarantine' ? `quarantine/${p.tenantId}/` : '');
+    // BUG-03: a center may only list its own keys (layout: <root>/<tenantId>/<materialId>/...).
+    const roots = role === 'quarantine' ? [`quarantine/${p.tenantId}/`] : ['published', 'previews', 'results'].map((r) => `${r}/${p.tenantId}/`);
+    // A prefix inside the center's roots narrows the listing; anything else (e.g. "results/" typed in the
+    // dashboard) is only a filter applied to the center's own keys — it never widens the listing.
+    const scoped = !!prefix && roots.some((r) => prefix.startsWith(r));
+    const prefixes = scoped ? [prefix] : roots;
+    const scopedPrefix = prefixes.join(',');
+    const listAll = async () => {
+      const parts = await Promise.all(prefixes.map((x) => this.storage.list(role, x, limit)));
+      const own = parts
+        .flatMap((r) => r.objects)
+        .filter((o) => o.key.split('/')[1] === p.tenantId)
+        .filter((o) => scoped || !prefix || o.key.startsWith(prefix));
+      return { objects: own.slice(0, limit), truncated: parts.some((r) => r.truncated) || own.length > limit };
+    };
     const [listing, health, byStatus, readyBytes, recent] = await Promise.all([
-      timed(() => this.storage.list(role, scopedPrefix, limit)),
+      timed(listAll),
       timed(() => this.storage.health()),
       this.prisma.material.groupBy({ by: ['status'], where: { tenantId: p.tenantId }, _count: true, _sum: { sizeBytes: true } }),
       this.prisma.material.aggregate({ where: { tenantId: p.tenantId, status: 'READY' }, _sum: { sizeBytes: true }, _count: true }),

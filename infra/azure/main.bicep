@@ -95,6 +95,8 @@ var baseAppSettings = [
   { name: 'DATABASE_URL', value: '${kvRef}db-runtime-url)' }
   { name: 'DEMO_CONTEXT_SECRET', value: '${kvRef}demo-context-secret)' }
   { name: 'AUTH_MODE', value: 'session' }
+  // Graded demo: no public self-registration (QA SEC-16); accounts come from the seed only.
+  { name: 'REGISTRATION_ENABLED', value: 'false' }
   { name: 'CALLBACK_HMAC_KEYS', value: '${kvRef}callback-hmac-keys)' }
   { name: 'CALLBACK_HMAC_ACTIVE_KEY_ID', value: callbackHmacActiveKeyId }
   { name: 'INTERNAL_BASE_URL', value: 'http://127.0.0.1:${appPort}' }

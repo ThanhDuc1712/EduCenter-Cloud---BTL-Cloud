@@ -144,8 +144,7 @@ if (studentA) {
 
 if (inactiveStudents[0]) {
   const r = await new Session('inactive').login(TENANT_A, inactiveStudents[0].email);
-  record('SEC-14', 'INACTIVE student login (decision needed)', 'Medium', 'CHỜ DEV: INACTIVE có được đăng nhập không?', `${r.status}`, 'INFO',
-    r.status === 200 ? 'currently ALLOWED — code blocks only ARCHIVED (session.service.ts)' : 'currently blocked');
+  record('SEC-14', 'INACTIVE student cannot sign in', 'Medium', '401 (same message as a wrong password)', `${r.status}`, pass(r.status === 401));
 } else record('SEC-14', 'INACTIVE student login', 'Medium', '', 'no INACTIVE student', 'SKIP');
 
 {
@@ -156,9 +155,9 @@ if (inactiveStudents[0]) {
 {
   const opt = await anon.call('GET', '/auth/options');
   const enabled = opt.json?.registrationEnabled === true;
-  record('SEC-16', 'Public self-registration on this environment', 'Medium', IS_LOCAL ? 'informational locally' : 'disabled on the graded demo (decision needed)',
-    `registrationEnabled=${opt.json?.registrationEnabled}`, IS_LOCAL ? 'INFO' : enabled ? 'INFO' : 'PASS',
-    !IS_LOCAL && enabled ? 'anyone can create STUDENT accounts in the demo centers — ask Đức' : '');
+  record('SEC-16', 'Public self-registration on this environment', 'Medium', IS_LOCAL ? 'informational locally' : 'disabled on the graded demo',
+    `registrationEnabled=${opt.json?.registrationEnabled}`, IS_LOCAL ? 'INFO' : pass(!enabled),
+    !IS_LOCAL && enabled ? 'set REGISTRATION_ENABLED=false on the App Service' : '');
 }
 
 if (!IS_LOCAL) {
@@ -225,6 +224,24 @@ if (teacher.cookie) {
   record('SEC-34', 'BUG-02: /cloud/logs isolates tenants', 'High', 'no center-A material id in center-B logs',
     logsB.status === 200 ? `${leaked.length} leaked id(s)` : `status ${logsB.status}`,
     logsB.status === 200 ? pass(leaked.length === 0) : 'INFO', logsB.status === 403 && !IS_LOCAL ? 'ops API blocked by OPS_ALLOWED_CIDRS' : '');
+}
+
+{
+  // BUG-03 regression: /cloud/storage must list only the caller's own object keys, with or without a prefix.
+  const tenantAId = loginA.json?.principal?.tenantId;
+  const matsA = new Set(itemsOf(await adminA.call('GET', '/materials?pageSize=100')).map((m) => String(m.id).toLowerCase()));
+  const leaks = [];
+  let blocked = 0;
+  for (const q of ['bucket=published', 'bucket=quarantine', `bucket=published&prefix=published/${tenantAId}/`, `bucket=quarantine&prefix=quarantine/${tenantAId}/`, 'bucket=published&prefix=results/']) {
+    const r = await adminB.call('GET', `/cloud/storage?${q}&limit=1000`);
+    if (r.status === 403) blocked++;
+    const keys = (r.json?.objects ?? []).map((o) => String(o.key));
+    const foreign = keys.filter((k) => (tenantAId && k.includes(tenantAId)) || [...uuidsIn(k)].some((id) => matsA.has(id)));
+    if (foreign.length) leaks.push(`${q.split('&')[0]}${q.includes('prefix') ? '+prefix' : ''}: ${foreign.length}`);
+  }
+  record('SEC-36', 'BUG-03: /cloud/storage lists only own objects', 'High', 'no center-A key in center-B listing',
+    leaks.length ? `LEAK ${leaks.join('; ')}` : blocked === 5 ? 'ops API blocked (403)' : '0 foreign keys',
+    blocked === 5 ? 'INFO' : pass(leaks.length === 0), blocked === 5 ? 'ops API blocked by OPS_ALLOWED_CIDRS' : '');
 }
 
 if (studentA) {
