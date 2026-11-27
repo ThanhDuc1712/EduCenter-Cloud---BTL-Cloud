@@ -1,0 +1,636 @@
+route,method,actor,idKind,expected,status,bodyHasData,result,note
+/auth/login,POST,studentInactive,-,?,200,yes,?,INACTIVE student CAN sign in; CHỜ DEV (Q1: học viên INACTIVE có được đăng nhập?)
+/health,GET,anonymous,-,ALLOW,200,yes,PASS,
+/health,GET,adminA,-,ALLOW,200,yes,PASS,
+/health,GET,adminB,-,ALLOW,200,yes,PASS,
+/health,GET,teacherAssigned,-,ALLOW,200,yes,PASS,
+/health,GET,teacherOther,-,ALLOW,200,yes,PASS,
+/health,GET,studentIn,-,ALLOW,200,yes,PASS,
+/health,GET,studentOut,-,ALLOW,200,yes,PASS,
+/health/live,GET,anonymous,-,ALLOW,200,yes,PASS,
+/health/live,GET,adminA,-,ALLOW,200,yes,PASS,
+/health/live,GET,adminB,-,ALLOW,200,yes,PASS,
+/health/live,GET,teacherAssigned,-,ALLOW,200,yes,PASS,
+/health/live,GET,teacherOther,-,ALLOW,200,yes,PASS,
+/health/live,GET,studentIn,-,ALLOW,200,yes,PASS,
+/health/live,GET,studentOut,-,ALLOW,200,yes,PASS,
+/auth/options,GET,anonymous,-,ALLOW,200,yes,PASS,
+/auth/options,GET,adminA,-,ALLOW,200,yes,PASS,
+/auth/options,GET,adminB,-,ALLOW,200,yes,PASS,
+/auth/options,GET,teacherAssigned,-,ALLOW,200,yes,PASS,
+/auth/options,GET,teacherOther,-,ALLOW,200,yes,PASS,
+/auth/options,GET,studentIn,-,ALLOW,200,yes,PASS,
+/auth/options,GET,studentOut,-,ALLOW,200,yes,PASS,
+/context,GET,anonymous,-,DENY,401,no,PASS,
+/context,GET,adminA,-,ALLOW,200,yes,PASS,
+/context,GET,adminB,-,ALLOW,200,yes,PASS,
+/context,GET,teacherAssigned,-,ALLOW,200,yes,PASS,
+/context,GET,teacherOther,-,ALLOW,200,yes,PASS,
+/context,GET,studentIn,-,ALLOW,200,yes,PASS,
+/context,GET,studentOut,-,ALLOW,200,yes,PASS,
+/context/personas,GET,anonymous,-,DENY,401,no,PASS,
+/context/personas,GET,adminA,-,ALLOW,200,no,PASS,
+/context/personas,GET,adminB,-,ALLOW,200,no,PASS,
+/context/personas,GET,teacherAssigned,-,ALLOW,200,no,PASS,items must be empty
+/context/personas,GET,teacherOther,-,ALLOW,200,no,PASS,items must be empty
+/context/personas,GET,studentIn,-,ALLOW,200,no,PASS,items must be empty
+/context/personas,GET,studentOut,-,ALLOW,200,no,PASS,items must be empty
+/dashboard,GET,anonymous,-,DENY,401,no,PASS,
+/dashboard,GET,adminA,-,ALLOW,200,yes,PASS,
+/dashboard,GET,adminB,-,ALLOW,200,yes,PASS,
+/dashboard,GET,teacherAssigned,-,ALLOW,200,yes,PASS,
+/dashboard,GET,teacherOther,-,ALLOW,200,yes,PASS,
+/dashboard,GET,studentIn,-,ALLOW,200,yes,PASS,
+/dashboard,GET,studentOut,-,ALLOW,200,yes,PASS,
+/students,GET,anonymous,-,DENY,401,no,PASS,
+/students,GET,adminA,-,ALLOW,200,yes,PASS,
+/students,GET,adminB,-,ALLOW,200,yes,PASS,
+/students,GET,teacherAssigned,-,ALLOW,200,yes,PASS,
+/students,GET,teacherOther,-,ALLOW,200,yes,PASS,
+/students,GET,studentIn,-,ALLOW,200,yes,PASS,
+/students,GET,studentOut,-,ALLOW,200,yes,PASS,
+/teachers,GET,anonymous,-,DENY,401,no,PASS,
+/teachers,GET,adminA,-,ALLOW,200,yes,PASS,
+/teachers,GET,adminB,-,ALLOW,200,yes,PASS,
+/teachers,GET,teacherAssigned,-,ALLOW,200,yes,PASS,
+/teachers,GET,teacherOther,-,ALLOW,200,yes,PASS,
+/teachers,GET,studentIn,-,ALLOW,200,yes,PASS,
+/teachers,GET,studentOut,-,ALLOW,200,yes,PASS,
+/courses,GET,anonymous,-,DENY,401,no,PASS,
+/courses,GET,adminA,-,ALLOW,200,yes,PASS,
+/courses,GET,adminB,-,ALLOW,200,yes,PASS,
+/courses,GET,teacherAssigned,-,ALLOW,200,yes,PASS,
+/courses,GET,teacherOther,-,ALLOW,200,yes,PASS,
+/courses,GET,studentIn,-,ALLOW,200,yes,PASS,
+/courses,GET,studentOut,-,ALLOW,200,yes,PASS,
+/rooms,GET,anonymous,-,DENY,401,no,PASS,
+/rooms,GET,adminA,-,ALLOW,200,yes,PASS,
+/rooms,GET,adminB,-,ALLOW,200,yes,PASS,
+/rooms,GET,teacherAssigned,-,ALLOW,200,yes,PASS,
+/rooms,GET,teacherOther,-,ALLOW,200,yes,PASS,
+/rooms,GET,studentIn,-,ALLOW,200,yes,PASS,
+/rooms,GET,studentOut,-,ALLOW,200,yes,PASS,
+/classrooms,GET,anonymous,-,DENY,401,no,PASS,
+/classrooms,GET,adminA,-,ALLOW,200,yes,PASS,
+/classrooms,GET,adminB,-,ALLOW,200,yes,PASS,
+/classrooms,GET,teacherAssigned,-,ALLOW,200,yes,PASS,
+/classrooms,GET,teacherOther,-,ALLOW,200,yes,PASS,
+/classrooms,GET,studentIn,-,ALLOW,200,yes,PASS,
+/classrooms,GET,studentOut,-,ALLOW,200,yes,PASS,
+/schedule,GET,anonymous,-,DENY,401,no,PASS,
+/schedule,GET,adminA,-,ALLOW,200,yes,PASS,
+/schedule,GET,adminB,-,ALLOW,200,yes,PASS,
+/schedule,GET,teacherAssigned,-,ALLOW,200,yes,PASS,
+/schedule,GET,teacherOther,-,ALLOW,200,yes,PASS,
+/schedule,GET,studentIn,-,ALLOW,200,yes,PASS,
+/schedule,GET,studentOut,-,ALLOW,200,yes,PASS,
+/schedule/conflicts,GET,anonymous,-,DENY,401,no,PASS,
+/schedule/conflicts,GET,adminA,-,ALLOW,200,yes,PASS,
+/schedule/conflicts,GET,adminB,-,ALLOW,200,yes,PASS,
+/schedule/conflicts,GET,teacherAssigned,-,DENY,403,no,PASS,
+/schedule/conflicts,GET,teacherOther,-,DENY,403,no,PASS,
+/schedule/conflicts,GET,studentIn,-,DENY,403,no,PASS,
+/schedule/conflicts,GET,studentOut,-,DENY,403,no,PASS,
+/enrollments,GET,anonymous,-,DENY,401,no,PASS,
+/enrollments,GET,adminA,-,ALLOW,200,yes,PASS,
+/enrollments,GET,adminB,-,ALLOW,200,yes,PASS,
+/enrollments,GET,teacherAssigned,-,ALLOW,200,yes,PASS,
+/enrollments,GET,teacherOther,-,ALLOW,200,yes,PASS,
+/enrollments,GET,studentIn,-,ALLOW,200,yes,PASS,
+/enrollments,GET,studentOut,-,ALLOW,200,yes,PASS,
+/attendance/pending,GET,anonymous,-,DENY,401,no,PASS,
+/attendance/pending,GET,adminA,-,ALLOW,200,no,PASS,
+/attendance/pending,GET,adminB,-,ALLOW,200,no,PASS,
+/attendance/pending,GET,teacherAssigned,-,ALLOW,200,no,PASS,
+/attendance/pending,GET,teacherOther,-,ALLOW,200,no,PASS,
+/attendance/pending,GET,studentIn,-,DENY,403,no,PASS,
+/attendance/pending,GET,studentOut,-,DENY,403,no,PASS,
+/attendance/history,GET,anonymous,-,DENY,401,no,PASS,
+/attendance/history,GET,adminA,-,ALLOW,200,yes,PASS,
+/attendance/history,GET,adminB,-,ALLOW,200,yes,PASS,
+/attendance/history,GET,teacherAssigned,-,ALLOW,200,yes,PASS,
+/attendance/history,GET,teacherOther,-,ALLOW,200,yes,PASS,
+/attendance/history,GET,studentIn,-,ALLOW,200,yes,PASS,
+/attendance/history,GET,studentOut,-,ALLOW,200,yes,PASS,
+/grade-bands,GET,anonymous,-,DENY,401,no,PASS,
+/grade-bands,GET,adminA,-,ALLOW,200,yes,PASS,
+/grade-bands,GET,adminB,-,ALLOW,200,yes,PASS,
+/grade-bands,GET,teacherAssigned,-,ALLOW,200,yes,PASS,
+/grade-bands,GET,teacherOther,-,ALLOW,200,yes,PASS,
+/grade-bands,GET,studentIn,-,ALLOW,200,yes,PASS,
+/grade-bands,GET,studentOut,-,ALLOW,200,yes,PASS,
+/invoices,GET,anonymous,-,DENY,401,no,PASS,
+/invoices,GET,adminA,-,ALLOW,200,yes,PASS,
+/invoices,GET,adminB,-,ALLOW,200,yes,PASS,
+/invoices,GET,teacherAssigned,-,DENY,403,no,PASS,
+/invoices,GET,teacherOther,-,DENY,403,no,PASS,
+/invoices,GET,studentIn,-,ALLOW,200,yes,PASS,
+/invoices,GET,studentOut,-,ALLOW,200,yes,PASS,
+/payments,GET,anonymous,-,DENY,401,no,PASS,
+/payments,GET,adminA,-,ALLOW,200,yes,PASS,
+/payments,GET,adminB,-,ALLOW,200,yes,PASS,
+/payments,GET,teacherAssigned,-,DENY,403,no,PASS,
+/payments,GET,teacherOther,-,DENY,403,no,PASS,
+/payments,GET,studentIn,-,ALLOW,200,yes,PASS,
+/payments,GET,studentOut,-,ALLOW,200,yes,PASS,
+/tuition/summary,GET,anonymous,-,DENY,401,no,PASS,
+/tuition/summary,GET,adminA,-,ALLOW,200,yes,PASS,
+/tuition/summary,GET,adminB,-,ALLOW,200,yes,PASS,
+/tuition/summary,GET,teacherAssigned,-,DENY,403,no,PASS,
+/tuition/summary,GET,teacherOther,-,DENY,403,no,PASS,
+/tuition/summary,GET,studentIn,-,ALLOW,200,yes,PASS,
+/tuition/summary,GET,studentOut,-,ALLOW,200,yes,PASS,
+/materials,GET,anonymous,-,DENY,401,no,PASS,
+/materials,GET,adminA,-,ALLOW,200,yes,PASS,
+/materials,GET,adminB,-,ALLOW,200,no,PASS,
+/materials,GET,teacherAssigned,-,ALLOW,200,yes,PASS,
+/materials,GET,teacherOther,-,ALLOW,200,no,PASS,
+/materials,GET,studentIn,-,ALLOW,200,yes,PASS,
+/materials,GET,studentOut,-,ALLOW,200,no,PASS,
+/notifications,GET,anonymous,-,DENY,401,no,PASS,
+/notifications,GET,adminA,-,ALLOW,200,yes,PASS,
+/notifications,GET,adminB,-,ALLOW,200,yes,PASS,
+/notifications,GET,teacherAssigned,-,ALLOW,200,yes,PASS,
+/notifications,GET,teacherOther,-,ALLOW,200,yes,PASS,
+/notifications,GET,studentIn,-,ALLOW,200,yes,PASS,
+/notifications,GET,studentOut,-,ALLOW,200,no,PASS,
+/notifications/unread-count,GET,anonymous,-,DENY,401,no,PASS,
+/notifications/unread-count,GET,adminA,-,ALLOW,200,yes,PASS,
+/notifications/unread-count,GET,adminB,-,ALLOW,200,yes,PASS,
+/notifications/unread-count,GET,teacherAssigned,-,ALLOW,200,yes,PASS,
+/notifications/unread-count,GET,teacherOther,-,ALLOW,200,yes,PASS,
+/notifications/unread-count,GET,studentIn,-,ALLOW,200,yes,PASS,
+/notifications/unread-count,GET,studentOut,-,ALLOW,200,yes,PASS,
+/activity,GET,anonymous,-,DENY,401,no,PASS,
+/activity,GET,adminA,-,ALLOW,200,yes,PASS,
+/activity,GET,adminB,-,ALLOW,200,yes,PASS,
+/activity,GET,teacherAssigned,-,DENY,403,no,PASS,
+/activity,GET,teacherOther,-,DENY,403,no,PASS,
+/activity,GET,studentIn,-,DENY,403,no,PASS,
+/activity,GET,studentOut,-,DENY,403,no,PASS,
+/reports/:kind,GET,anonymous,kind=students,DENY,401,no,PASS,
+/reports/:kind,GET,adminA,kind=students,ALLOW,200,yes,PASS,
+/reports/:kind,GET,adminB,kind=students,ALLOW,200,yes,PASS,
+/reports/:kind,GET,teacherAssigned,kind=students,DENY,403,no,PASS,
+/reports/:kind,GET,teacherOther,kind=students,DENY,403,no,PASS,
+/reports/:kind,GET,studentIn,kind=students,DENY,403,no,PASS,
+/reports/:kind,GET,studentOut,kind=students,DENY,403,no,PASS,
+/reports/:kind,GET,anonymous,kind=teachers,DENY,401,no,PASS,
+/reports/:kind,GET,adminA,kind=teachers,ALLOW,200,yes,PASS,
+/reports/:kind,GET,adminB,kind=teachers,ALLOW,200,yes,PASS,
+/reports/:kind,GET,teacherAssigned,kind=teachers,DENY,403,no,PASS,
+/reports/:kind,GET,teacherOther,kind=teachers,DENY,403,no,PASS,
+/reports/:kind,GET,studentIn,kind=teachers,DENY,403,no,PASS,
+/reports/:kind,GET,studentOut,kind=teachers,DENY,403,no,PASS,
+/reports/:kind,GET,anonymous,kind=courses,DENY,401,no,PASS,
+/reports/:kind,GET,adminA,kind=courses,ALLOW,200,yes,PASS,
+/reports/:kind,GET,adminB,kind=courses,ALLOW,200,yes,PASS,
+/reports/:kind,GET,teacherAssigned,kind=courses,DENY,403,no,PASS,
+/reports/:kind,GET,teacherOther,kind=courses,DENY,403,no,PASS,
+/reports/:kind,GET,studentIn,kind=courses,DENY,403,no,PASS,
+/reports/:kind,GET,studentOut,kind=courses,DENY,403,no,PASS,
+/reports/:kind,GET,anonymous,kind=classes,DENY,401,no,PASS,
+/reports/:kind,GET,adminA,kind=classes,ALLOW,200,yes,PASS,
+/reports/:kind,GET,adminB,kind=classes,ALLOW,200,yes,PASS,
+/reports/:kind,GET,teacherAssigned,kind=classes,DENY,403,no,PASS,
+/reports/:kind,GET,teacherOther,kind=classes,DENY,403,no,PASS,
+/reports/:kind,GET,studentIn,kind=classes,DENY,403,no,PASS,
+/reports/:kind,GET,studentOut,kind=classes,DENY,403,no,PASS,
+/reports/:kind,GET,anonymous,kind=attendance,DENY,401,no,PASS,
+/reports/:kind,GET,adminA,kind=attendance,ALLOW,200,yes,PASS,
+/reports/:kind,GET,adminB,kind=attendance,ALLOW,200,yes,PASS,
+/reports/:kind,GET,teacherAssigned,kind=attendance,DENY,403,no,PASS,
+/reports/:kind,GET,teacherOther,kind=attendance,DENY,403,no,PASS,
+/reports/:kind,GET,studentIn,kind=attendance,DENY,403,no,PASS,
+/reports/:kind,GET,studentOut,kind=attendance,DENY,403,no,PASS,
+/reports/:kind,GET,anonymous,kind=grades,DENY,401,no,PASS,
+/reports/:kind,GET,adminA,kind=grades,ALLOW,200,yes,PASS,
+/reports/:kind,GET,adminB,kind=grades,ALLOW,200,yes,PASS,
+/reports/:kind,GET,teacherAssigned,kind=grades,DENY,403,no,PASS,
+/reports/:kind,GET,teacherOther,kind=grades,DENY,403,no,PASS,
+/reports/:kind,GET,studentIn,kind=grades,DENY,403,no,PASS,
+/reports/:kind,GET,studentOut,kind=grades,DENY,403,no,PASS,
+/reports/:kind,GET,anonymous,kind=revenue,DENY,401,no,PASS,
+/reports/:kind,GET,adminA,kind=revenue,ALLOW,200,yes,PASS,
+/reports/:kind,GET,adminB,kind=revenue,ALLOW,200,yes,PASS,
+/reports/:kind,GET,teacherAssigned,kind=revenue,DENY,403,no,PASS,
+/reports/:kind,GET,teacherOther,kind=revenue,DENY,403,no,PASS,
+/reports/:kind,GET,studentIn,kind=revenue,DENY,403,no,PASS,
+/reports/:kind,GET,studentOut,kind=revenue,DENY,403,no,PASS,
+/reports/:kind,GET,anonymous,kind=debts,DENY,401,no,PASS,
+/reports/:kind,GET,adminA,kind=debts,ALLOW,200,yes,PASS,
+/reports/:kind,GET,adminB,kind=debts,ALLOW,200,yes,PASS,
+/reports/:kind,GET,teacherAssigned,kind=debts,DENY,403,no,PASS,
+/reports/:kind,GET,teacherOther,kind=debts,DENY,403,no,PASS,
+/reports/:kind,GET,studentIn,kind=debts,DENY,403,no,PASS,
+/reports/:kind,GET,studentOut,kind=debts,DENY,403,no,PASS,
+/cloud/overview,GET,anonymous,-,DENY,401,no,PASS,
+/cloud/overview,GET,adminA,-,ALLOW,200,yes,PASS,
+/cloud/overview,GET,adminB,-,ALLOW,200,yes,PASS,
+/cloud/overview,GET,teacherAssigned,-,DENY,403,no,PASS,
+/cloud/overview,GET,teacherOther,-,DENY,403,no,PASS,
+/cloud/overview,GET,studentIn,-,DENY,403,no,PASS,
+/cloud/overview,GET,studentOut,-,DENY,403,no,PASS,
+/cloud/storage,GET,anonymous,-,DENY,401,no,PASS,
+/cloud/storage,GET,adminA,-,ALLOW,200,yes,PASS,
+/cloud/storage,GET,adminB,-,ALLOW,200,yes,PASS,
+/cloud/storage,GET,teacherAssigned,-,DENY,403,no,PASS,
+/cloud/storage,GET,teacherOther,-,DENY,403,no,PASS,
+/cloud/storage,GET,studentIn,-,DENY,403,no,PASS,
+/cloud/storage,GET,studentOut,-,DENY,403,no,PASS,
+/cloud/jobs,GET,anonymous,-,DENY,401,no,PASS,
+/cloud/jobs,GET,adminA,-,ALLOW,200,yes,PASS,
+/cloud/jobs,GET,adminB,-,ALLOW,200,no,PASS,
+/cloud/jobs,GET,teacherAssigned,-,DENY,403,no,PASS,
+/cloud/jobs,GET,teacherOther,-,DENY,403,no,PASS,
+/cloud/jobs,GET,studentIn,-,DENY,403,no,PASS,
+/cloud/jobs,GET,studentOut,-,DENY,403,no,PASS,
+/cloud/reconciler,GET,anonymous,-,DENY,401,no,PASS,
+/cloud/reconciler,GET,adminA,-,ALLOW,200,yes,PASS,
+/cloud/reconciler,GET,adminB,-,ALLOW,200,yes,PASS,
+/cloud/reconciler,GET,teacherAssigned,-,DENY,403,no,PASS,
+/cloud/reconciler,GET,teacherOther,-,DENY,403,no,PASS,
+/cloud/reconciler,GET,studentIn,-,DENY,403,no,PASS,
+/cloud/reconciler,GET,studentOut,-,DENY,403,no,PASS,
+/cloud/metrics,GET,anonymous,-,DENY,401,no,PASS,
+/cloud/metrics,GET,adminA,-,ALLOW,200,yes,PASS,
+/cloud/metrics,GET,adminB,-,ALLOW,200,yes,PASS,
+/cloud/metrics,GET,teacherAssigned,-,DENY,403,no,PASS,
+/cloud/metrics,GET,teacherOther,-,DENY,403,no,PASS,
+/cloud/metrics,GET,studentIn,-,DENY,403,no,PASS,
+/cloud/metrics,GET,studentOut,-,DENY,403,no,PASS,
+/cloud/logs,GET,anonymous,-,DENY,401,no,PASS,
+/cloud/logs,GET,adminA,-,ALLOW,200,yes,PASS,
+/cloud/logs,GET,adminB,-,ALLOW,200,yes,PASS,
+/cloud/logs,GET,teacherAssigned,-,DENY,403,no,PASS,
+/cloud/logs,GET,teacherOther,-,DENY,403,no,PASS,
+/cloud/logs,GET,studentIn,-,DENY,403,no,PASS,
+/cloud/logs,GET,studentOut,-,DENY,403,no,PASS,
+/cloud/resources,GET,anonymous,-,DENY,401,no,PASS,
+/cloud/resources,GET,adminA,-,ALLOW,200,yes,PASS,
+/cloud/resources,GET,adminB,-,ALLOW,200,yes,PASS,
+/cloud/resources,GET,teacherAssigned,-,DENY,403,no,PASS,
+/cloud/resources,GET,teacherOther,-,DENY,403,no,PASS,
+/cloud/resources,GET,studentIn,-,DENY,403,no,PASS,
+/cloud/resources,GET,studentOut,-,DENY,403,no,PASS,
+/cloud/cost,GET,anonymous,-,DENY,401,no,PASS,
+/cloud/cost,GET,adminA,-,ALLOW,200,yes,PASS,
+/cloud/cost,GET,adminB,-,ALLOW,200,yes,PASS,
+/cloud/cost,GET,teacherAssigned,-,DENY,403,no,PASS,
+/cloud/cost,GET,teacherOther,-,DENY,403,no,PASS,
+/cloud/cost,GET,studentIn,-,DENY,403,no,PASS,
+/cloud/cost,GET,studentOut,-,DENY,403,no,PASS,
+/storage/local/object,GET,anonymous,-,DENY,403,no,PASS,
+/classrooms/:id,GET,anonymous,n/a,DENY,401,no,PASS,target=X
+/classrooms/:id,GET,adminA,sameTenant,ALLOW,200,yes,PASS,target=X
+/classrooms/:id,GET,adminA,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id,GET,adminB,sameTenant,ALLOW,200,yes,PASS,target=B
+/classrooms/:id,GET,adminB,otherTenant,DENY,404,no,PASS,target=X
+/classrooms/:id,GET,teacherAssigned,own,ALLOW,200,yes,PASS,target=X
+/classrooms/:id,GET,teacherAssigned,sameTenant,DENY,404,no,PASS,target=Y
+/classrooms/:id,GET,teacherAssigned,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id,GET,teacherOther,sameTenant,DENY,404,no,PASS,target=X
+/classrooms/:id,GET,teacherOther,own,ALLOW,200,yes,PASS,target=Y
+/classrooms/:id,GET,teacherOther,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id,GET,studentIn,own,ALLOW,200,yes,PASS,target=X
+/classrooms/:id,GET,studentIn,sameTenant,DENY,404,no,PASS,target=Y
+/classrooms/:id,GET,studentIn,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id,GET,studentOut,sameTenant,DENY,404,no,PASS,target=X
+/classrooms/:id,GET,studentOut,own,ALLOW,200,yes,PASS,target=Y
+/classrooms/:id,GET,studentOut,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id/students,GET,anonymous,n/a,DENY,401,no,PASS,target=X
+/classrooms/:id/students,GET,adminA,sameTenant,ALLOW,200,yes,PASS,target=X
+/classrooms/:id/students,GET,adminA,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id/students,GET,adminB,sameTenant,ALLOW,200,yes,PASS,target=B
+/classrooms/:id/students,GET,adminB,otherTenant,DENY,404,no,PASS,target=X
+/classrooms/:id/students,GET,teacherAssigned,own,ALLOW,200,yes,PASS,target=X
+/classrooms/:id/students,GET,teacherAssigned,sameTenant,DENY,404,no,PASS,target=Y
+/classrooms/:id/students,GET,teacherAssigned,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id/students,GET,teacherOther,sameTenant,DENY,404,no,PASS,target=X
+/classrooms/:id/students,GET,teacherOther,own,ALLOW,200,yes,PASS,target=Y
+/classrooms/:id/students,GET,teacherOther,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id/students,GET,studentIn,own,ALLOW,200,yes,PASS,target=X
+/classrooms/:id/students,GET,studentIn,sameTenant,DENY,404,no,PASS,target=Y
+/classrooms/:id/students,GET,studentIn,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id/students,GET,studentOut,sameTenant,DENY,404,no,PASS,target=X
+/classrooms/:id/students,GET,studentOut,own,ALLOW,200,yes,PASS,target=Y
+/classrooms/:id/students,GET,studentOut,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id/sessions,GET,anonymous,n/a,DENY,401,no,PASS,target=X
+/classrooms/:id/sessions,GET,adminA,sameTenant,ALLOW,200,yes,PASS,target=X
+/classrooms/:id/sessions,GET,adminA,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id/sessions,GET,adminB,sameTenant,ALLOW,200,yes,PASS,target=B
+/classrooms/:id/sessions,GET,adminB,otherTenant,DENY,404,no,PASS,target=X
+/classrooms/:id/sessions,GET,teacherAssigned,own,ALLOW,200,yes,PASS,target=X
+/classrooms/:id/sessions,GET,teacherAssigned,sameTenant,DENY,404,no,PASS,target=Y
+/classrooms/:id/sessions,GET,teacherAssigned,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id/sessions,GET,teacherOther,sameTenant,DENY,404,no,PASS,target=X
+/classrooms/:id/sessions,GET,teacherOther,own,ALLOW,200,yes,PASS,target=Y
+/classrooms/:id/sessions,GET,teacherOther,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id/sessions,GET,studentIn,own,ALLOW,200,yes,PASS,target=X
+/classrooms/:id/sessions,GET,studentIn,sameTenant,DENY,404,no,PASS,target=Y
+/classrooms/:id/sessions,GET,studentIn,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id/sessions,GET,studentOut,sameTenant,DENY,404,no,PASS,target=X
+/classrooms/:id/sessions,GET,studentOut,own,ALLOW,200,yes,PASS,target=Y
+/classrooms/:id/sessions,GET,studentOut,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id/assessments,GET,anonymous,n/a,DENY,401,no,PASS,target=X
+/classrooms/:id/assessments,GET,adminA,sameTenant,ALLOW,200,yes,PASS,target=X
+/classrooms/:id/assessments,GET,adminA,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id/assessments,GET,adminB,sameTenant,ALLOW,200,yes,PASS,target=B
+/classrooms/:id/assessments,GET,adminB,otherTenant,DENY,404,no,PASS,target=X
+/classrooms/:id/assessments,GET,teacherAssigned,own,ALLOW,200,yes,PASS,target=X
+/classrooms/:id/assessments,GET,teacherAssigned,sameTenant,DENY,404,no,PASS,target=Y
+/classrooms/:id/assessments,GET,teacherAssigned,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id/assessments,GET,teacherOther,sameTenant,DENY,404,no,PASS,target=X
+/classrooms/:id/assessments,GET,teacherOther,own,ALLOW,200,yes,PASS,target=Y
+/classrooms/:id/assessments,GET,teacherOther,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id/assessments,GET,studentIn,own,ALLOW,200,yes,PASS,target=X
+/classrooms/:id/assessments,GET,studentIn,sameTenant,DENY,404,no,PASS,target=Y
+/classrooms/:id/assessments,GET,studentIn,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id/assessments,GET,studentOut,sameTenant,DENY,404,no,PASS,target=X
+/classrooms/:id/assessments,GET,studentOut,own,ALLOW,200,yes,PASS,target=Y
+/classrooms/:id/assessments,GET,studentOut,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id/gradebook,GET,anonymous,n/a,DENY,401,no,PASS,target=X
+/classrooms/:id/gradebook,GET,adminA,sameTenant,ALLOW,200,yes,PASS,target=X
+/classrooms/:id/gradebook,GET,adminA,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id/gradebook,GET,adminB,sameTenant,ALLOW,200,yes,PASS,target=B
+/classrooms/:id/gradebook,GET,adminB,otherTenant,DENY,404,no,PASS,target=X
+/classrooms/:id/gradebook,GET,teacherAssigned,own,ALLOW,200,yes,PASS,target=X
+/classrooms/:id/gradebook,GET,teacherAssigned,sameTenant,DENY,404,no,PASS,target=Y
+/classrooms/:id/gradebook,GET,teacherAssigned,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id/gradebook,GET,teacherOther,sameTenant,DENY,404,no,PASS,target=X
+/classrooms/:id/gradebook,GET,teacherOther,own,ALLOW,200,yes,PASS,target=Y
+/classrooms/:id/gradebook,GET,teacherOther,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id/gradebook,GET,studentIn,own,ALLOW,200,yes,PASS,target=X
+/classrooms/:id/gradebook,GET,studentIn,sameTenant,DENY,404,no,PASS,target=Y
+/classrooms/:id/gradebook,GET,studentIn,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id/gradebook,GET,studentOut,sameTenant,DENY,404,no,PASS,target=X
+/classrooms/:id/gradebook,GET,studentOut,own,ALLOW,200,yes,PASS,target=Y
+/classrooms/:id/gradebook,GET,studentOut,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id/attendance-summary,GET,anonymous,n/a,DENY,401,no,PASS,target=X
+/classrooms/:id/attendance-summary,GET,adminA,sameTenant,ALLOW,200,yes,PASS,target=X
+/classrooms/:id/attendance-summary,GET,adminA,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id/attendance-summary,GET,adminB,sameTenant,ALLOW,200,yes,PASS,target=B
+/classrooms/:id/attendance-summary,GET,adminB,otherTenant,DENY,404,no,PASS,target=X
+/classrooms/:id/attendance-summary,GET,teacherAssigned,own,ALLOW,200,yes,PASS,target=X
+/classrooms/:id/attendance-summary,GET,teacherAssigned,sameTenant,DENY,404,no,PASS,target=Y
+/classrooms/:id/attendance-summary,GET,teacherAssigned,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id/attendance-summary,GET,teacherOther,sameTenant,DENY,404,no,PASS,target=X
+/classrooms/:id/attendance-summary,GET,teacherOther,own,ALLOW,200,yes,PASS,target=Y
+/classrooms/:id/attendance-summary,GET,teacherOther,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id/attendance-summary,GET,studentIn,own,ALLOW,200,yes,PASS,target=X
+/classrooms/:id/attendance-summary,GET,studentIn,sameTenant,DENY,404,no,PASS,target=Y
+/classrooms/:id/attendance-summary,GET,studentIn,otherTenant,DENY,404,no,PASS,target=B
+/classrooms/:id/attendance-summary,GET,studentOut,sameTenant,DENY,404,no,PASS,target=X
+/classrooms/:id/attendance-summary,GET,studentOut,own,ALLOW,200,yes,PASS,target=Y
+/classrooms/:id/attendance-summary,GET,studentOut,otherTenant,DENY,404,no,PASS,target=B
+/sessions/:id,GET,anonymous,n/a,DENY,401,no,PASS,target=X
+/sessions/:id,GET,adminA,sameTenant,ALLOW,200,yes,PASS,target=X
+/sessions/:id,GET,adminA,otherTenant,DENY,404,no,PASS,target=B
+/sessions/:id,GET,adminB,sameTenant,ALLOW,200,yes,PASS,target=B
+/sessions/:id,GET,adminB,otherTenant,DENY,404,no,PASS,target=X
+/sessions/:id,GET,teacherAssigned,own,ALLOW,200,yes,PASS,target=X
+/sessions/:id,GET,teacherAssigned,sameTenant,DENY,404,no,PASS,target=Y
+/sessions/:id,GET,teacherAssigned,otherTenant,DENY,404,no,PASS,target=B
+/sessions/:id,GET,teacherOther,sameTenant,DENY,404,no,PASS,target=X
+/sessions/:id,GET,teacherOther,own,ALLOW,200,yes,PASS,target=Y
+/sessions/:id,GET,teacherOther,otherTenant,DENY,404,no,PASS,target=B
+/sessions/:id,GET,studentIn,own,ALLOW,200,yes,PASS,target=X
+/sessions/:id,GET,studentIn,sameTenant,DENY,404,no,PASS,target=Y
+/sessions/:id,GET,studentIn,otherTenant,DENY,404,no,PASS,target=B
+/sessions/:id,GET,studentOut,sameTenant,DENY,404,no,PASS,target=X
+/sessions/:id,GET,studentOut,own,ALLOW,200,yes,PASS,target=Y
+/sessions/:id,GET,studentOut,otherTenant,DENY,404,no,PASS,target=B
+/sessions/:id/attendance,GET,anonymous,n/a,DENY,401,no,PASS,target=X
+/sessions/:id/attendance,GET,adminA,sameTenant,ALLOW,200,yes,PASS,target=X
+/sessions/:id/attendance,GET,adminA,otherTenant,DENY,404,no,PASS,target=B
+/sessions/:id/attendance,GET,adminB,sameTenant,ALLOW,200,yes,PASS,target=B
+/sessions/:id/attendance,GET,adminB,otherTenant,DENY,404,no,PASS,target=X
+/sessions/:id/attendance,GET,teacherAssigned,own,ALLOW,200,yes,PASS,target=X
+/sessions/:id/attendance,GET,teacherAssigned,sameTenant,DENY,404,no,PASS,target=Y
+/sessions/:id/attendance,GET,teacherAssigned,otherTenant,DENY,404,no,PASS,target=B
+/sessions/:id/attendance,GET,teacherOther,sameTenant,DENY,404,no,PASS,target=X
+/sessions/:id/attendance,GET,teacherOther,own,ALLOW,200,yes,PASS,target=Y
+/sessions/:id/attendance,GET,teacherOther,otherTenant,DENY,404,no,PASS,target=B
+/sessions/:id/attendance,GET,studentIn,own,ALLOW,200,yes,PASS,target=X
+/sessions/:id/attendance,GET,studentIn,sameTenant,DENY,404,no,PASS,target=Y
+/sessions/:id/attendance,GET,studentIn,otherTenant,DENY,404,no,PASS,target=B
+/sessions/:id/attendance,GET,studentOut,sameTenant,DENY,404,no,PASS,target=X
+/sessions/:id/attendance,GET,studentOut,own,ALLOW,200,yes,PASS,target=Y
+/sessions/:id/attendance,GET,studentOut,otherTenant,DENY,404,no,PASS,target=B
+/assessments/:id/grades,GET,anonymous,n/a,DENY,401,no,PASS,target=X
+/assessments/:id/grades,GET,adminA,sameTenant,ALLOW,200,yes,PASS,target=X
+/assessments/:id/grades,GET,adminA,otherTenant,DENY,404,no,PASS,target=B
+/assessments/:id/grades,GET,adminB,sameTenant,ALLOW,200,yes,PASS,target=B
+/assessments/:id/grades,GET,adminB,otherTenant,DENY,404,no,PASS,target=X
+/assessments/:id/grades,GET,teacherAssigned,own,ALLOW,200,yes,PASS,target=X
+/assessments/:id/grades,GET,teacherAssigned,sameTenant,DENY,404,no,PASS,target=Y
+/assessments/:id/grades,GET,teacherAssigned,otherTenant,DENY,404,no,PASS,target=B
+/assessments/:id/grades,GET,teacherOther,sameTenant,DENY,404,no,PASS,target=X
+/assessments/:id/grades,GET,teacherOther,own,ALLOW,200,yes,PASS,target=Y
+/assessments/:id/grades,GET,teacherOther,otherTenant,DENY,404,no,PASS,target=B
+/assessments/:id/grades,GET,studentIn,own,ALLOW,200,yes,PASS,target=X
+/assessments/:id/grades,GET,studentIn,sameTenant,DENY,404,no,PASS,target=Y
+/assessments/:id/grades,GET,studentIn,otherTenant,DENY,404,no,PASS,target=B
+/assessments/:id/grades,GET,studentOut,sameTenant,DENY,404,no,PASS,target=X
+/assessments/:id/grades,GET,studentOut,own,ALLOW,200,yes,PASS,target=Y
+/assessments/:id/grades,GET,studentOut,otherTenant,DENY,404,no,PASS,target=B
+/students/:id,GET,anonymous,n/a,DENY,401,no,PASS,target=studentIn
+/students/:id,GET,adminA,sameTenant,ALLOW,200,yes,PASS,target=studentIn
+/students/:id,GET,adminA,otherTenant,DENY,404,no,PASS,target=B
+/students/:id,GET,adminB,sameTenant,ALLOW,200,yes,PASS,target=B
+/students/:id,GET,adminB,otherTenant,DENY,404,no,PASS,target=studentIn
+/students/:id,GET,teacherAssigned,own,ALLOW,200,yes,PASS,target=studentIn
+/students/:id,GET,teacherAssigned,sameTenant,DENY,404,no,PASS,target=studentOut
+/students/:id,GET,teacherAssigned,otherTenant,DENY,404,no,PASS,target=B
+/students/:id,GET,teacherOther,sameTenant,DENY,404,no,PASS,target=studentIn
+/students/:id,GET,teacherOther,own,ALLOW,200,yes,PASS,target=studentOut
+/students/:id,GET,teacherOther,otherTenant,DENY,404,no,PASS,target=B
+/students/:id,GET,studentIn,own,ALLOW,200,yes,PASS,target=studentIn
+/students/:id,GET,studentIn,sameTenant,DENY,404,no,PASS,target=studentOut
+/students/:id,GET,studentIn,otherTenant,DENY,404,no,PASS,target=B
+/students/:id,GET,studentOut,sameTenant,DENY,404,no,PASS,target=studentIn
+/students/:id,GET,studentOut,own,ALLOW,200,yes,PASS,target=studentOut
+/students/:id,GET,studentOut,otherTenant,DENY,404,no,PASS,target=B
+/students/:id/overview,GET,anonymous,n/a,DENY,401,no,PASS,target=studentIn
+/students/:id/overview,GET,adminA,sameTenant,ALLOW,200,yes,PASS,target=studentIn
+/students/:id/overview,GET,adminA,otherTenant,DENY,404,no,PASS,target=B
+/students/:id/overview,GET,adminB,sameTenant,ALLOW,200,yes,PASS,target=B
+/students/:id/overview,GET,adminB,otherTenant,DENY,404,no,PASS,target=studentIn
+/students/:id/overview,GET,teacherAssigned,own,ALLOW,200,yes,PASS,target=studentIn
+/students/:id/overview,GET,teacherAssigned,sameTenant,DENY,404,no,PASS,target=studentOut
+/students/:id/overview,GET,teacherAssigned,otherTenant,DENY,404,no,PASS,target=B
+/students/:id/overview,GET,teacherOther,sameTenant,DENY,404,no,PASS,target=studentIn
+/students/:id/overview,GET,teacherOther,own,ALLOW,200,yes,PASS,target=studentOut
+/students/:id/overview,GET,teacherOther,otherTenant,DENY,404,no,PASS,target=B
+/students/:id/overview,GET,studentIn,own,ALLOW,200,yes,PASS,target=studentIn
+/students/:id/overview,GET,studentIn,sameTenant,DENY,404,no,PASS,target=studentOut
+/students/:id/overview,GET,studentIn,otherTenant,DENY,404,no,PASS,target=B
+/students/:id/overview,GET,studentOut,sameTenant,DENY,404,no,PASS,target=studentIn
+/students/:id/overview,GET,studentOut,own,ALLOW,200,yes,PASS,target=studentOut
+/students/:id/overview,GET,studentOut,otherTenant,DENY,404,no,PASS,target=B
+/students/:id/grades,GET,anonymous,n/a,DENY,401,no,PASS,target=studentIn
+/students/:id/grades,GET,adminA,sameTenant,ALLOW,200,yes,PASS,target=studentIn
+/students/:id/grades,GET,adminA,otherTenant,DENY,404,no,PASS,target=B
+/students/:id/grades,GET,adminB,sameTenant,ALLOW,200,yes,PASS,target=B
+/students/:id/grades,GET,adminB,otherTenant,DENY,404,no,PASS,target=studentIn
+/students/:id/grades,GET,teacherAssigned,own,ALLOW,200,yes,PASS,target=studentIn
+/students/:id/grades,GET,teacherAssigned,sameTenant,DENY,404,no,PASS,target=studentOut
+/students/:id/grades,GET,teacherAssigned,otherTenant,DENY,404,no,PASS,target=B
+/students/:id/grades,GET,teacherOther,sameTenant,DENY,404,no,PASS,target=studentIn
+/students/:id/grades,GET,teacherOther,own,ALLOW,200,yes,PASS,target=studentOut
+/students/:id/grades,GET,teacherOther,otherTenant,DENY,404,no,PASS,target=B
+/students/:id/grades,GET,studentIn,own,ALLOW,200,yes,PASS,target=studentIn
+/students/:id/grades,GET,studentIn,sameTenant,DENY,404,no,PASS,target=studentOut
+/students/:id/grades,GET,studentIn,otherTenant,DENY,404,no,PASS,target=B
+/students/:id/grades,GET,studentOut,sameTenant,DENY,404,no,PASS,target=studentIn
+/students/:id/grades,GET,studentOut,own,ALLOW,200,yes,PASS,target=studentOut
+/students/:id/grades,GET,studentOut,otherTenant,DENY,404,no,PASS,target=B
+/students/:id/attendance-summary,GET,anonymous,n/a,DENY,401,no,PASS,target=studentIn
+/students/:id/attendance-summary,GET,adminA,sameTenant,ALLOW,200,yes,PASS,target=studentIn
+/students/:id/attendance-summary,GET,adminA,otherTenant,DENY,404,no,PASS,target=B
+/students/:id/attendance-summary,GET,adminB,sameTenant,ALLOW,200,yes,PASS,target=B
+/students/:id/attendance-summary,GET,adminB,otherTenant,DENY,404,no,PASS,target=studentIn
+/students/:id/attendance-summary,GET,teacherAssigned,own,ALLOW,200,yes,PASS,target=studentIn
+/students/:id/attendance-summary,GET,teacherAssigned,sameTenant,DENY,404,no,PASS,target=studentOut
+/students/:id/attendance-summary,GET,teacherAssigned,otherTenant,DENY,404,no,PASS,target=B
+/students/:id/attendance-summary,GET,teacherOther,sameTenant,DENY,404,no,PASS,target=studentIn
+/students/:id/attendance-summary,GET,teacherOther,own,ALLOW,200,yes,PASS,target=studentOut
+/students/:id/attendance-summary,GET,teacherOther,otherTenant,DENY,404,no,PASS,target=B
+/students/:id/attendance-summary,GET,studentIn,own,ALLOW,200,yes,PASS,target=studentIn
+/students/:id/attendance-summary,GET,studentIn,sameTenant,DENY,404,no,PASS,target=studentOut
+/students/:id/attendance-summary,GET,studentIn,otherTenant,DENY,404,no,PASS,target=B
+/students/:id/attendance-summary,GET,studentOut,sameTenant,DENY,404,no,PASS,target=studentIn
+/students/:id/attendance-summary,GET,studentOut,own,ALLOW,200,yes,PASS,target=studentOut
+/students/:id/attendance-summary,GET,studentOut,otherTenant,DENY,404,no,PASS,target=B
+/teachers/:id,GET,anonymous,n/a,DENY,401,no,PASS,target=teacherAssigned
+/teachers/:id,GET,adminA,sameTenant,ALLOW,200,yes,PASS,target=teacherAssigned
+/teachers/:id,GET,adminA,otherTenant,DENY,404,no,PASS,target=B
+/teachers/:id,GET,adminB,sameTenant,ALLOW,200,yes,PASS,target=B
+/teachers/:id,GET,adminB,otherTenant,DENY,404,no,PASS,target=teacherAssigned
+/teachers/:id,GET,teacherAssigned,own,ALLOW,200,yes,PASS,target=teacherAssigned
+/teachers/:id,GET,teacherAssigned,sameTenant,DENY,404,no,PASS,target=teacherOther
+/teachers/:id,GET,teacherAssigned,otherTenant,DENY,404,no,PASS,target=B
+/teachers/:id,GET,teacherOther,sameTenant,DENY,404,no,PASS,target=teacherAssigned
+/teachers/:id,GET,teacherOther,own,ALLOW,200,yes,PASS,target=teacherOther
+/teachers/:id,GET,teacherOther,otherTenant,DENY,404,no,PASS,target=B
+/teachers/:id,GET,studentIn,own,ALLOW,200,yes,PASS,target=teacherAssigned
+/teachers/:id,GET,studentIn,sameTenant,DENY,404,no,PASS,target=teacherOther
+/teachers/:id,GET,studentIn,otherTenant,DENY,404,no,PASS,target=B
+/teachers/:id,GET,studentOut,sameTenant,DENY,404,no,PASS,target=teacherAssigned
+/teachers/:id,GET,studentOut,own,ALLOW,200,yes,PASS,target=teacherOther
+/teachers/:id,GET,studentOut,otherTenant,DENY,404,no,PASS,target=B
+/teachers/:id/overview,GET,anonymous,n/a,DENY,401,no,PASS,target=teacherAssigned
+/teachers/:id/overview,GET,adminA,sameTenant,ALLOW,200,yes,PASS,target=teacherAssigned
+/teachers/:id/overview,GET,adminA,otherTenant,DENY,404,no,PASS,target=B
+/teachers/:id/overview,GET,adminB,sameTenant,ALLOW,200,yes,PASS,target=B
+/teachers/:id/overview,GET,adminB,otherTenant,DENY,404,no,PASS,target=teacherAssigned
+/teachers/:id/overview,GET,teacherAssigned,own,ALLOW,200,yes,PASS,target=teacherAssigned
+/teachers/:id/overview,GET,teacherAssigned,sameTenant,DENY,404,no,PASS,target=teacherOther
+/teachers/:id/overview,GET,teacherAssigned,otherTenant,DENY,404,no,PASS,target=B
+/teachers/:id/overview,GET,teacherOther,sameTenant,DENY,404,no,PASS,target=teacherAssigned
+/teachers/:id/overview,GET,teacherOther,own,ALLOW,200,yes,PASS,target=teacherOther
+/teachers/:id/overview,GET,teacherOther,otherTenant,DENY,404,no,PASS,target=B
+/teachers/:id/overview,GET,studentIn,own,ALLOW,200,yes,PASS,target=teacherAssigned
+/teachers/:id/overview,GET,studentIn,sameTenant,DENY,404,no,PASS,target=teacherOther
+/teachers/:id/overview,GET,studentIn,otherTenant,DENY,404,no,PASS,target=B
+/teachers/:id/overview,GET,studentOut,sameTenant,DENY,404,no,PASS,target=teacherAssigned
+/teachers/:id/overview,GET,studentOut,own,ALLOW,200,yes,PASS,target=teacherOther
+/teachers/:id/overview,GET,studentOut,otherTenant,DENY,404,no,PASS,target=B
+/courses/:id,GET,anonymous,n/a,DENY,401,no,PASS,target=course(X)
+/courses/:id,GET,adminA,sameTenant,ALLOW,200,yes,PASS,target=course(X)
+/courses/:id,GET,adminA,otherTenant,DENY,404,no,PASS,target=B
+/courses/:id,GET,adminB,sameTenant,ALLOW,200,yes,PASS,target=B
+/courses/:id,GET,adminB,otherTenant,DENY,404,no,PASS,target=course(X)
+/courses/:id,GET,teacherAssigned,own,ALLOW,200,yes,PASS,target=course(X)
+/courses/:id,GET,teacherAssigned,sameTenant,DENY,404,no,PASS,target=course(other)
+/courses/:id,GET,teacherAssigned,otherTenant,DENY,404,no,PASS,target=B
+/courses/:id,GET,teacherOther,sameTenant,DENY,404,no,PASS,target=course(X)
+/courses/:id,GET,teacherOther,own,ALLOW,200,yes,PASS,target=course(other)
+/courses/:id,GET,teacherOther,otherTenant,DENY,404,no,PASS,target=B
+/courses/:id,GET,studentIn,own,ALLOW,200,yes,PASS,target=course(X)
+/courses/:id,GET,studentIn,sameTenant,DENY,404,no,PASS,target=course(other)
+/courses/:id,GET,studentIn,otherTenant,DENY,404,no,PASS,target=B
+/courses/:id,GET,studentOut,sameTenant,DENY,404,no,PASS,target=course(X)
+/courses/:id,GET,studentOut,own,ALLOW,200,yes,PASS,target=course(other)
+/courses/:id,GET,studentOut,otherTenant,DENY,404,no,PASS,target=B
+/invoices/:id,GET,anonymous,n/a,DENY,401,no,PASS,target=invoice(studentIn)
+/invoices/:id,GET,adminA,sameTenant,ALLOW,200,yes,PASS,target=invoice(studentIn)
+/invoices/:id,GET,adminA,otherTenant,DENY,404,no,PASS,target=B
+/invoices/:id,GET,adminB,sameTenant,ALLOW,200,yes,PASS,target=B
+/invoices/:id,GET,adminB,otherTenant,DENY,404,no,PASS,target=invoice(studentIn)
+/invoices/:id,GET,teacherAssigned,own,DENY,403,no,PASS,target=invoice(studentIn)
+/invoices/:id,GET,teacherAssigned,sameTenant,DENY,403,no,PASS,target=invoice(studentOut)
+/invoices/:id,GET,teacherAssigned,otherTenant,DENY,403,no,PASS,target=B
+/invoices/:id,GET,teacherOther,sameTenant,DENY,403,no,PASS,target=invoice(studentIn)
+/invoices/:id,GET,teacherOther,own,DENY,403,no,PASS,target=invoice(studentOut)
+/invoices/:id,GET,teacherOther,otherTenant,DENY,403,no,PASS,target=B
+/invoices/:id,GET,studentIn,own,ALLOW,200,yes,PASS,target=invoice(studentIn)
+/invoices/:id,GET,studentIn,sameTenant,DENY,404,no,PASS,target=invoice(studentOut)
+/invoices/:id,GET,studentIn,otherTenant,DENY,404,no,PASS,target=B
+/invoices/:id,GET,studentOut,sameTenant,DENY,404,no,PASS,target=invoice(studentIn)
+/invoices/:id,GET,studentOut,own,ALLOW,200,yes,PASS,target=invoice(studentOut)
+/invoices/:id,GET,studentOut,otherTenant,DENY,404,no,PASS,target=B
+/materials/:id,GET,anonymous,n/a,-,-,-,SKIP,no material fixture (material(X))
+/materials/:id,GET,adminA,sameTenant,-,-,-,SKIP,no material fixture (material(X))
+/materials/:id,GET,adminA,otherTenant,-,-,-,SKIP,no material fixture (B)
+/materials/:id,GET,adminB,sameTenant,-,-,-,SKIP,no material fixture (B)
+/materials/:id,GET,adminB,otherTenant,-,-,-,SKIP,no material fixture (material(X))
+/materials/:id,GET,teacherAssigned,sameTenant,-,-,-,SKIP,no material fixture (material(X))
+/materials/:id,GET,teacherAssigned,sameTenant,?,404,no,?,target=material(other); CHỜ DEV (Q13: học liệu không gắn lớp / lịch sử học liệu)
+/materials/:id,GET,teacherAssigned,otherTenant,-,-,-,SKIP,no material fixture (B)
+/materials/:id,GET,teacherOther,sameTenant,-,-,-,SKIP,no material fixture (material(X))
+/materials/:id,GET,teacherOther,sameTenant,?,404,no,?,target=material(other); CHỜ DEV (Q13: học liệu không gắn lớp / lịch sử học liệu)
+/materials/:id,GET,teacherOther,otherTenant,-,-,-,SKIP,no material fixture (B)
+/materials/:id,GET,studentIn,sameTenant,-,-,-,SKIP,no material fixture (material(X))
+/materials/:id,GET,studentIn,sameTenant,?,404,no,?,target=material(other); CHỜ DEV (Q13: học liệu không gắn lớp / lịch sử học liệu)
+/materials/:id,GET,studentIn,otherTenant,-,-,-,SKIP,no material fixture (B)
+/materials/:id,GET,studentOut,sameTenant,-,-,-,SKIP,no material fixture (material(X))
+/materials/:id,GET,studentOut,sameTenant,?,404,no,?,target=material(other); CHỜ DEV (Q13: học liệu không gắn lớp / lịch sử học liệu)
+/materials/:id,GET,studentOut,otherTenant,-,-,-,SKIP,no material fixture (B)
+/materials/:id/history,GET,anonymous,n/a,-,-,-,SKIP,no material fixture (material(X))
+/materials/:id/history,GET,adminA,sameTenant,-,-,-,SKIP,no material fixture (material(X))
+/materials/:id/history,GET,adminA,otherTenant,-,-,-,SKIP,no material fixture (B)
+/materials/:id/history,GET,adminB,sameTenant,-,-,-,SKIP,no material fixture (B)
+/materials/:id/history,GET,adminB,otherTenant,-,-,-,SKIP,no material fixture (material(X))
+/materials/:id/history,GET,teacherAssigned,sameTenant,-,-,-,SKIP,no material fixture (material(X))
+/materials/:id/history,GET,teacherAssigned,sameTenant,?,404,no,?,target=material(other); CHỜ DEV (Q13: học liệu không gắn lớp / lịch sử học liệu)
+/materials/:id/history,GET,teacherAssigned,otherTenant,-,-,-,SKIP,no material fixture (B)
+/materials/:id/history,GET,teacherOther,sameTenant,-,-,-,SKIP,no material fixture (material(X))
+/materials/:id/history,GET,teacherOther,sameTenant,?,404,no,?,target=material(other); CHỜ DEV (Q13: học liệu không gắn lớp / lịch sử học liệu)
+/materials/:id/history,GET,teacherOther,otherTenant,-,-,-,SKIP,no material fixture (B)
+/materials/:id/history,GET,studentIn,sameTenant,-,-,-,SKIP,no material fixture (material(X))
+/materials/:id/history,GET,studentIn,sameTenant,?,403,no,?,target=material(other); CHỜ DEV (Q13: học liệu không gắn lớp / lịch sử học liệu)
+/materials/:id/history,GET,studentIn,otherTenant,-,-,-,SKIP,no material fixture (B)
+/materials/:id/history,GET,studentOut,sameTenant,-,-,-,SKIP,no material fixture (material(X))
+/materials/:id/history,GET,studentOut,sameTenant,?,403,no,?,target=material(other); CHỜ DEV (Q13: học liệu không gắn lớp / lịch sử học liệu)
+/materials/:id/history,GET,studentOut,otherTenant,-,-,-,SKIP,no material fixture (B)
+/materials/:id/access,GET,anonymous,n/a,-,-,-,SKIP,no material fixture (material(X))
+/materials/:id/access,GET,adminA,sameTenant,-,-,-,SKIP,no material fixture (material(X))
+/materials/:id/access,GET,adminA,otherTenant,-,-,-,SKIP,no material fixture (B)
+/materials/:id/access,GET,adminB,sameTenant,-,-,-,SKIP,no material fixture (B)
+/materials/:id/access,GET,adminB,otherTenant,-,-,-,SKIP,no material fixture (material(X))
+/materials/:id/access,GET,teacherAssigned,sameTenant,-,-,-,SKIP,no material fixture (material(X))
+/materials/:id/access,GET,teacherAssigned,sameTenant,?,404,no,?,target=material(other); CHỜ DEV (Q13: học liệu không gắn lớp / lịch sử học liệu)
+/materials/:id/access,GET,teacherAssigned,otherTenant,-,-,-,SKIP,no material fixture (B)
+/materials/:id/access,GET,teacherOther,sameTenant,-,-,-,SKIP,no material fixture (material(X))
+/materials/:id/access,GET,teacherOther,sameTenant,?,404,no,?,target=material(other); CHỜ DEV (Q13: học liệu không gắn lớp / lịch sử học liệu)
+/materials/:id/access,GET,teacherOther,otherTenant,-,-,-,SKIP,no material fixture (B)
+/materials/:id/access,GET,studentIn,sameTenant,-,-,-,SKIP,no material fixture (material(X))
+/materials/:id/access,GET,studentIn,sameTenant,?,404,no,?,target=material(other); CHỜ DEV (Q13: học liệu không gắn lớp / lịch sử học liệu)
+/materials/:id/access,GET,studentIn,otherTenant,-,-,-,SKIP,no material fixture (B)
+/materials/:id/access,GET,studentOut,sameTenant,-,-,-,SKIP,no material fixture (material(X))
+/materials/:id/access,GET,studentOut,sameTenant,?,404,no,?,target=material(other); CHỜ DEV (Q13: học liệu không gắn lớp / lịch sử học liệu)
+/materials/:id/access,GET,studentOut,otherTenant,-,-,-,SKIP,no material fixture (B)
+/cloud/jobs/:id,GET,anonymous,n/a,DENY,401,no,PASS,target=job(A)
+/cloud/jobs/:id,GET,adminA,sameTenant,ALLOW,200,yes,PASS,target=job(A)
+/cloud/jobs/:id,GET,adminA,otherTenant,-,-,-,SKIP,no job fixture (B)
+/cloud/jobs/:id,GET,adminB,sameTenant,-,-,-,SKIP,no job fixture (B)
+/cloud/jobs/:id,GET,adminB,otherTenant,DENY,404,no,PASS,target=job(A)
+/cloud/jobs/:id,GET,teacherAssigned,sameTenant,DENY,403,no,PASS,target=job(A)
+/cloud/jobs/:id,GET,teacherAssigned,otherTenant,-,-,-,SKIP,no job fixture (B)
+/cloud/jobs/:id,GET,teacherOther,sameTenant,DENY,403,no,PASS,target=job(A)
+/cloud/jobs/:id,GET,teacherOther,otherTenant,-,-,-,SKIP,no job fixture (B)
+/cloud/jobs/:id,GET,studentIn,sameTenant,DENY,403,no,PASS,target=job(A)
+/cloud/jobs/:id,GET,studentIn,otherTenant,-,-,-,SKIP,no job fixture (B)
+/cloud/jobs/:id,GET,studentOut,sameTenant,DENY,403,no,PASS,target=job(A)
+/cloud/jobs/:id,GET,studentOut,otherTenant,-,-,-,SKIP,no job fixture (B)

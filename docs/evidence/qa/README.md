@@ -6,3 +6,6 @@ Every row is one run of `tests\run-qa.ps1 -Archive`. Folders hold the raw report
 |---|---|---|---|---|---|---|---|
 | [20261127-2200-pre-aliyun-service-available-local](20261127-2200-pre-aliyun-service-available-local/SUMMARY.md) | 2026-11-27 22:00 | local | `c73c3b4` | FAIL: PASS 23  FAIL 1  INFO 3  SKIP 1 | FAIL | PASS: 34/34 steps passed | NOT RUN: chua cai k6 |
 | [20261127-2220-fix-bug-01-02-local](20261127-2220-fix-bug-01-02-local/SUMMARY.md) | 2026-11-27 22:20 | local | `c73c3b4` | PASS: PASS 24  FAIL 0  INFO 3  SKIP 1 | PASS | PASS: 34/34 steps passed | NOT RUN: chua cai k6 |
+| [20261128-0044-local-k6-smoke-local](20261128-0044-local-k6-smoke-local/SUMMARY.md) | 2026-11-28 00:44 | local | `3de6429` | PASS: PASS 24  FAIL 0  INFO 3  SKIP 1 | PASS | PASS: 34/34 steps passed | NOT RUN: chua cai k6 |
+| [20261128-0052-local-materials-covered-local](20261128-0052-local-materials-covered-local/SUMMARY.md) | 2026-11-28 00:52 | local | `3de6429` | PASS: PASS 24  FAIL 0  INFO 3  SKIP 1 | FAIL | PASS: 34/34 steps passed | NOT RUN: chua cai k6 |
+| [20261128-0101-fix-bug-03-local](20261128-0101-fix-bug-03-local/SUMMARY.md) | 2026-11-28 01:01 | local | `3de6429` | PASS: PASS 25  FAIL 0  INFO 3  SKIP 1 | PASS | PASS: 34/34 steps passed | NOT RUN: chua cai k6 |

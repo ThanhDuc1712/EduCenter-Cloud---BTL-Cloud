@@ -227,6 +227,24 @@ if (teacher.cookie) {
     logsB.status === 200 ? pass(leaked.length === 0) : 'INFO', logsB.status === 403 && !IS_LOCAL ? 'ops API blocked by OPS_ALLOWED_CIDRS' : '');
 }
 
+{
+  // BUG-03 regression: /cloud/storage must list only the caller's own object keys, with or without a prefix.
+  const tenantAId = loginA.json?.principal?.tenantId;
+  const matsA = new Set(itemsOf(await adminA.call('GET', '/materials?pageSize=100')).map((m) => String(m.id).toLowerCase()));
+  const leaks = [];
+  let blocked = 0;
+  for (const q of ['bucket=published', 'bucket=quarantine', `bucket=published&prefix=published/${tenantAId}/`, `bucket=quarantine&prefix=quarantine/${tenantAId}/`, 'bucket=published&prefix=results/']) {
+    const r = await adminB.call('GET', `/cloud/storage?${q}&limit=1000`);
+    if (r.status === 403) blocked++;
+    const keys = (r.json?.objects ?? []).map((o) => String(o.key));
+    const foreign = keys.filter((k) => (tenantAId && k.includes(tenantAId)) || [...uuidsIn(k)].some((id) => matsA.has(id)));
+    if (foreign.length) leaks.push(`${q.split('&')[0]}${q.includes('prefix') ? '+prefix' : ''}: ${foreign.length}`);
+  }
+  record('SEC-36', 'BUG-03: /cloud/storage lists only own objects', 'High', 'no center-A key in center-B listing',
+    leaks.length ? `LEAK ${leaks.join('; ')}` : blocked === 5 ? 'ops API blocked (403)' : '0 foreign keys',
+    blocked === 5 ? 'INFO' : pass(leaks.length === 0), blocked === 5 ? 'ops API blocked by OPS_ALLOWED_CIDRS' : '');
+}
+
 if (studentA) {
   const r = await student.call('GET', '/students?pageSize=100');
   const ids = itemsOf(r).map((x) => x.id);
