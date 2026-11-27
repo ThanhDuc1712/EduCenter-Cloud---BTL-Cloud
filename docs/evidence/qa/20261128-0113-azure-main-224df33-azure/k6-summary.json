@@ -1,0 +1,275 @@
+{
+    "root_group": {
+        "groups": {},
+        "checks": {
+            "ADMIN /dashboard 200": {
+                "path": "::ADMIN /dashboard 200",
+                "id": "6b8f0bc5a7d762b0267e82298c216579",
+                "passes": 0,
+                "fails": 10,
+                "name": "ADMIN /dashboard 200"
+            },
+            "TEACHER /dashboard 200": {
+                "name": "TEACHER /dashboard 200",
+                "path": "::TEACHER /dashboard 200",
+                "id": "6daacfc39a4938fec6fbbeaeaf1f1bf7",
+                "passes": 0,
+                "fails": 12
+            },
+            "STUDENT /dashboard 200": {
+                "name": "STUDENT /dashboard 200",
+                "path": "::STUDENT /dashboard 200",
+                "id": "5fb59fa56010ed6bd2a7d444a1b04d8d",
+                "passes": 6,
+                "fails": 0
+            },
+            "TEACHER /classrooms 200": {
+                "name": "TEACHER /classrooms 200",
+                "path": "::TEACHER /classrooms 200",
+                "id": "3dba186a8ab6e0b41cd9a18b4913cd91",
+                "passes": 0,
+                "fails": 12
+            },
+            "ADMIN /classrooms 200": {
+                "name": "ADMIN /classrooms 200",
+                "path": "::ADMIN /classrooms 200",
+                "id": "eaf8df13a9275cccfa0b5f897ff02350",
+                "passes": 0,
+                "fails": 10
+            },
+            "STUDENT /schedule 200": {
+                "name": "STUDENT /schedule 200",
+                "path": "::STUDENT /schedule 200",
+                "id": "93c82b8f721e39dd3d3caf0d5f716b60",
+                "passes": 6,
+                "fails": 0
+            },
+            "ADMIN /students 200": {
+                "name": "ADMIN /students 200",
+                "path": "::ADMIN /students 200",
+                "id": "f98bb5b3efe3525a9cb84fe18cf3d77f",
+                "passes": 0,
+                "fails": 10
+            },
+            "TEACHER /schedule 200": {
+                "name": "TEACHER /schedule 200",
+                "path": "::TEACHER /schedule 200",
+                "id": "7d73360488313eaa77c044f32fe6a7c3",
+                "passes": 0,
+                "fails": 12
+            },
+            "ADMIN /schedule 200": {
+                "name": "ADMIN /schedule 200",
+                "path": "::ADMIN /schedule 200",
+                "id": "07764b7b819cc148d3129ba73efeef79",
+                "passes": 0,
+                "fails": 10
+            },
+            "STUDENT /classrooms 200": {
+                "passes": 6,
+                "fails": 0,
+                "name": "STUDENT /classrooms 200",
+                "path": "::STUDENT /classrooms 200",
+                "id": "7e80ba0fda3b6d062453c1d2c06d205e"
+            },
+            "ADMIN /invoices 200": {
+                "name": "ADMIN /invoices 200",
+                "path": "::ADMIN /invoices 200",
+                "id": "151439e6b445a9e9814ed1e41550d8c3",
+                "passes": 0,
+                "fails": 10
+            },
+            "TEACHER /attendance/pending 200": {
+                "passes": 0,
+                "fails": 12,
+                "name": "TEACHER /attendance/pending 200",
+                "path": "::TEACHER /attendance/pending 200",
+                "id": "ca7ca764225a450aa9f46796fe690750"
+            },
+            "STUDENT /invoices 200": {
+                "fails": 0,
+                "name": "STUDENT /invoices 200",
+                "path": "::STUDENT /invoices 200",
+                "id": "e297d9a7d5e3e230c8fe559c29ea6046",
+                "passes": 6
+            },
+            "ADMIN /materials 200": {
+                "path": "::ADMIN /materials 200",
+                "id": "d48fcadee5f9d63ab3573ae08ad8afe5",
+                "passes": 0,
+                "fails": 10,
+                "name": "ADMIN /materials 200"
+            },
+            "TEACHER /materials 200": {
+                "fails": 12,
+                "name": "TEACHER /materials 200",
+                "path": "::TEACHER /materials 200",
+                "id": "7972c1e5489cfdad6becca98c4ff9649",
+                "passes": 0
+            },
+            "STUDENT /materials 200": {
+                "name": "STUDENT /materials 200",
+                "path": "::STUDENT /materials 200",
+                "id": "57f2a9f6d48f4b5dfd50736236e5651d",
+                "passes": 6,
+                "fails": 0
+            }
+        },
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "metrics": {
+        "http_req_connecting": {
+            "avg": 1.5434425806451615,
+            "min": 0,
+            "med": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "p(99)": 41.58834800000001,
+            "max": 42.5636
+        },
+        "data_received": {
+            "count": 201541,
+            "rate": 2998.7454625954447
+        },
+        "http_req_duration": {
+            "p(99)": 387.2437180000016,
+            "max": 782.432,
+            "avg": 90.83555354838708,
+            "min": 43.5346,
+            "med": 68.9492,
+            "p(90)": 131.86266,
+            "p(95)": 196.17968
+        },
+        "iterations": {
+            "count": 28,
+            "rate": 0.4166143511874629
+        },
+        "http_reqs": {
+            "count": 155,
+            "rate": 2.3062580155020265
+        },
+        "http_req_waiting": {
+            "p(90)": 129.52211999999997,
+            "p(95)": 196.17968,
+            "p(99)": 387.2437180000016,
+            "max": 782.432,
+            "avg": 88.60349032258067,
+            "min": 42.9004,
+            "med": 67.7458
+        },
+        "http_req_receiving": {
+            "p(90)": 8.932279999999999,
+            "p(95)": 11.494369999999993,
+            "p(99)": 15.310772000000005,
+            "max": 15.97,
+            "avg": 1.9922006451612901,
+            "min": 0,
+            "med": 0
+        },
+        "http_req_blocked": {
+            "avg": 3.5238135483870967,
+            "min": 0,
+            "med": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "p(99)": 90.767562,
+            "max": 108.4579
+        },
+        "vus_max": {
+            "value": 5,
+            "min": 5,
+            "max": 5
+        },
+        "checks": {
+            "passes": 30,
+            "fails": 120,
+            "thresholds": {
+                "rate>0.99": true
+            },
+            "value": 0.2
+        },
+        "http_req_duration{kind:read}": {
+            "p(90)": 127.14307,
+            "p(95)": 150.63851999999991,
+            "p(99)": 377.08226999999783,
+            "max": 782.432,
+            "avg": 87.29415066666665,
+            "min": 43.5346,
+            "med": 68.22409999999999,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "http_req_duration{expected_response:true}": {
+            "p(99)": 616.8601939999983,
+            "max": 782.432,
+            "avg": 137.26388285714285,
+            "min": 66.2378,
+            "med": 90.7804,
+            "p(90)": 257.96202,
+            "p(95)": 277.21962999999994
+        },
+        "vus": {
+            "value": 1,
+            "min": 0,
+            "max": 5
+        },
+        "http_req_failed": {
+            "passes": 120,
+            "fails": 35,
+            "thresholds": {
+                "rate<0.005": true
+            },
+            "value": 0.7741935483870968
+        },
+        "data_sent": {
+            "count": 18590,
+            "rate": 276.6021710205334
+        },
+        "iteration_duration": {
+            "max": 16111.1555,
+            "avg": 11344.168207142855,
+            "min": 9233.1343,
+            "med": 11273.15435,
+            "p(90)": 13433.65431,
+            "p(95)": 13738.139405,
+            "p(99)": 15479.851247000002
+        },
+        "http_req_tls_handshaking": {
+            "p(90)": 0,
+            "p(95)": 0,
+            "p(99)": 48.835358000000014,
+            "max": 59.8488,
+            "avg": 1.8952548387096775,
+            "min": 0,
+            "med": 0
+        },
+        "http_req_sending": {
+            "min": 0,
+            "med": 0,
+            "p(90)": 0.6937199999999999,
+            "p(95)": 0.83386,
+            "p(99)": 1.062128000000001,
+            "max": 1.324,
+            "avg": 0.23986258064516133
+        }
+    },
+    "setup_data": {
+        "sessions": [
+            {
+                "cookie": "__Host-educenter_session=yFVCaKa00yOQfRD2StckGZrPy6N21hJQ5r16YzULvd0",
+                "role": "ADMIN"
+            },
+            {
+                "cookie": "__Host-educenter_session=bjju5Ui7ZsYhIJ4-0pTBwalJer9fHqKQEPy_rybK9hQ",
+                "role": "TEACHER"
+            },
+            {
+                "cookie": "__Host-educenter_session=7Vgua07NzeXr1oGVgmkXNDUER9OOOaiOJvf2FbMsyu8",
+                "role": "STUDENT"
+            }
+        ]
+    }
+}

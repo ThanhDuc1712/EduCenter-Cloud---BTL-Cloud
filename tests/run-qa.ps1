@@ -57,6 +57,9 @@ $out = Join-Path (Split-Path -Parent $repo) "EduCenter-test-results\$runId-$sha"
 New-Item -ItemType Directory -Force $out | Out-Null
 
 $env:BASE_URL = $BaseUrl.TrimEnd('/')
+# Unsafe requests must carry the app's own origin (same-origin check). Locally the SPA runs on Vite :5173;
+# in the cloud the API serves the SPA, so the origin is the site itself.
+if ($isLocal) { $env:APP_ORIGIN = 'http://localhost:5173' } else { $env:APP_ORIGIN = ([Uri]$env:BASE_URL).GetLeftPart([UriPartial]::Authority) }
 $env:OUT_DIR = $out
 $results = New-Object System.Collections.Generic.List[object]
 
