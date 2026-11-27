@@ -72,7 +72,8 @@ export class SessionService {
       if (!u.teacher || u.teacher.status === 'INACTIVE') return undefined;
       return { ...base, role: 'TEACHER', personaKey: `teacher:${u.teacher.code}`, displayName: u.teacher.fullName, teacherId: u.teacher.id };
     }
-    if (!u.student || u.student.status === 'ARCHIVED') return undefined;
+    // INACTIVE ("Vô hiệu hóa" / tạm nghỉ) and ARCHIVED students may not sign in — same rule as teachers.
+    if (!u.student || u.student.status !== 'ACTIVE') return undefined;
     return { ...base, role: 'STUDENT', personaKey: `student:${u.student.code}`, displayName: u.student.fullName, studentId: u.student.id };
   }
 

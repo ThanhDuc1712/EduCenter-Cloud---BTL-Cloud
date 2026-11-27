@@ -144,8 +144,7 @@ if (studentA) {
 
 if (inactiveStudents[0]) {
   const r = await new Session('inactive').login(TENANT_A, inactiveStudents[0].email);
-  record('SEC-14', 'INACTIVE student login (decision needed)', 'Medium', 'CHỜ DEV: INACTIVE có được đăng nhập không?', `${r.status}`, 'INFO',
-    r.status === 200 ? 'currently ALLOWED — code blocks only ARCHIVED (session.service.ts)' : 'currently blocked');
+  record('SEC-14', 'INACTIVE student cannot sign in', 'Medium', '401 (same message as a wrong password)', `${r.status}`, pass(r.status === 401));
 } else record('SEC-14', 'INACTIVE student login', 'Medium', '', 'no INACTIVE student', 'SKIP');
 
 {
@@ -156,9 +155,9 @@ if (inactiveStudents[0]) {
 {
   const opt = await anon.call('GET', '/auth/options');
   const enabled = opt.json?.registrationEnabled === true;
-  record('SEC-16', 'Public self-registration on this environment', 'Medium', IS_LOCAL ? 'informational locally' : 'disabled on the graded demo (decision needed)',
-    `registrationEnabled=${opt.json?.registrationEnabled}`, IS_LOCAL ? 'INFO' : enabled ? 'INFO' : 'PASS',
-    !IS_LOCAL && enabled ? 'anyone can create STUDENT accounts in the demo centers — ask Đức' : '');
+  record('SEC-16', 'Public self-registration on this environment', 'Medium', IS_LOCAL ? 'informational locally' : 'disabled on the graded demo',
+    `registrationEnabled=${opt.json?.registrationEnabled}`, IS_LOCAL ? 'INFO' : pass(!enabled),
+    !IS_LOCAL && enabled ? 'set REGISTRATION_ENABLED=false on the App Service' : '');
 }
 
 if (!IS_LOCAL) {

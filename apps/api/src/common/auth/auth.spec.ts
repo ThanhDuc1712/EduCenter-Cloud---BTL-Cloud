@@ -39,6 +39,7 @@ describe('SessionService.toPrincipal', () => {
     expect(SessionService.toPrincipal({ ...base, status: 'DISABLED' })).toBeUndefined();
     expect(SessionService.toPrincipal({ ...base, role: 'TEACHER', teacher: { id: 'g1', code: 'GV001', fullName: 'GV', status: 'INACTIVE' } })).toBeUndefined();
     expect(SessionService.toPrincipal({ ...base, role: 'STUDENT', student: { id: 's1', code: 'HV0001', fullName: 'HV', status: 'ARCHIVED' } })).toBeUndefined();
+    expect(SessionService.toPrincipal({ ...base, role: 'STUDENT', student: { id: 's1', code: 'HV0001', fullName: 'HV', status: 'INACTIVE' } })).toBeUndefined();
     expect(SessionService.toPrincipal({ ...base, role: 'STUDENT', student: null })).toBeUndefined();
   });
 
