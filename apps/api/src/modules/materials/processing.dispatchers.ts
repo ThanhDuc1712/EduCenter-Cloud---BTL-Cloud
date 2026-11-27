@@ -103,7 +103,7 @@ export class LocalProcessingDispatcher implements ProcessingDispatcher {
     const keyId = this.config.get('CALLBACK_HMAC_ACTIVE_KEY_ID');
     const secret = keys.get(keyId);
     if (!secret) {
-      await this.ops.write({ provider: 'LOCAL', service: 'CALLBACK', level: 'ERROR', event: 'callback.no_key', message: `CALLBACK_HMAC_ACTIVE_KEY_ID=${keyId} không có trong CALLBACK_HMAC_KEYS`, materialId: job.materialId, correlationId: job.correlationId });
+      await this.ops.write({ provider: 'LOCAL', service: 'CALLBACK', level: 'ERROR', event: 'callback.no_key', message: `CALLBACK_HMAC_ACTIVE_KEY_ID=${keyId} không có trong CALLBACK_HMAC_KEYS`, tenantId: job.tenantId, materialId: job.materialId, correlationId: job.correlationId });
       return;
     }
     const delays = [0, 500, 2000, 5000];
@@ -118,9 +118,9 @@ export class LocalProcessingDispatcher implements ProcessingDispatcher {
       } catch {
         this.telemetry.dependency({ name: 'callback.http', type: 'Callback', target: '/internal/material-callback', durationMs: performance.now() - started, success: false });
       }
-      await this.ops.write({ provider: 'LOCAL', service: 'CALLBACK', level: 'WARN', event: 'callback.retry', message: `Callback thất bại, thử lại (${i + 1}/${delays.length})`, materialId: job.materialId, correlationId: job.correlationId });
+      await this.ops.write({ provider: 'LOCAL', service: 'CALLBACK', level: 'WARN', event: 'callback.retry', message: `Callback thất bại, thử lại (${i + 1}/${delays.length})`, tenantId: job.tenantId, materialId: job.materialId, correlationId: job.correlationId });
     }
-    await this.ops.write({ provider: 'LOCAL', service: 'CALLBACK', level: 'ERROR', event: 'callback.gave_up', message: 'Callback không thành công — reconciler sẽ đọc result JSON', materialId: job.materialId, correlationId: job.correlationId });
+    await this.ops.write({ provider: 'LOCAL', service: 'CALLBACK', level: 'ERROR', event: 'callback.gave_up', message: 'Callback không thành công — reconciler sẽ đọc result JSON', tenantId: job.tenantId, materialId: job.materialId, correlationId: job.correlationId });
   }
 }
 

@@ -42,7 +42,12 @@ if (-not $SkipPython) {
 if (-not $SkipE2E) {
   $apiUp = $false
   try { $apiUp = (Invoke-WebRequest -UseBasicParsing -TimeoutSec 3 'http://127.0.0.1:3000/api/v1/health').StatusCode -eq 200 } catch { $apiUp = $false }
-  if ($apiUp) { Invoke-Gate 'E2E integration flow (education + cloud pipeline)' { node tests/e2e/integration-flow.mjs } }
+  # integration-flow.mjs switches demo personas (PUT /context) and only works with AUTH_MODE=demo (BUG-01).
+  # With real logins (AUTH_MODE=session, the default) run the login-based role journeys instead.
+  $authMode = 'session'
+  try { $authMode = (Invoke-RestMethod -TimeoutSec 3 'http://127.0.0.1:3000/api/v1/auth/options').authMode } catch { }
+  if ($apiUp -and $authMode -eq 'demo') { Invoke-Gate 'E2E integration flow (education + cloud pipeline)' { node tests/e2e/integration-flow.mjs } }
+  elseif ($apiUp) { Invoke-Gate 'E2E role journeys (real login, AUTH_MODE=session)' { node tests/e2e/role-journeys.mjs } }
   else { $results.Add([pscustomobject]@{ Gate = 'E2E integration flow'; Result = 'SKIPPED (API not running - start-local.ps1)'; Seconds = 0 }) }
 } else { $results.Add([pscustomobject]@{ Gate = 'E2E integration flow'; Result = 'SKIPPED'; Seconds = 0 }) }
 
