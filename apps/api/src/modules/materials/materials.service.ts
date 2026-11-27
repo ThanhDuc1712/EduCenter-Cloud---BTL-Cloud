@@ -342,9 +342,11 @@ export class MaterialsService {
    * Applies a worker result (callback or reconciler replay). Idempotent: a repeated eventId is
    * reported as duplicate; a result for an outdated source version or a deleted material is ignored.
    */
-  async applyResult(r: ProcessingResult, source: 'CALLBACK' | 'RECONCILER'): Promise<{ applied: boolean; duplicate?: boolean; reason?: string; status?: MaterialStatus }> {
+  /** `tenantId` is returned only when it comes from the database (never from the payload), so callers can tag logs safely. */
+  async applyResult(r: ProcessingResult, source: 'CALLBACK' | 'RECONCILER'): Promise<{ applied: boolean; duplicate?: boolean; reason?: string; status?: MaterialStatus; tenantId?: string }> {
     const receivedAt = Date.now();
-    if (await this.prisma.materialProcessingEvent.findUnique({ where: { eventId: r.eventId }, select: { id: true } })) return { applied: false, duplicate: true };
+    const seen = await this.prisma.materialProcessingEvent.findUnique({ where: { eventId: r.eventId }, select: { id: true, tenantId: true } });
+    if (seen) return { applied: false, duplicate: true, tenantId: seen.tenantId };
     const uploaded = parseQuarantineKey(r.sourceKey);
     if (!uploaded || uploaded.tenantId !== r.tenantId || uploaded.materialId !== r.materialId) return { applied: false, reason: 'SOURCE_KEY_MISMATCH' };
     const out = [r.tenantId, r.materialId, uploaded.attempt, r.sourceVersionId] as const;
@@ -356,7 +358,7 @@ export class MaterialsService {
       if (!m) return { applied: false, reason: 'MATERIAL_NOT_FOUND' } as const;
       const record = async (type: string, reason: string) => {
         await db.materialProcessingEvent.create({ data: { tenantId: m.tenantId, materialId: m.id, eventId: r.eventId, type, source, fromStatus: m.status, toStatus: m.status, detail: { reason, sourceVersionId: r.sourceVersionId ?? null } } });
-        return { applied: false, reason, status: m.status } as const;
+        return { applied: false, reason, status: m.status, tenantId: m.tenantId } as const;
       };
       if (m.status === 'DELETED') return record('callback.ignored', 'MATERIAL_DELETED');
       // Only the key of the current attempt counts: a late result of an older attempt changes nothing.

@@ -377,7 +377,8 @@ export class CloudService {
 
     const where: Prisma.OpsLogEntryWhereInput = {
       AND: [
-        { OR: [{ tenantId: p.tenantId }, { tenantId: null }] },
+        // BUG-02: platform rows (no tenant) are shared only when they name no material.
+        { OR: [{ tenantId: p.tenantId }, { tenantId: null, materialId: null }] },
         { createdAt: { gte: from, lte: to } },
         q.provider ? { provider: q.provider } : {},
         q.service ? { service: q.service } : {},
@@ -389,7 +390,7 @@ export class CloudService {
     const [rows, total, services] = await Promise.all([
       this.prisma.opsLogEntry.findMany({ where, orderBy: { createdAt: 'desc' }, ...pageArgs(q) }),
       this.prisma.opsLogEntry.count({ where }),
-      this.prisma.opsLogEntry.groupBy({ by: ['provider', 'service'], _count: true, where: { createdAt: { gte: from, lte: to } } }),
+      this.prisma.opsLogEntry.groupBy({ by: ['provider', 'service'], _count: true, where: { createdAt: { gte: from, lte: to }, OR: [{ tenantId: p.tenantId }, { tenantId: null, materialId: null }] } }),
     ]);
     return { source, status: 'OK', ...toPage(rows, total, q), facets: services.map((s) => ({ provider: s.provider, service: s.service, count: s._count })) };
   }

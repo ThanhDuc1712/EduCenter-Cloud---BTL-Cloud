@@ -53,10 +53,14 @@ export class MaterialCallbackController {
     }
     const outcome = await this.materials.applyResult(parsed.value, 'CALLBACK');
     this.telemetry.dependency({ name: 'callback.handle', type: 'Callback', target: 'material-callback', durationMs: performance.now() - started, success: true });
+    // BUG-02: a log row that names a material must carry its tenant (from the DB); without one, omit the ids.
+    const scope = outcome.tenantId
+      ? { tenantId: outcome.tenantId, materialId: parsed.value.materialId, correlationId: parsed.value.correlationId ?? null }
+      : { tenantId: null, materialId: null, correlationId: null };
     if (outcome.duplicate) {
-      await this.ops.write({ provider: parsed.value.processor === 'ALIYUN_FC' ? 'ALIYUN' : 'LOCAL', service: 'CALLBACK', level: 'INFO', event: 'callback.duplicate', message: 'Callback lặp lại (eventId đã xử lý) — bỏ qua', materialId: parsed.value.materialId, correlationId: parsed.value.correlationId ?? null });
+      await this.ops.write({ provider: parsed.value.processor === 'ALIYUN_FC' ? 'ALIYUN' : 'LOCAL', service: 'CALLBACK', level: 'INFO', event: 'callback.duplicate', message: 'Callback lặp lại (eventId đã xử lý) — bỏ qua', ...scope });
     } else if (!outcome.applied) {
-      await this.ops.write({ provider: parsed.value.processor === 'ALIYUN_FC' ? 'ALIYUN' : 'LOCAL', service: 'CALLBACK', level: 'WARN', event: 'callback.ignored', message: `Callback không được áp dụng: ${outcome.reason}`, materialId: parsed.value.materialId, correlationId: parsed.value.correlationId ?? null });
+      await this.ops.write({ provider: parsed.value.processor === 'ALIYUN_FC' ? 'ALIYUN' : 'LOCAL', service: 'CALLBACK', level: 'WARN', event: 'callback.ignored', message: `Callback không được áp dụng: ${outcome.reason}`, ...scope });
     }
     return { received: true, applied: outcome.applied, duplicate: outcome.duplicate ?? false, keyId: verdict.keyId };
   }
