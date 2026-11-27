@@ -1,0 +1,21 @@
+{
+  "Version": "1",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["ram:PassRole"],
+      "Resource": [
+        "acs:ram::<ACCOUNT_ID>:role/educenter-fc-worker",
+        "acs:ram::<ACCOUNT_ID>:role/aliyunosseventnotificationrole"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["ram:GetRole"],
+      "Resource": [
+        "acs:ram::<ACCOUNT_ID>:role/educenter-fc-worker",
+        "acs:ram::<ACCOUNT_ID>:role/aliyunosseventnotificationrole"
+      ]
+    }
+  ]
+}

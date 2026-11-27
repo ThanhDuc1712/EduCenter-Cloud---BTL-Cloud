@@ -1,4 +1,5 @@
-# CI baseline (P0-06): lint, typecheck, unit tests, build, Gitleaks.
+# CI (P0-06 + P1-18): lint, typecheck, unit tests, build, integration tests on PostgreSQL (edu_runtime),
+# Function Compute tests (Python 3.10), Gitleaks. Deploy workflows (deploy-azure.yml) start only after CI passes on main.
 # Security: read-only token, no secrets used, no pull_request_target, every action pinned to a
 # commit SHA (the tag in the comment is informational only — update both together).
 name: CI
@@ -7,8 +8,9 @@ on:
   pull_request:
     branches: [main]
   push:
-    # main + the 6 personal branches (D-35, ROADMAP §7.4).
-    branches: [main, duc, doanh, anh, ha, duong, giang]
+    # main + the branches the team actually uses (D-35 listed duc/doanh/... but the repo uses these).
+    # A push to a branch that has an open PR runs CI twice (push + pull_request) — harmless on a public repo.
+    branches: [main, 'CI/CD', 'feat/**', 'fix/**', 'integration/**', test]
   workflow_dispatch:
 
 permissions:
@@ -68,6 +70,97 @@ jobs:
       # The contract client is committed (D-36); the build regenerates it, so any diff is drift.
       - name: Check generated files are up to date
         run: git diff --exit-code -- packages/api-contract/generated
+
+  integration:
+    name: Integration tests (PostgreSQL 16, edu_runtime)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_DB: educenter
+          POSTGRES_PASSWORD: ci-only-superuser
+        ports: ['5433:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d educenter"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      # Throw-away passwords of a database that only lives for this job (not secrets).
+      EDU_MIGRATOR_PASSWORD: ci-only-migrator
+      EDU_RUNTIME_PASSWORD: ci-only-runtime
+      MIGRATION_DATABASE_URL: postgresql://edu_migrator:ci-only-migrator@localhost:5433/educenter
+      DATABASE_URL: postgresql://edu_runtime:ci-only-runtime@localhost:5433/educenter
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared package
+        run: pnpm --filter @educenter/shared build
+
+      # Same role script as docker-compose (D-25): the app connects as edu_runtime, never as superuser.
+      - name: Create database roles (edu_migrator, edu_runtime)
+        env:
+          PGHOST: localhost
+          PGPORT: '5433'
+          PGPASSWORD: ci-only-superuser
+          POSTGRES_USER: postgres
+          POSTGRES_DB: educenter
+        run: sh infra/local/postgres/init/01-roles.sh
+
+      # Other non-secret settings (AUTH_MODE, HMAC test keys...) come from .env.example;
+      # the variables above take precedence because dotenv never overrides the process environment.
+      - name: Prepare .env from .env.example
+        run: cp .env.example .env
+
+      - name: Migrate (edu_migrator)
+        run: pnpm --filter api prisma:deploy
+
+      # seed.ts imports src/generated/prisma (git-ignored), so the client must exist first.
+      - name: Generate Prisma client
+        run: pnpm --filter api prisma:generate
+
+      - name: Seed demo data
+        run: pnpm --filter api db:seed
+
+      - name: Integration tests
+        run: pnpm test:integration
+
+  fc-tests:
+    name: Function Compute tests (Python 3.10)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    # Same image as the FC runtime version and as scripts/windows/test-local.ps1.
+    container: python:3.10-slim
+    defaults:
+      run:
+        working-directory: functions/material-processor
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install
+        run: pip install -q --disable-pip-version-check --root-user-action=ignore -r requirements.txt pytest==8.3.5
+
+      - name: Pytest
+        run: python -m pytest -q tests
 
   gitleaks:
     name: Gitleaks secret scan
