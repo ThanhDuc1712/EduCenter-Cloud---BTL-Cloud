@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { AppConfigService } from '../config/app-config.service';
+import { clientIpMiddleware } from '../http/client-ip';
 import { buildHelmetOptions, buildSpaHelmetOptions } from '../http/security-headers';
 import { AppLogger } from '../logging/app-logger';
 
@@ -37,6 +38,8 @@ export function configureApp(app: NestExpressApplication): void {
   app.setGlobalPrefix(API_PREFIX);
   app.set('trust proxy', config.get('TRUST_PROXY_HOPS'));
   app.disable('x-powered-by');
+  // Must run before anything reads req.ip (rate limits, ops allow-list, session audit).
+  app.use(clientIpMiddleware);
 
   const apiHelmet = helmet(buildHelmetOptions());
   const spaHelmet = helmet(buildSpaHelmetOptions(storageOrigins(config)));
