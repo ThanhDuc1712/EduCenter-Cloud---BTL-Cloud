@@ -9,6 +9,7 @@ import { requestContext } from '../context/request-context';
 import { DemoContextService } from '../context/demo-context.service';
 import type { Principal } from '../context/principal';
 import { AppException } from '../errors/app-exception';
+import { normalizeClientIp } from '../http/client-ip';
 import { POLICY_METADATA, type PolicyMetadata } from './policy.decorator';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
@@ -86,7 +87,7 @@ export class DenyByDefaultGuard implements CanActivate {
         else this.opsAllowList.addAddress(addr, family);
       }
     }
-    const normalized = ip.startsWith('::ffff:') ? ip.slice(7) : ip;
+    const normalized = normalizeClientIp(ip);
     return this.opsAllowList.check(normalized, isIP(normalized) === 6 ? 'ipv6' : 'ipv4');
   }
 }
