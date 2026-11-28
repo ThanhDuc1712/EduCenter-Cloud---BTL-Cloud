@@ -42,6 +42,8 @@ param operatorObjectId string
 param githubRepo string = 'ThanhDuc1712/EduCenter-Cloud---BTL-Cloud'
 @description('Tên GitHub Environment mà job deploy dùng (Doanh xác nhận).')
 param githubEnvironment string = 'demo'
+@description('Subject OIDC dạng có ID mà GitHub gửi cho repo này (thấy trong lỗi AADSTS700213 ngày 27/11). Để trống = không tạo.')
+param githubOidcIdSubject string = 'repo:ThanhDuc1712@200977746/EduCenter-Cloud---BTL-Cloud@1460195731:environment:demo'
 
 // ---------- Cấu hình ứng dụng (không có secret; secret đọc từ Key Vault runtime) ----------
 @description('Origin công khai của app, ví dụ https://<default-domain>. Trống = https://app-educenter-<suffix>.azurewebsites.net.')
@@ -123,6 +125,8 @@ var roleKvReader = '4633458b-17de-408a-b874-0445c86b69e6' // built-in role ID (p
 var roleKvWriter = 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7' // built-in role ID (public)
 var roleWebsiteContributor = 'de139f84-1756-47ae-9be6-808fbbe84772'
 var roleContributor = 'b24988ac-6180-42a0-ab88-20f7382dd24c'
+var roleMonitoringReader = '43d0d8ad-25c7-4714-9337-8ba259a9fe05'
+var roleCostReader = '72fafb9e-0641-4937-9268-a91bfd8191a3'
 
 // ---------- Quan sát ----------
 resource law 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
@@ -221,9 +225,38 @@ resource app 'Microsoft.Web/sites@2023-12-01' = {
       appSettings: concat(
         baseAppSettings,
         useOss ? aliyunAppSettings : [],
-        [ { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appi.properties.ConnectionString } ]
+        [ { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appi.properties.ConnectionString } ],
+        // Cloud Operations dashboard: read-only checks with the app's Managed Identity
+        // (Key Vault metadata, Azure Monitor metrics, resource health, Log Analytics, cost).
+        [
+          { name: 'AZURE_KEY_VAULT_URL', value: kvRuntime.properties.vaultUri }
+          { name: 'AZURE_SUBSCRIPTION_ID', value: subscription().subscriptionId }
+          { name: 'AZURE_RESOURCE_GROUP', value: resourceGroup().name }
+          { name: 'AZURE_APP_SERVICE_NAME', value: names.app }
+          { name: 'AZURE_POSTGRES_SERVER_NAME', value: names.pg }
+          { name: 'AZURE_LOG_ANALYTICS_WORKSPACE_ID', value: law.properties.customerId }
+        ]
       )
     }
+  }
+}
+
+// App MI chỉ ĐỌC số liệu giám sát và chi phí trong resource group (trang Cloud Operations)
+resource appMonitoringReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceGroup().id, app.id, roleMonitoringReader)
+  properties: {
+    principalId: app.identity.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleMonitoringReader)
+  }
+}
+
+resource appCostReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceGroup().id, app.id, roleCostReader)
+  properties: {
+    principalId: app.identity.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleCostReader)
   }
 }
 
@@ -320,6 +353,19 @@ resource deployFic 'Microsoft.ManagedIdentity/userAssignedIdentities/federatedId
     subject: 'repo:${githubRepo}:environment:${githubEnvironment}'
     audiences: ['api://AzureADTokenExchange']
   }
+}
+
+// GitHub gửi subject kèm ID owner/repo; giữ cả dạng tên ở trên để tương thích.
+// Azure không cho ghi song song 2 federated credential trên cùng identity, nên phụ thuộc deployFic.
+resource deployFicIds 'Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials@2023-01-31' = if (!empty(githubOidcIdSubject)) {
+  parent: deployId
+  name: 'github-demo-idsubject'
+  properties: {
+    issuer: 'https://token.actions.githubusercontent.com'
+    subject: githubOidcIdSubject
+    audiences: ['api://AzureADTokenExchange']
+  }
+  dependsOn: [deployFic]
 }
 
 resource deployWebApp 'Microsoft.Authorization/roleAssignments@2022-04-01' = {

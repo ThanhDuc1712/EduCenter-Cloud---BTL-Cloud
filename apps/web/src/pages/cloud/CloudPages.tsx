@@ -208,7 +208,7 @@ export function CloudArchitecturePage() {
             </defs>
             <rect x={225} y={30} width={400} height={390} rx={14} fill="#eff6ff" opacity={0.5} />
             <text x={237} y={50} className="fill-blue-800 text-[12px] font-semibold">
-              Microsoft Azure · Southeast Asia
+              Microsoft Azure · East Asia
             </text>
             <rect x={500} y={170} width={620} height={250} rx={14} fill="#fff7ed" opacity={0.55} />
             <text x={1110} y={190} textAnchor="end" className="fill-orange-800 text-[12px] font-semibold">
