@@ -353,6 +353,105 @@ resource deployReadsOpsKv 'Microsoft.Authorization/roleAssignments@2022-04-01' =
   }
 }
 
+// ---------- Azure Monitor: cảnh báo qua email (action group tạo ở P0-02) ----------
+@description('Tên action group đã có trong RG (tạo tay ở P0-02). Để trống = không tạo cảnh báo.')
+param alertActionGroupName string = 'ag-educenter-email'
+
+var alertsEnabled = !empty(alertActionGroupName)
+
+// Tham chiếu theo ID (action group có sẵn, không do template này quản lý)
+var alertActionGroupId = resourceId('Microsoft.Insights/actionGroups', alertActionGroupName)
+
+// App trả lỗi 5xx: tổng > 5 trong 5 phút
+resource alertHttp5xx 'Microsoft.Insights/metricAlerts@2018-03-01' = if (alertsEnabled) {
+  name: 'alert-${names.app}-http5xx'
+  location: 'global'
+  tags: tags
+  properties: {
+    description: 'EduCenter: App Service trả lỗi 5xx (> 5 trong 5 phút)'
+    severity: 2
+    enabled: true
+    scopes: [app.id]
+    evaluationFrequency: 'PT1M'
+    windowSize: 'PT5M'
+    criteria: {
+      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
+      allOf: [
+        {
+          criterionType: 'StaticThresholdCriterion'
+          name: 'Http5xx'
+          metricNamespace: 'Microsoft.Web/sites'
+          metricName: 'Http5xx'
+          operator: 'GreaterThan'
+          threshold: 5
+          timeAggregation: 'Total'
+        }
+      ]
+    }
+    actions: [{ actionGroupId: alertActionGroupId }]
+  }
+}
+
+// Health check của App Service (chỉ có trên gói khác F1): trung bình < 100% trong 5 phút
+resource alertHealth 'Microsoft.Insights/metricAlerts@2018-03-01' = if (alertsEnabled && appServiceSku != 'F1') {
+  name: 'alert-${names.app}-health'
+  location: 'global'
+  tags: tags
+  properties: {
+    description: 'EduCenter: /api/v1/health không ổn định (HealthCheckStatus < 100)'
+    severity: 1
+    enabled: true
+    scopes: [app.id]
+    evaluationFrequency: 'PT1M'
+    windowSize: 'PT5M'
+    criteria: {
+      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
+      allOf: [
+        {
+          criterionType: 'StaticThresholdCriterion'
+          name: 'HealthCheckStatus'
+          metricNamespace: 'Microsoft.Web/sites'
+          metricName: 'HealthCheckStatus'
+          operator: 'LessThan'
+          threshold: 100
+          timeAggregation: 'Average'
+        }
+      ]
+    }
+    actions: [{ actionGroupId: alertActionGroupId }]
+  }
+}
+
+// PostgreSQL: dung lượng > 80%
+resource alertPgStorage 'Microsoft.Insights/metricAlerts@2018-03-01' = if (alertsEnabled) {
+  name: 'alert-${names.pg}-storage'
+  location: 'global'
+  tags: tags
+  properties: {
+    description: 'EduCenter: PostgreSQL dùng > 80% dung lượng'
+    severity: 2
+    enabled: true
+    scopes: [pg.id]
+    evaluationFrequency: 'PT15M'
+    windowSize: 'PT30M'
+    criteria: {
+      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
+      allOf: [
+        {
+          criterionType: 'StaticThresholdCriterion'
+          name: 'StoragePercent'
+          metricNamespace: 'Microsoft.DBforPostgreSQL/flexibleServers'
+          metricName: 'storage_percent'
+          operator: 'GreaterThan'
+          threshold: 80
+          timeAggregation: 'Average'
+        }
+      ]
+    }
+    actions: [{ actionGroupId: alertActionGroupId }]
+  }
+}
+
 // ---------- Output (không có secret) ----------
 output webAppName string = app.name
 output webAppDefaultHostName string = app.properties.defaultHostName
