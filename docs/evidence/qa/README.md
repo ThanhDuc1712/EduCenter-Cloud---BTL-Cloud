@@ -12,3 +12,4 @@ Every row is one run of `tests\run-qa.ps1 -Archive`. Folders hold the raw report
 | [20261128-0113-azure-main-224df33-azure](20261128-0113-azure-main-224df33-azure/SUMMARY.md) | 2026-11-28 01:13 | azure | `6337f21` | PASS: PASS 22  FAIL 0  INFO 5  SKIP 2 | ERROR | PASS: 34/34 steps passed | FAIL |
 | [20261128-0121-azure-main-224df33-r2-azure](20261128-0121-azure-main-224df33-r2-azure/SUMMARY.md) | 2026-11-28 01:21 | azure | `6337f21` | PASS: PASS 22  FAIL 0  INFO 5  SKIP 2 | FAIL | PASS: 34/34 steps passed | PASS |
 | [20261128-0143-fix-inactive-ip-local](20261128-0143-fix-inactive-ip-local/SUMMARY.md) | 2026-11-28 01:43 | local | `3e4f226` | PASS: PASS 26  FAIL 0  INFO 2  SKIP 1 | PASS | PASS: 34/34 steps passed | PASS |
+| [20261128-1423-azure-final-azure](20261128-1423-azure-final-azure/SUMMARY.md) | 2026-11-28 14:23 | azure | `ce99a00` | PASS: PASS 26  FAIL 0  INFO 1  SKIP 2 | PASS | PASS: 34/34 steps passed | PASS |
