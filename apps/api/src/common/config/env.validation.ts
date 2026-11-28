@@ -32,7 +32,13 @@ export type AuthModeName = (typeof AUTH_MODES)[number];
 const BYTE_SIZE = /^\d+(b|kb|mb)$/i;
 /** `keyId:secret[,keyId:secret]` — secrets ≥ 32 chars; two keys may be valid during rotation (D-29). */
 const HMAC_KEYS = /^[A-Za-z0-9_-]{1,32}:[^,\s]{32,}(,[A-Za-z0-9_-]{1,32}:[^,\s]{32,})?$/;
-const toBool = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.toLowerCase() === 'true' : value);
+// Read the RAW value (obj[key]): with enableImplicitConversion class-transformer has already turned
+// the string "false" into Boolean("false") === true before this transform runs.
+const toBool = ({ obj, key, value }: { obj: Record<string, unknown>; key: string; value: unknown }) => {
+  const raw = obj[key];
+  if (typeof raw === 'string') return ['true', '1', 'yes'].includes(raw.trim().toLowerCase());
+  return raw ?? value;
+};
 
 /**
  * Validated environment. Secrets have NO defaults: a missing value stops the process.
