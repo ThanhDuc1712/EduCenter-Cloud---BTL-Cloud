@@ -1,7 +1,10 @@
 # Tích hợp Alibaba Cloud
 
 Trạng thái: mã, cấu hình và script đã viết; worker kiểm thử bằng pytest (Python 3.10 trong Docker) và mô phỏng cả luồng
-với API local (`tests/e2e/fc-sim`). **Chưa triển khai lên tài khoản thật** (kích hoạt Function Compute đang bị chặn).
+với API local (`tests/e2e/fc-sim`). **Không triển khai được lên tài khoản thật (BLOCKED, chốt 28/11/2026):** kích hoạt Function Compute (25/11) và OSS (26/11)
+bị hệ thống kiểm soát rủi ro của Alibaba Cloud từ chối trên 2 tài khoản; KYC của chủ thẻ bị từ chối 27/11. Toàn bộ mã, IaC/cấu hình
+và kiểm thử mô phỏng vẫn giữ nguyên để triển khai khi có tài khoản hợp lệ (workflow `deploy-aliyun-fc.yml` bật bằng biến repo
+`ALIYUN_DEPLOY_ENABLED=true`). Trên Azure, luồng học liệu chạy ở chế độ LOCAL (MOCK FC) với cùng hợp đồng callback HMAC.
 
 ## OSS
 - Hai bucket **private**, versioning bật: `<prefix>-quarantine-<id>` (nhận upload) và `<prefix>-published-<id>`.

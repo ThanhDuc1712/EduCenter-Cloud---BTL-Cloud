@@ -417,7 +417,7 @@ export class CloudService {
     return {
       mode: this.mode,
       azure: [
-        item('AZURE', 'Resource Group', this.config.get('AZURE_RESOURCE_GROUP'), 'rg-educenter-demo · Southeast Asia (D-09)'),
+        item('AZURE', 'Resource Group', this.config.get('AZURE_RESOURCE_GROUP'), 'rg-educenter-demo · East Asia'),
         item('AZURE', 'App Service (Linux, Node 24)', this.config.get('AZURE_APP_SERVICE_NAME') ?? this.config.get('WEBSITE_SITE_NAME'), 'Host NestJS + SPA cùng origin, health check /api/v1/health, system-assigned identity'),
         item('AZURE', 'PostgreSQL Flexible Server 16', this.config.get('AZURE_POSTGRES_SERVER_NAME'), 'TLS bắt buộc, role edu_migrator / edu_runtime, backup 7 ngày'),
         item('AZURE', 'Key Vault', kvUrl ? new URL(kvUrl).host : null, 'RBAC: identity App Service có Key Vault Secrets User'),

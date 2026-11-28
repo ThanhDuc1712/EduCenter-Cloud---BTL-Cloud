@@ -46,6 +46,10 @@ jobs:
   deploy:
     name: Deploy material-processor
     needs: test
+    # Off until an Alibaba Cloud account can activate OSS/FC (blocked by risk control, 25-27/11).
+    # Turn on with a REPOSITORY variable ALIYUN_DEPLOY_ENABLED=true (environment variables are not
+    # visible in a job-level `if`). Until then the job shows as skipped instead of failing every push.
+    if: vars.ALIYUN_DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     environment: demo

@@ -29,23 +29,23 @@ Trạng thái:
 
 | Hạng mục | Trạng thái | Ghi chú |
 |---|---|---|
-| Azure App Service | IMPLEMENTED | Bicep + script; **gói deploy chạy thử local ở production: VERIFIED** |
-| Azure PostgreSQL | IMPLEMENTED | Bicep (TLS, backup), `scripts/bootstrap_db.py` |
-| Key Vault | IMPLEMENTED | Bicep RBAC + references; đọc metadata secret |
-| Managed Identity | IMPLEMENTED | system-assigned, 3 role assignment |
-| Application Insights | IMPLEMENTED | SDK nạp có điều kiện, custom telemetry |
-| Azure Monitor | IMPLEMENTED | alerts + availability test (Bicep), đọc metrics REST |
+| Azure App Service | VERIFIED (Azure thật) | B1 Linux, East Asia; deploy qua GitHub Actions OIDC; health 200 (25–28/11) |
+| Azure PostgreSQL | VERIFIED (Azure thật) | Flexible B1ms PG16, TLS, role `edu_migrator`/`edu_runtime`, migration 2/2 |
+| Key Vault | VERIFIED (Azure thật) | 2 vault RBAC; Key Vault references Resolved trên App Service |
+| Managed Identity | VERIFIED (Azure thật) | system-assigned đọc Key Vault; user-assigned + federated credential cho GitHub OIDC |
+| Application Insights | VERIFIED (Azure thật) | request theo đường dẫn, correlationId |
+| Azure Monitor | CONFIGURED (Azure thật) | 3 metric alert (Http5xx, HealthCheckStatus, PG storage) qua action group email; chưa có availability test; chưa có lần kích hoạt thật |
 | OSS Quarantine / Published | IMPLEMENTED | provider V4, lifecycle/CORS/versioning, script; LOCAL mock VERIFIED |
 | RAM | IMPLEMENTED | 2 policy JSON + role/users trong script |
-| Function Compute | IMPLEMENTED (logic VERIFIED) | 15 test Python trong Docker; `s.yaml`; chưa deploy |
+| Function Compute | IMPLEMENTED (logic VERIFIED) | 15 test Python + `fc-sim` 33/33; `s.yaml`; **BLOCKED**: tài khoản Alibaba Cloud bị kiểm soát rủi ro (25–27/11) |
 | SLS | IMPLEMENTED | log JSON có correlationId; GetLogs (chữ ký có unit test) |
 | CloudMonitor | IMPLEMENTED | DescribeMetricList/RuleList (chữ ký khớp vector chính thức); tên metric FC cần xác nhận |
 | PDF processing | VERIFIED (LOCAL + Python unit) | |
 | HMAC callback | VERIFIED | unit TS + Python (vector chung) + E2E (callback thật, giả mạo → 401) |
 | Signed URL | VERIFIED (LOCAL); OSS IMPLEMENTED | |
 | Reconciliation | IMPLEMENTED, chạy thủ công VERIFIED | chạy không lỗi; kịch bản treo/khôi phục chưa có test tự động |
-| Backup and recovery | VERIFIED (local pg_dump/restore); Azure PITR IMPLEMENTED (tài liệu) | |
-| Cross-cloud integration | VERIFIED ở LOCAL MODE (cùng hợp đồng); chưa chạy Azure ↔ Alibaba thật | |
+| Backup and recovery | VERIFIED (local pg_dump/restore); Azure PITR VERIFIED (26/11, restore Succeeded, RTO ≈ 80–90 phút, server tạm đã xóa) | |
+| Cross-cloud integration | VERIFIED ở LOCAL MODE trên Azure thật (MOCK FC, cùng hợp đồng HMAC); Azure ↔ Alibaba thật BLOCKED (kiểm soát rủi ro tài khoản) | |
 | Cloud Operations Dashboard | VERIFIED | 8 trang, trạng thái đo trực tiếp, MOCK/NOT CONFIGURED rõ ràng |
 
 ## Lệch so với ROADMAP / yêu cầu

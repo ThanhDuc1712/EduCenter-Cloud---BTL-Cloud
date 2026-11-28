@@ -1,7 +1,7 @@
 # Báo cáo kiểm thử
 
 Ngày chạy: 2026-11-24 · Windows 11, PowerShell 5.1, Node 24.22.3, pnpm 10.34.9, Docker 29.9.3, PostgreSQL 16 (Docker).
-Chỉ ghi PASS cho những gì **đã chạy**. Không có kiểm thử nào chạy trên Azure hay Alibaba Cloud thật.
+Chỉ ghi PASS cho những gì **đã chạy**. Báo cáo này (24/11) là kiểm thử local. Kết quả trên **Azure thật** (25–28/11) nằm ở `docs/evidence/qa/*-azure` và `completion-report.md`. Alibaba Cloud thật: **BLOCKED** (tài khoản bị kiểm soát rủi ro).
 
 ## Cổng chất lượng — `scripts/windows/test-local.ps1`
 
@@ -89,3 +89,28 @@ Các số liệu ở trên là của nhánh FE/BE trước khi tích hợp. Ph�
 - Alibaba Cloud: chưa có gì chạy thật — OSS, PostObject, trigger (kể cả việc event có `versionId`, giả định A-04),
   RAM policy, lifecycle, Function Compute, SLS. `deploy-aliyun.ps1` chưa chạy.
 - Chưa đo hiệu năng.
+
+---
+
+## Bổ sung 2026-11-28: Azure thật (East Asia)
+
+Người thực hiện phần hạ tầng: Ngô Minh Giang. Kiểm thử chức năng/bảo mật: Hòa Tùng Dương (`docs/evidence/qa/*-azure`).
+Môi trường: App Service B1 Linux (Node 24), PostgreSQL Flexible B1ms (PG16, TLS), 2 Key Vault (RBAC), Application Insights + Log Analytics,
+resource group `rg-educenter-demo`, vùng `eastasia` (Azure for Students không cho `southeastasia`).
+
+| Hạng mục | Kết quả | Thời điểm / bản |
+|---|---|---|
+| Bicep `infra/azure/main.bicep` | PASS: deploy Succeeded (lần đầu F1 lỗi `Conflict 03029`, chạy lại idempotent) | 25/11 |
+| Role DB `edu_migrator` / `edu_runtime`, firewall theo IP outbound, không mở 0.0.0.0 | PASS | 25/11 |
+| Migration (`prisma migrate deploy` bằng `edu_migrator`) | PASS: 2/2 | 25/11 |
+| Key Vault references (`DATABASE_URL`, `DEMO_CONTEXT_SECRET`, `CALLBACK_HMAC_KEYS`) qua Managed Identity | PASS: Resolved | 25/11 |
+| CI/CD GitHub Actions → Azure (OIDC, không có secret dài hạn) | PASS: Deploy #2, #3, #5 xanh; #1 lỗi `AADSTS700213` (subject OIDC có ID) → thêm federated credential | 27–28/11 |
+| Health `/api/v1/health` | PASS: `{"status":"ok","checks":{"app":"up","database":"up"}}` | 25–28/11 |
+| Luồng học liệu F09 (LOCAL MOCK FC trên Azure) | PASS: PDF hợp lệ → READY (1 trang, xử lý 1,7 s, callback 255 ms); tệp giả → REJECTED; tải bằng signed GET 200, tệp REJECTED → 422 | 27/11, `10dac2f` |
+| QA azure-final (Dương) | PASS: security 26/0, authz matrix PASS, E2E 34/34, k6 smoke PASS | 28/11 14:23, `ce99a00` |
+| Số liệu vận hành (trang Cloud Monitoring, 60 phút) | API p95 216 ms (TB 58 ms, 1.063 request, 0% 5xx); DB ping 11 ms | 28/11 14:38 |
+| Azure Monitor | CONFIGURED: 3 metric alert (Http5xx, HealthCheckStatus, PG storage) → action group email; chưa có lần kích hoạt thật; gửi thử bị chặn trên offer sinh viên | 26/11 |
+| PITR PostgreSQL | PASS: restore Succeeded về thời điểm −15 phút, RTO ≈ 80–90 phút (thời gian chờ lệnh), server tạm đã xóa | 26–27/11 |
+| Lỗi chỉ lộ ra trên Azure, đã sửa | IP client kèm cổng sau proxy App Service (403 `/cloud/*`, giới hạn IP vô hiệu); biến `false` bị đọc thành `true` (`REGISTRATION_ENABLED`) | 27–28/11 |
+| Alibaba Cloud | BLOCKED: kiểm soát rủi ro tài khoản (FC 25/11, OSS 26/11), KYC bị từ chối 27/11 | |
+
